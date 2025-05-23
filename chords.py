@@ -3,6 +3,8 @@ from tilings import Tiling
 from tilings import GriddedPerm
 from typing import Callable, Dict, FrozenSet, Iterable, Iterator, List, Optional, Tuple, Union
 from itertools import combinations, islice, tee, product, chain
+from permuta.misc import UnionFind
+import json
 
 DIR_EAST = 0
 DIR_NORTH = 1
@@ -54,11 +56,13 @@ class Chord(Tuple):
         for num in iterable:
             if not isinstance(num, int):
                 raise TypeError(f"'{num}' object is not an integer")
+            # The chord num skiped a number from the biggest chord seen so far.
             if num > max_chord_seen + 1:
                 raise ChordException(f"Incorrect indexing, chord {num} came before chord {num-1}")
+            # The chord num is the next chord after the biggest chord seen so far.
             elif num == max_chord_seen + 1:
                 max_chord_seen = num
-                # since this is the first time seeing num, it is currently an unpaird chord.
+                # First time seeing num, so it is currently unseen
                 unpaired_chords.add(max_chord_seen) 
             elif num <= max_chord_seen:
                 if num in unpaired_chords:
@@ -78,7 +82,7 @@ class Chord(Tuple):
         self._pattern = iterable
 
         # Creates dictionary of chord number and vertices it connects
-        # (1,2,1,3,3,2) -> {(1, (1, 3)), (2, (2, 6)), (3, (4, 5))}
+        # (0, 1, 2, 1, 3, 3, 2, 0) becomes {0: (0, 7), 1: (1, 3), 2: (2, 6), (3: (4, 5)}
         self._chord = {}
         for i,c in enumerate(iterable):
             if c not in self._chord:
@@ -102,40 +106,18 @@ class Chord(Tuple):
             result.extend(val + self._length for val in other)
         return Chord(result)
 
-    # sToDo: fix examples
-    def remove_index(self, index: Optional[int] = None) -> "Chord":
-        """Return the Chord acquired by removing a chord at a specified index. It
-        defaults to the index of the diagram
-
-        Examples:
-            >>> Chord((0, 0, 1, 1)).remove_index()
-            Chord((0, 0))
-            >>> Chord((0, 0, 1, 1, 2, 2)).remove_index(0)
-            Chord((0, 0, 1, 1))
-            >>> Chord((0, 1, 1, 0, 2, 3, 3, 2)).remove_index(1)
-            Chord((0, 0, 1, 2, 2, 1))
-        """
-        selected = -1
-        if index is None:
-            if self._length == 0:
-                return self
-            selected = self[-1] # defaults to the last index
-        else:
-            selected = self[index]
-        return self.remove_chord(selected)
-    
-    # sToDo: fix examples; sCP
+    # sCP
     def remove_chord(self, selected: Optional[int] = None) -> "Chord":
         """Return the Chord acquired by removing i-th chord (0-indexed). It
         defaults to the last chord.
 
         Examples:
-            >>> Chord((0, 0, 1, 1)).remove_chord()
-            Chord((0, 0))
-            >>> Chord((0, 0, 1, 1, 2, 2)).remove_chord(0)
-            Chord((0, 0, 1, 1))
-            >>> Chord((0, 1, 1, 0, 2, 3, 3, 2)).remove_chord(2)
-            Chord((0, 1, 1, 0, 2, 2))
+            >>> Chord((0, 1, 0, 1, 2, 2)).remove_chord()
+            Chord((0, 1, 0, 1)))
+            >>> Chord((0, 1, 1, 0, 2, 2)).remove_chord(2)
+            Chord((0, 1, 1, 0)))
+            >>> Chord((0, 1, 1, 0, 2, 3, 3, 2)).remove_chord(3)
+            Chord((0, 1, 1, 0, 2, 2)))
         """
         if selected is None:
             if self._length == 0:
@@ -146,6 +128,27 @@ class Chord(Tuple):
             list(val if val < selected else val - 1 for val in self if val != selected)
         )
 
+    def remove_index(self, index: Optional[int] = None) -> "Chord":
+        """Return the Chord acquired by removing a chord at a specified index. It
+        defaults to the index of the diagram
+
+        Examples:
+            >>> Chord((0, 1, 0, 1, 2, 2)).remove_index()
+            Chord((0, 1, 0, 1)))
+            >>> Chord((0, 1, 1, 0, 2, 2)).remove_index(2)
+            Chord((0, 0, 1, 1)))
+            >>> Chord((0, 1, 1, 0, 2, 3, 3, 2)).remove_index(3)
+            Chord((0, 0, 1, 2, 2, 1)))
+        """
+        selected = -1
+        if index is None:
+            if self._length == 0:
+                return self
+            selected = self[-1] # defaults to the last index
+        else:
+            selected = self[index]
+        return self.remove_chord(selected)
+    
     # sCP, sAsk: it feels like there is a better way to do this
     # sToDo: test with this function commented out, then get rid
     def standardize(self, original_list: list) -> "Chord":
@@ -172,28 +175,37 @@ class Chord(Tuple):
     
     @classmethod
     def to_standard(cls, iterable):
+        # Keeps track of standard order chords items in iterable will be mapped to.
         chord_map = {}
+        # Keeps track of what chord the next new item in iterable will be mapped to.
         next_index = 0
-        standard_order = []
-
+        
+        # Maps each item in iterable to its appropriate chord.
         for item in iterable:
             if item not in chord_map:
                 chord_map[item] = next_index
                 next_index += 1
         
+        # Puts iterable in standard order using chord_map to map items to their chord values.
+        standard_order = []
         for item in iterable:
             standard_order.append(chord_map[item])
         
         return cls(standard_order)
 
-    # sToDo: more tests. sCP: similar method for this was implemented in occurances_in
+    # sCP: similar method for this was implemented in occurances_in
     def _contains(self, patt: "Chord") -> bool:
-        """Determines if a chord contains an instance of patt"""
+        """Determines if a chord contains an instance of patt
+        Examples:
+            >>> Chord((0, 1, 1, 0)).contains(Chord((0, 0)))
+            True
+            >>> Chord((0, 1, 1, 0)).contains(Chord((0, 1, 0, 1)))
+            False"""
         if isinstance(patt, Chord):
             return len(patt.occurrences_in(self)) > 0
         raise TypeError("patt must be a Chord")
     
-    # sCP, sToDo: more tests, changed function in structure (just calls occurrences_in)
+    # sCN: changed function in structure (just calls occurrences_in)
     def contains(self, *chords: "Chord") -> bool:
         """
         Check if self contains all patts.
@@ -209,7 +221,6 @@ class Chord(Tuple):
     def occurrences_in(self, patt: "Chord", colour_self: Iterator = None, 
                        colour_patt: Iterator[int] = None) -> Iterator[Tuple[int, ...]]:
         """Find all indices of occurrences of self in patt. 
-
         Examples:
             >>> list(Chord((0, 1, 0, 1)).occurrences_in(Chord((0,1,2,0,1,2))))
             [(0, 1), (1, 2), (0, 2)]
@@ -218,7 +229,6 @@ class Chord(Tuple):
             >>> list(Chord().occurrences_in(Chord((0, 1, 1, 0))))
             [()]
         """
-
         self_has_colour = (colour_self != None)
         patt_has_colour = (colour_patt != None)
 
@@ -239,12 +249,12 @@ class Chord(Tuple):
         for subchord in combinations(patt._chord, len(self)):
             subchord_indices_in_patt = []
             for i in subchord:
-                subchord_indices_in_patt.extend(patt.chord[i])
+                subchord_indices_in_patt.extend(patt._chord[i])
             subchord_indices_in_patt.sort()
 
             subchord_patt = []
             for i in subchord_indices_in_patt:
-                subchord_patt.append(patt.get_chord()[i])
+                subchord_patt.append(patt._pattern[i])
 
             if Chord.to_standard(subchord_patt) == self:
                 append = True
@@ -257,20 +267,17 @@ class Chord(Tuple):
 
         return instances
 
-    # not really needed with _pattern parameter. OR make default in get_chords method
-    def get_chord(self) -> "Chord":
-        """Returns the chord part of the pattern.
-
-        Examples:
-            >>> Chord((3,2,1,0)).get_chord()
-            Chord((3, 2, 1, 0))
-        """
-        return self
-
-    # sCP
+    # sCP, added examples
     def avoids(self, *chords: "Chord") -> bool:
         """
         Check if self avoids all chords.
+        Examples:
+        >>> Chord((0, 0, 1, 1)).avoids(Chord((0, 0, 1, 1)), Chord((0, 1, 0, 1))))
+        False
+        >>> Chord((0, 1, 1, 0, 2, 3, 3, 2)).avoids(Chord((0, 1, 0, 1)), Chord((0, 1, 2, 2, 1, 0))))
+        True
+        >>> Chord((0, 1, 1, 2, 0, 3, 3, 2)).avoids(Chord((0, 1, 1, 0))))
+        False
         """
         return all(not self._contains(patt) for patt in chords)
 
@@ -301,21 +308,32 @@ class Chord(Tuple):
         result.insert(n+1, -1)
         return Chord.to_standard(result)
 
-    # sCP    
-    def get_chords(self, selected: list) -> "Chord":
-        """Return the Chord based on the selected list of foots.
-
+    # sCN: added default, which has the functionality of get_chord, returning whole chord
+    def get_chords(self, selected: list = None) -> "Chord":
+        """Return the Chord based on the selected list of Chords. If no argument 
+        is given, it will retrun the whole chord.
         Examples:
             >>> Chord((0, 0, 1, 1)).get_chords([0])
             Chord((0, 0))
             >>> Chord((0, 1, 0, 1)).get_chords([0, 1])
             Chord((0, 1, 0, 1))
+            >>> Chord((0, 1, 1, 0, 2, 2)).get_chords()
+            Chord((0, 1, 1, 0, 2, 2)))
+            >>> Chord((0, 1, 1, 0, 2, 2)).get_chords([1, 2])
+            Chord((0, 0, 1, 1)))
         """
+        if selected == None:
+            return self
+        
         return Chord.to_standard([val for val in self if val in selected])
 
-    # sCP, changed name from chord -> chord_dict
+    # sCP, sCN: changed name from chord -> chord_dict, added example
     @property
     def chord_dict(self) -> dict[(int)]:
+        """Returns the chord dictionary
+        Example:
+            >>> Chord((0, 1, 1, 0, 2, 2)).chord_dict
+            {0: (0, 3), 1: (1, 2), 2: (4, 5)}"""
         return self._chord
     
     # sToDo: all of the following up to connected (these methods will probably be fun)
@@ -755,43 +773,8 @@ class GriddedChord(CombinatorialObject):
         return cls(
             tuple(next(iterator) for _ in range(length)), ((next(iterator), next(iterator)) for _ in range(length))
         )
-    '''
-    def chordute_columns(self, chord: Iterable[int]) -> "GriddedChord":
-        """Given an initial state of columns 12...n, chordute them using the provided
-        chord.
-        """
-        if not isinstance(chord, Chord):
-            chord = Chord(chord)
-        assert len(chord) > max(x for x, y in self.pos)
-        cols: List[List[Tuple[int, int]]] = [[] for _ in range(len(chord))]
-        for v, (x, y) in self:
-            cols[x].append((v, y))
-        patt, positions = [], []
-        for x, col in enumerate(chord.apply(cols)):
-            for v, y in col:
-                patt.append(v)
-                positions.append((x, y))
-        return type(self)(patt, positions)
 
-    def chordute_rows(self, chord: Iterable[int]) -> "GriddedChord":
-        """Given an initial state of rows 12...n, chordute them using the provided
-        chord.
-        """
-        if not isinstance(chord, Chord):
-            chord = Chord(chord)
-        assert len(chord) > max(x for x, y in self.pos)
-        back_map = dict(zip(chord, range(len(chord))))
-        positions = [(x, back_map[y]) for x, y in self.pos]
-        occ: List[List[int]] = [[] for _ in range(len(chord))]
-        for val, (_, y) in zip(self.patt, positions):
-            occ[y].append(val)
-        offset, val_map = 0, {}
-        for lis in occ:
-            for a, b in zip(lis, Chord.to_standard(lis)):
-                val_map[a] = b + offset
-            offset += len(lis)
-        return type(self)((val_map[val] for val in self.patt), positions)
-
+    # looks about right, have not tested.
     def apply_chord_map_to_cell(
         self, chord_mapping: Callable[[Chord], Chord], cell: Cell
     ) -> "GriddedChord":
@@ -821,7 +804,6 @@ class GriddedChord(CombinatorialObject):
         serialized GriddedChord object."""
         return cls(jsondict["patt"], map(tuple, jsondict["pos"]))  # type: ignore
 
-    '''
     @property
     def patt(self) -> Chord:
         return self._patt
@@ -861,13 +843,12 @@ class GriddedChord(CombinatorialObject):
         
         for idx, (val, (x, y)) in enumerate(self):
             # insert into this spot:
-            # (idx + x + 1) is the horizontal index. idx is points to left, and
+            # (val + x + 1) is the horizontal index. val is chords to left, and
             #               x + 1 counts number of col boundaries to left
-            # (len(self) + max_y) - (val + y) is vertical index.
-            #               val is points below, and y + 1 counts number of - below
-            insert = (val + x + 1) + ((len(self) + max_y) - (idx + y)) * (
-                len(col_boundary) + 1
-            )
+            # (len(self) + max_y) - (idx + y) is vertical index.
+            #               idx is points below, and y + 1 counts number of - below
+            insert = (val + x + 1) + ((len(self)*2 + max_y) - (idx + y)) * (
+                len(row_boundary) + 1)
             res = res[:insert] + "●" + res[insert + 1 :]
 
         #for chord, (x, y) in self:
@@ -904,10 +885,6 @@ class GriddedChord(CombinatorialObject):
 gc = GriddedChord((0, 1, 2, 0, 3, 4, 2, 3, 1, 4), ((0, 0), (1, 0), (1, 1), (0, 1), (3, 2), (4, 2), (1, 2), (3, 3), (1, 3), (4, 3)))
 hc = GriddedChord((0, 1, 0, 2,2,1), ((1, 1), (1, 1), (1, 1), (1, 1), (2, 2), (1, 1) ))
 sc = GriddedChord((0,0), ((0,0), (0,1)))
-empty_c = GriddedChord((), ())
-print(gc.ascii_plot())
 
 chord = Chord((0,1,1,0))
 c = Chord.to_standard([0,4,4,0,2,2])
-for chord, (x, y) in gc:
-    print(chord, (x, y))
