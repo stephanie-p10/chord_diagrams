@@ -190,8 +190,65 @@ assert set(GriddedChord(Chord((0, 1, 1, 0)), ((0, 0), (1, 0), (1, 1), (0, 1))).i
 assert GriddedChord(Chord((0, 1, 1, 0)), ((0, 0), (1, 0), (1, 1), (0, 1))).insert_chord(1, 2, 2) == [
     GriddedChord(Chord((0, 1, 1, 0, 2, 2)), ((0, 0), (1, 0), (1, 1), (0, 1), (1, 2), (1, 2)))]
 
+assert GriddedChord(Chord((0,1,2,0,2,1)), ((0,0), (1,0), (1,1), (0,1), (1,2), (1,3))).remove_chord(0) == GriddedChord(Chord((0,1,1,0)), ((1,0), (1,1), (1,2), (1,3)))
+assert GriddedChord(Chord((0,1,2,0,2,1)), ((0,0), (1,0), (1,1), (0,1), (1,2), (1,3))).remove_chord(3) == GriddedChord(Chord((0,1,2,0,2,1)), ((0,0), (1,0), (1,1), (0,1), (1,2), (1,3)))
+assert GriddedChord(Chord((0,1,2,0,2,1)), ((0,0), (1,0), (1,1), (0,1), (1,2), (1,3))).remove_chord(2) == GriddedChord(Chord((0,1,0,1)), ((0,0), (1,0), (0,1), (1,3)))
 
+assert set(gc3.all_subchords()) == set([GriddedChord(), GriddedChord(Chord((0,0)), ((0, 0), (0, 1))), GriddedChord(Chord((0,0)), ((1, 1), (1, 2)))])
+assert set(GriddedChord(Chord((0, 1, 2, 2, 0, 1)), ((0, 0), (0, 1), (1, 1), (1, 1), (0, 2), (0, 2))).all_subchords(proper=False)) == set([
+    GriddedChord(),
+    GriddedChord(Chord((0, 0)), ((0, 0), (0, 2))),
+    GriddedChord(Chord((0, 0)), ((0, 1), (0, 2))),
+    GriddedChord(Chord((0, 0)), ((1, 1), (1, 1))),
+    GriddedChord(Chord((0, 1, 0, 1)), ((0, 0), (0, 1), (0, 2), (0, 2))),
+    GriddedChord(Chord((0, 1, 1, 0)), ((0, 0), (1, 1), (1, 1), (0, 2))),
+    GriddedChord(Chord((0, 1, 1, 0)), ((0, 1), (1, 1), (1, 1), (0, 2))),
+    GriddedChord(Chord((0, 1, 2, 2, 0, 1)), ((0, 0), (0, 1), (1, 1), (1, 1), (0, 2), (0, 2)))
+])
 
+def add_one_x(cell: Cell):
+    return (cell[0] + 1, cell[1])
+
+assert gc3.apply_map(add_one_x) == GriddedChord(Chord((0, 1, 0, 1)), ((1,0), (2,1), (1,1), (2,2)))
+
+assert not gc3.is_single_chord()
+assert GriddedChord(Chord((0, 0)), ((0, 0), (0, 1))).is_single_chord()
+
+assert not gc1.is_single_cell()
+assert gc2.is_single_cell()
+
+assert not gc1.is_single_row()
+assert gc2.is_single_row()
+assert GriddedChord(Chord((0, 1, 0, 2, 2, 1)), ((1, 1), (1, 1), (1, 1), (2, 1), (2, 1), (1, 1))).is_single_row()
+
+assert not gc1.is_single_col()
+assert gc2.is_single_col()
+assert GriddedChord(Chord((0, 1, 0, 2, 2, 1)), ((1, 1), (1, 1), (1, 1), (1, 1), (1, 1), (1, 2))).is_single_col()
+
+assert empty_c.is_empty()
+assert not gc1.is_empty()
+
+assert not gc2.is_interleaving()
+#assert not GriddedChord(Chord((0, 1, 0, 2, 2, 1)), ((1, 1), (1, 1), (1, 1), (1, 1), (1, 1), (1, 2))).is_interleaving()
+assert GriddedChord(Chord((0, 1, 0, 2, 2, 1)), ((1, 1), (1, 1), (1, 1), (2, 1), (2, 1), (1, 2))).is_interleaving()
+
+assert gc1.compress() == [0, 1, 2, 0, 3, 4, 2, 3, 1, 4, 0, 0, 1, 0, 1, 1, 0, 1, 3, 2, 4, 2, 1, 2, 3, 3, 1, 3, 4, 4]
+assert GriddedChord.decompress([0, 1, 2, 0, 3, 4, 2, 3, 1, 4, 0, 0, 1, 0, 1, 1, 0, 1, 3, 2, 4, 2, 1, 2, 3, 3, 1, 3, 4, 4]) == gc1
+assert GriddedChord.decompress(gc2.compress()) == gc2
+
+assert gc1.to_jsonable() == {'patt': (0, 1, 2, 0, 3, 4, 2, 3, 1, 4),
+                             'pos': ((0, 0), (1, 0), (1, 1), (0, 1), (3, 2), (4, 2), (1, 2), (3, 3), (1, 3), (4, 4))}
+assert GriddedChord(Chord((0, 1, 0, 2, 2, 1)), ((1, 1), (1, 1), (1, 1), (1, 1), (1, 1), (1, 2))).to_jsonable() == {
+    'patt': (0, 1, 0, 2, 2, 1),
+    'pos': ((1, 1), (1, 1), (1, 1), (1, 1), (1, 1), (1, 2))
+}
+
+#assert GriddedChord.from_json("{'patt': (0, 1, 2, 0, 3, 4, 2, 3, 1, 4), 'pos': ((0, 0), (1, 0), (1, 1), (0, 1), (3, 2), (4, 2), (1, 2), (3, 3), (1, 3), (4, 4))}") == gc1
+assert GriddedChord.from_dict({'patt': (0, 1, 2, 0, 3, 4, 2, 3, 1, 4), 'pos': ((0, 0), (1, 0), (1, 1), (0, 1), (3, 2), (4, 2), (1, 2), (3, 3), (1, 3), (4, 4))}) == gc1
+assert GriddedChord.from_dict(gc1.to_jsonable()) == gc1
+
+assert gc1.patt == (0, 1, 2, 0, 3, 4, 2, 3, 1, 4)
+assert gc1.pos == ((0, 0), (1, 0), (1, 1), (0, 1), (3, 2), (4, 2), (1, 2), (3, 3), (1, 3), (4, 4))
 
 print("all assertions passed")
 

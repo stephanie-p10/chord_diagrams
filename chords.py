@@ -920,10 +920,9 @@ class GriddedChord(CombinatorialObject):
             return None
         return gc
     
-    # tests to here
     #sCN: changed to work with chords
     def remove_chord(self, chord: int) -> "GriddedChord":
-        """Remove the point at index from the gridded chord.
+        """Remove the chord of the int given. Doesn't do anything if an incorrect chord is given.
         
         Examples:
         >>> GriddedChord(Chord((0,1,2,0,2,1)), ((0,0), (1,0), (1,1), (0,1), (1,2), (1,3))).remove_chord(0)
@@ -943,11 +942,10 @@ class GriddedChord(CombinatorialObject):
         for subchord_length in range(len(self) if proper else len(self) + 1):
             for subchords in combinations(range(len(self)), subchord_length):
                 yield type(self)(
-                    Chord.to_standard([chord for chord, pos in self if chord in subchords])._pattern,
-                    (pos for chord, pos in self if chord in subchords)
-                )
+                    Chord.to_standard([chord for chord, pos in self if chord in subchords]),
+                    (pos for chord, pos in self if chord in subchords))
 
-    # this method does not seem relavent, also don't know what it is doing
+    # this method does not seem relavent, also don't know what it is doing sAsk
     '''
     def extend(self, c: int, r: int) -> Iterator["GriddedChord"]:
         """Add n+1 to all possible positions in chord and all allowed positions given
@@ -969,11 +967,17 @@ class GriddedChord(CombinatorialObject):
                 for y in range(min_y, r)
             )'''
 
-    # this looks like it works? not sure what to test on it, if it is necessary, so it is being left as is
     def apply_map(self, cell_mapping: Callable[[Cell], Cell]) -> "GriddedChord":
         """Map the coordinates to a new list of coordinates according to the
-        cell_mapping given."""
-        return type(self)(self._patt._pattern, [cell_mapping(cell) for cell in self._pos])
+        cell_mapping given.
+        
+        Example:
+        def add_one_x(cell: Cell):
+            return (cell[0] + 1, cell[1])
+
+        >>> GriddedChord(Chord((0, 1, 0, 1)), ((0,0), (1,1), (0,1), (1,2))).apply_map(add_one_x)
+        GriddedChord(Chord((0, 1, 0, 1)), ((1,0), (2,1), (1,1), (2,2)))"""
+        return type(self)(self._chord, [cell_mapping(cell) for cell in self._pos])
     
     # sCN: is_point_chord -> is_single_chord
     def is_single_chord(self) -> bool:
@@ -1001,6 +1005,7 @@ class GriddedChord(CombinatorialObject):
         """Check if the gridded chord is the gridded chord."""
         return len(self) == 0
 
+    # sToDo: change to ignore chords in same column?
     def is_interleaving(self) -> bool:
         """Check if the gridded chord occupies two cells that are in the
         same row or column."""
@@ -1016,6 +1021,7 @@ class GriddedChord(CombinatorialObject):
         return False
     
     # sToDo: not sure what this is doing, need to look more at union find algorithm
+    # sToDo: tests
     # sAsk: what is unionfind
     def factors(self) -> List["GriddedChord"]:
         """Return a list containing the factors of a gridded chord.
@@ -1050,9 +1056,10 @@ class GriddedChord(CombinatorialObject):
         length = len(arr) // 3
         iterator = iter(arr)
         return cls(
-            tuple(next(iterator) for _ in range(length)), ((next(iterator), next(iterator)) for _ in range(length))
+            Chord(tuple(next(iterator) for _ in range(length))), ((next(iterator), next(iterator)) for _ in range(length))
         )
 
+    # skipped testing
     # looks about right, have not tested.
     def apply_chord_map_to_cell(
         self, chord_mapping: Callable[[Chord], Chord], cell: Cell
@@ -1071,6 +1078,7 @@ class GriddedChord(CombinatorialObject):
         a GriddedChord."""
         return {"patt": self._patt, "pos": self._pos}
 
+    # not sure how to test (what is a JSON string)
     @classmethod
     def from_json(cls, jsonstr: str) -> "GriddedChord":
         """Returns a GriddedChord object from JSON string."""
@@ -1081,7 +1089,7 @@ class GriddedChord(CombinatorialObject):
     def from_dict(cls, jsondict: dict) -> "GriddedChord":
         """Returns a GriddedChord object from a dictionary loaded from a JSON
         serialized GriddedChord object."""
-        return cls(jsondict["patt"], map(tuple, jsondict["pos"]))  # type: ignore
+        return cls(Chord(jsondict["patt"]), map(tuple, jsondict["pos"]))  # type: ignore
 
     @property
     def patt(self) -> Chord:
@@ -1091,6 +1099,7 @@ class GriddedChord(CombinatorialObject):
     def pos(self) -> Tuple[Cell, ...]:
         return self._pos
     
+    # tests to here
     def ascii_plot(self) -> str:
         max_x = max(cell[0] for cell in self._pos)
         max_y = max(cell[1] for cell in self._pos)
@@ -1136,7 +1145,7 @@ class GriddedChord(CombinatorialObject):
         return res
     
     def __len__(self) -> int:
-        return len(self._patt)
+        return len(self._chord)
 
     def __repr__(self) -> str:
         return f"{type(self).__name__}({tuple(self._patt)!r}, {self._pos})"
