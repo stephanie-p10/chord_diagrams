@@ -1,6 +1,4 @@
-from comb_spec_searcher import CombinatorialClass, CombinatorialObject
-from tilings import Tiling
-from tilings import GriddedPerm
+from comb_spec_searcher import CombinatorialObject
 from typing import Callable, Dict, FrozenSet, Iterable, Iterator, List, Optional, Tuple, Union
 from itertools import combinations, islice, tee, product, chain, filterfalse
 from permuta.misc import UnionFind
@@ -347,9 +345,6 @@ class Chord(Tuple):
     def connected(self):
         pass
 
-
-
-# sToDo: GriddedChord should initialize with a chord instead of a list, and this should be fixed in methods as well
 class GriddedChord(CombinatorialObject):
     def __init__(
         self, chord: Chord = Chord(()), positions: Iterable[Cell] = ()
