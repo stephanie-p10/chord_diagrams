@@ -3,6 +3,7 @@ from typing import Callable, Dict, FrozenSet, Iterable, Iterator, List, Optional
 from itertools import combinations, islice, tee, product, chain, filterfalse
 from permuta.misc import UnionFind
 import json
+from collections import deque
 
 DIR_EAST = 0
 DIR_NORTH = 1
@@ -335,6 +336,43 @@ class Chord(Tuple):
             {0: (0, 3), 1: (1, 2), 2: (4, 5)}"""
         return self._chord
     
+    # sToDo: test
+    @classmethod
+    def __generate(cls, n: int):
+        """
+        generate all chord diagrams with size n
+        """
+        length = 2*n
+        q = deque()
+        q.append(((1 << length) - 1, [-1]*length, 0))
+        while q:
+            remaining, chord, i = q.popleft()
+            if remaining == 0:
+                yield cls(chord)
+                continue
+            source = 0
+            while not (remaining & (1 << (length - source-1))):
+                source += 1
+            remaining ^= (1 << (length - source-1))
+            for sink in range(source+1, length):
+                if remaining & (1 << (length - sink - 1)):
+                    new_chord = chord[:]
+                    new_chord[source] = i
+                    new_chord[sink] = i
+                    new_remaining = remaining^(1 << (length - sink - 1))
+                    q.append((new_remaining, new_chord, i+1))
+
+    # sToDo: test
+    @classmethod
+    def of_length(cls, length: int) -> Iterator["Chord"]:
+        """Generate all chord diagrams of a given length.
+
+        Examples:
+            >>> list(Chord.of_length(2))
+            [Chord(0,1,1,0),Chord((0, 1, 0, 1)), Chord((0, 0, 1, 1))]
+        """
+        yield from cls.__generate(length)
+
     # sToDo: all of the following up to connected (these methods will probably be fun)
     def crossing(self):
         pass
@@ -1043,6 +1081,68 @@ class GriddedChord(CombinatorialObject):
         serialized GriddedChord object."""
         return cls(Chord(jsondict["patt"]), map(tuple, jsondict["pos"]))  # type: ignore
 
+    @classmethod
+    def all_grids(cls, chord: Chord, cells) -> Iterator["GriddedChord"]:
+        """Returns all possible griddings of chord in cells
+        
+        Examples: 
+        >>> GriddedChord.all_grids(Chord((0, 0, 1, 1)), [(0, 0)])
+        GriddedChord(Chord((0, 0, 1, 1)), ((0, 0), (0, 0), (0, 0), (0, 0)))
+        >>> GriddedChord.all_grids(Chord((0, 0, 1, 1)), [(0, 0), (0, 1)])
+        GriddedChord(Chord((0, 0, 1, 1)), ((0, 0), (0, 0), (0, 1), (0, 1)))
+        GriddedChord(Chord((0, 0, 1, 1)), ((0, 0), (0, 0), (0, 1), (0, 1)))
+        GriddedChord(Chord((0, 0, 1, 1)), ((0, 0), (0, 0), (0, 0), (0, 0)))
+        """
+        positions_so_far = [[]]
+        source_vals = {} # chord value : source
+        last_source_idx = -1
+        
+        def append_pos_lists(curr_positions: List[List[Cell]], 
+                        possible_cells: List[Cell], 
+                        source_idx: int = None, 
+                        last_source_idx: int= None):
+            """Returns the list of all positions that can be created by extending a
+            position in positions_curr with a cell in positions_possible
+            
+            source_idx is the source index of the chord in the position about to be added
+            
+            last_source_idx is the index of where the largest chord so far started"""
+            appended_positions = []
+            # loops through every current position list, and checks (then adds) every possible cell as a new list
+            for pos_lst in curr_positions:
+                for cell in possible_cells:
+                    # x-coordinate of the most recent cell
+                    last_x = pos_lst[-1][0] if len(pos_lst) > 0 else -1
+                    valid_x = (cell[0] >= last_x) # the x-coordinates must be in increasing order
+
+                    valid_y = True
+                    # if the chord has a source, the only valid y-coordinate is the same as the source
+                    if source_idx != None:
+                        valid_y = (pos_lst[source_idx][1] == cell[1]) 
+                    # if a new (non-root) chord is being placed, it must go above the last chord placed
+                    elif (last_source_idx >= 0):
+                        valid_y = (pos_lst[last_source_idx][1] <= cell[1])
+                    
+                    # extend pos_lst by cell iff it has a valid x and y coordinate.
+                    if valid_x and valid_y:
+                        pos_lst_extended = pos_lst.copy()
+                        pos_lst_extended.append(cell)
+                        appended_positions.append(pos_lst_extended)
+            return appended_positions
+
+        # runs over every item in the chord to build the posible position lists to the length of the chord
+        for idx, chord_val in enumerate(chord):
+            source = source_vals.get(chord_val) # either the idx of the source or none if chord_val is a source
+            # updates the possible positions lists to include positions for (idx, chord_val)
+            positions_so_far = append_pos_lists(positions_so_far, cells, source, last_source_idx)
+            if source == None: # if source is none, the current chord is the most recent source
+                source_vals[chord_val] = idx
+                last_source_idx = idx
+            
+        for pos_list in positions_so_far:
+            if (len(pos_list) == len(chord) * 2):
+                yield cls(chord, pos_list)
+
     @property
     def patt(self) -> Chord:
         return self._patt
@@ -1050,7 +1150,7 @@ class GriddedChord(CombinatorialObject):
     @property
     def pos(self) -> Tuple[Cell, ...]:
         return self._pos
-    
+
     # tests to here
     def ascii_plot(self) -> str:
         max_x = max(cell[0] for cell in self._pos)

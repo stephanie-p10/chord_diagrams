@@ -1,3 +1,7 @@
+import sys
+from pathlib import Path
+sys.path.append(str(Path(__file__).resolve().parent.parent))
+
 from chords import *
 
 # GriddedChord tests
@@ -201,5 +205,12 @@ assert GriddedChord.from_dict(gc1.to_jsonable()) == gc1
 
 assert gc1.patt == (0, 1, 2, 0, 3, 4, 2, 3, 1, 4)
 assert gc1.pos == ((0, 0), (0, 1), (1, 1), (1, 0), (2, 3), (2, 4), (2, 1), (3, 3), (3, 1), (4, 4))
+
+# sToDo: more tests on this
+assert set(GriddedChord.all_grids(Chord((0, 0, 1, 1)), [(0, 0)])) == set([GriddedChord(Chord((0, 0, 1, 1)), ((0, 0), (0, 0), (0, 0), (0, 0)))])
+assert set(GriddedChord.all_grids(Chord((0, 0, 1, 1)), [(0, 0), (0, 1)])) == set([
+        GriddedChord(Chord((0, 0, 1, 1)), ((0, 0), (0, 0), (0, 1), (0, 1))),
+        GriddedChord(Chord((0, 0, 1, 1)), ((0, 1), (0, 1), (0, 1), (0, 1))),
+        GriddedChord(Chord((0, 0, 1, 1)), ((0, 0), (0, 0), (0, 0), (0, 0)))])
 
 print("all assertions passed")
