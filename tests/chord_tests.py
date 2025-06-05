@@ -61,4 +61,10 @@ assert(Chord((0, 1, 1, 0, 2, 2)).get_chords([1, 2]) == Chord((0, 0, 1, 1)))
 
 assert(Chord((0, 1, 1, 0, 2, 2)).chord_dict == {0: (0, 3), 1: (1, 2), 2: (4, 5)})
 
+assert Chord((0, 1, 2, 3, 1, 3, 0, 4, 5, 2, 5, 4)).connected()
+assert not Chord((0, 1, 2, 1, 2, 0, 3, 4, 4, 3)).connected()
+assert not Chord.to_standard((0, 1, 2, 1, 2, 0, 3, 4, 4, 3)).connected()
+assert Chord((0, 0)).connected()
+assert not Chord().connected()
+
 print("tests passed")

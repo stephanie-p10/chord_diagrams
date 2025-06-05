@@ -234,7 +234,7 @@ class Chord(Tuple):
         patt_has_colour = (colour_patt != None)
 
         if (not self_has_colour and patt_has_colour) or (not patt_has_colour and self_has_colour):
-            return [()]
+            return []
         
         if self_has_colour and len(colour_self) != len(self) * 2:
             raise Exception("Incorrect colour length for self")
@@ -243,7 +243,7 @@ class Chord(Tuple):
             raise Exception("Incorrect colour length for pattern given")
 
         if len(self) == 0 or len(self) > len(patt):
-            return [()]
+            return []
         
         instances = []
 
@@ -381,9 +381,34 @@ class Chord(Tuple):
         pass
     def k_crossing(self):
         pass
+
     def connected(self):
-        nodes = range(len(self))
+        nodes = list(range(len(self)))
         edges = Chord((0, 1, 0, 1)).occurrences_in(self)
+        graph = [[] for _ in nodes]
+        for edge in edges:
+            u = edge[0]
+            v = edge[1]
+            graph[u].append(v)
+            graph[v].append(u)
+
+        visited = [False for _ in nodes]
+
+        # Depth first search for graph to see what is connected
+        def dfs(node, graph, visited):
+            visited[node] = True
+            # search all unvisited neighbors
+            for neighbor in graph[node]:
+                if not visited[neighbor]:
+                    dfs(neighbor, graph, visited)
+        if len(graph) > 0:
+            dfs(0, graph, visited)
+        else: # empty graph is disconnected
+            return False
+
+        #print(nodes, edges, graph, visited, all(visited))
+
+        return all(visited)
 
 class GriddedChord(CombinatorialObject):
     def __init__(
@@ -634,8 +659,21 @@ class GriddedChord(CombinatorialObject):
         return False
     
     def is_connected(self, cells: List[Cell] = []) -> bool:
-        # sAsk: is linkage everything strictly inside, or everything with one end inside.
-        # also, linkages must be retangle grids, or any collection of cells?
+        """Determines whether a diagram is connected.
+        
+        cells: list of cells to check if the subchord inside is connected.
+                if none are passed, the whole chord will be checked.
+                
+        returns: whether the chord based on cells is connected
+        
+        Examples:
+        >>> GriddedChord(Chord((0, 1, 1, 0), ((0, 0), (1, 0), (1, 0), (2, 0))).is_connected())
+        False
+        >>> GriddedChord(Chord((0, 1, 0, 1), ((0, 0), (1, 0), (0, 0), (2, 0))).is_connected())
+        True
+        >>> GriddedChord(Chord((0, 1, 0, 1)), ((0, 0), (1, 0), (0, 0), (2, 0))).is_connected([(0, 0)]))
+        True"""
+        # sAsk: is linkage everything strictly inside, or everything with one end inside. (strictly for now)
         subchord = self
         if len(cells) != 0:
             subchord = self.get_subchord_in_cells(cells)
@@ -859,8 +897,23 @@ class GriddedChord(CombinatorialObject):
         )
     
     def get_subchord_in_cells(self, cells: Iterable[Cell]) -> "GriddedChord":
-        # sCN: gets all chords with at least one endpoint in cells - should this be non inclusive?
-        """Returns the subgridded chord with chords with endpoints in cells.
+        """Returns the subgridded chord with chords with both endpoints in cells.
+        """
+        chords_to_throw = [chord for chord, pos in self if pos not in cells]
+        patt = []
+        positions = []
+
+        # builds lists of the chord pattern and positions of the chords in cells
+        for chord, pos in self:
+            if chord not in chords_to_throw:
+                patt.append(chord)
+                positions.append(pos)
+
+        new_grid = GriddedChord(Chord.to_standard(patt), positions)
+        return new_grid
+    
+    def get_chords_on_cells(self, cells: Iterable[Cell]) -> "GriddedChord":
+        """Returns the subgridded chord with chords with an endpoint in cells.
         """
         chords_to_keep = [chord for chord, pos in self if pos in cells]
         patt = []

@@ -37,13 +37,16 @@ class Tiling(CombinatorialClass):
     cells and the active cells.
     """
     def __init__(self,
+        dimensions: Iterable[int] = (0, 0),
         obstructions: Iterable[GriddedChord] = tuple(),
         requirements: Iterable[Iterable[GriddedChord]] = tuple(),
-        linkags: Iterable[Cell] = tuple(),
+        linkages: Iterable[Iterable[Cell]] = tuple(),
         assumptions: Iterable[TrackingAssumption] = tuple()):
 
         super().__init__()
-        self._linkages = linkags
+        self._length = dimensions[0]
+        self._height = dimensions[1]
+        self._linkages = linkages
         self._obstructions = obstructions
         self._requirements = requirements
         self._assumptions = assumptions
@@ -71,12 +74,37 @@ class Tiling(CombinatorialClass):
         contradicting requirements and obstructions or no gridded chord
         can be gridded on the tiling.
         """
-        if any(ob.is_empty() for ob in self.obstructions):
-            return True
-        if len(self.requirements) <= 1:
-            return False
-        MGP = MinimalGriddedChords(self.obstructions, self.requirements)
-        return all(False for _ in MGP.minimal_gridded_chords(yield_non_minimal=True))
+        sum_max_reqs = 0
+        for req_list in self.requirements:
+            if len(req_list) == 0:
+                return True
+            req_lengths = [len(req) for req in req_list]
+            sum_max_reqs += max(req_lengths)
+
+        # proved maximum of smallest chord:
+        max_len = sum_max_reqs * 2 - 1
+
+        all_chords = []
+        for num_chords in range(max_len + 1):
+            all_chords += list(Chord.of_length(num_chords))
+
+        # product of length and width to get valid cells can probaby be much improved.
+        cells = product(range(self._length), range(self._height))
+        all_gridded_chords = []
+        for chord in all_chords:
+            all_gridded_chords += list(GriddedChord.all_grids(chord, cells))
+
+        # now check if any of the chords work??
+        return any(self.contains(gc) for gc in all_gridded_chords)
+
+    def contains(self, gc: GriddedChord) -> bool:
+        has_reqs = all(gc.contains(*req) for req in self._requirements)
+        avoids_ob = not any(gc.contains(ob) for ob in self._obstructions)
+        # is_connected is a sToDo
+        links_connected = all(gc.is_connected(cells) for cells in self._linkages)
+
+        return has_reqs and avoids_ob and links_connected
+
 
     def __hash__(self) -> int:
         return (
@@ -214,3 +242,4 @@ class Tiling(CombinatorialClass):
 
         return "".join(result)
 
+Chord((0, 1, 1, 0))
