@@ -108,9 +108,9 @@ assert GriddedChord(Chord((0, 1, 2, 0, 2, 1)), ((0, 0), (0, 1), (1, 1), (1, 0), 
 assert GriddedChord(Chord((0, 1, 2, 0, 2, 1)), ((0, 0), (0, 1), (1, 1), (1, 0), (2, 1), (3, 1))).remove_chord_idx(3) == GriddedChord(Chord((0, 1, 1, 0)), ((0, 1), (1, 1), (2, 1), (3, 1)))
 assert GriddedChord(Chord((0, 1, 2, 0, 2, 1)), ((0, 0), (0, 1), (1, 1), (1, 0), (2, 1), (3, 1))).remove_chord_idx(4) == GriddedChord(Chord((0, 1, 0, 1)), ((0, 0), (0, 1), (1, 0), (3, 1)))
 
-assert gc1.get_gridded_chord_in_cells(((0, 0), (0, 1), (1, 0))) == GriddedChord(Chord((0, 1, 0, 1)), ((0, 0), (0, 1), (1, 0), (3, 1)))
-assert gc1.get_gridded_chord_in_cells(((4, 4), (3, 3))) == GriddedChord(Chord((0, 1, 0, 1)), ((2, 3), (2, 4), (3, 3), (4, 4)))
-assert gc1.get_gridded_chord_in_cells([(2, 0)]) == GriddedChord()
+assert gc1.get_subchord_in_cells(((0, 0), (0, 1), (1, 0))) == GriddedChord(Chord((0, 1, 0, 1)), ((0, 0), (0, 1), (1, 0), (3, 1)))
+assert gc1.get_subchord_in_cells(((4, 4), (3, 3))) == GriddedChord(Chord((0, 1, 0, 1)), ((2, 3), (2, 4), (3, 3), (4, 4)))
+assert gc1.get_subchord_in_cells([(2, 0)]) == GriddedChord()
 
 assert list(GriddedChord(Chord((0, 1, 0, 1)), ((0, 0), (0, 1), (1, 0), (2, 1))).get_bounding_box(0, 1)) == [0, 2, 2, 3]
 assert list(GriddedChord(Chord((0, 1, 0, 1)), ((0, 0), (1, 1), (1, 0), (1, 1))).get_bounding_box(0, 1)) == [0, 1, 1, 4]
