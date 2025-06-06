@@ -27,6 +27,8 @@ Dimension = Tuple[int, int]
 GCTuple = Tuple[GriddedChord, ...]
 
 
+# sToDo: make way to handle single point obstructions/requirements
+
 class Tiling(CombinatorialClass):
     """Tiling class.
 
@@ -37,9 +39,9 @@ class Tiling(CombinatorialClass):
     cells and the active cells.
     """
     def __init__(self,
-        dimensions: Iterable[int] = (0, 0),
+        dimensions: Iterable[int] = (1, 1),
         obstructions: Iterable[GriddedChord] = tuple(),
-        requirements: Iterable[Iterable[GriddedChord]] = tuple(),
+        requirements: Iterable[Iterable[GriddedChord]] = tuple(), # might need a case for requirement of having one point in a cell...
         linkages: Iterable[Iterable[Cell]] = tuple(),
         assumptions: Iterable[TrackingAssumption] = tuple()):
 
@@ -74,37 +76,49 @@ class Tiling(CombinatorialClass):
         contradicting requirements and obstructions or no gridded chord
         can be gridded on the tiling.
         """
+        # if any obstruction is empty, no chords can be gridded since all grids contain the empty grid.
+        if any(ob.is_empty() for ob in self.obstructions):
+            return True
+        
+        # if any req list is empty or has all empty grids, only the empty grid can be gridded. 
+        if any(all(req.is_empty() for req in req_list) for req_list in self.requirements) and len(self.requirements) >= 1:
+            return True
+        
         sum_max_reqs = 0
         for req_list in self.requirements:
-            if len(req_list) == 0:
-                return True
+            #if len(req_list) == 0:
+                #return True
             req_lengths = [len(req) for req in req_list]
             sum_max_reqs += max(req_lengths)
 
-        # proved maximum of smallest chord:
+        if sum_max_reqs == 0: # then there are no requirements, but we still need a chord of size one
+            sum_max_reqs += 1
+        
+        # proved maximum size of smallest chord that can be gridded:
         max_len = sum_max_reqs * 2 - 1
+        print(max_len)
 
         all_chords = []
-        for num_chords in range(max_len + 1):
+        for num_chords in range(1, max_len + 1):
             all_chords += list(Chord.of_length(num_chords))
 
         # product of length and width to get valid cells can probaby be much improved.
-        cells = product(range(self._length), range(self._height))
+        cells = list(product(range(self._length), range(self._height)))
         all_gridded_chords = []
         for chord in all_chords:
             all_gridded_chords += list(GriddedChord.all_grids(chord, cells))
 
         # now check if any of the chords work??
-        return any(self.contains(gc) for gc in all_gridded_chords)
+        #for gc in all_gridded_chords:
+        #    if self.contains(gc):
+        #        print(gc)
+        return not any(self.contains(gc) for gc in all_gridded_chords)
 
     def contains(self, gc: GriddedChord) -> bool:
         has_reqs = all(gc.contains(*req) for req in self._requirements)
         avoids_ob = not any(gc.contains(ob) for ob in self._obstructions)
-        # is_connected is a sToDo
         links_connected = all(gc.is_connected(cells) for cells in self._linkages)
-
         return has_reqs and avoids_ob and links_connected
-
 
     def __hash__(self) -> int:
         return (
@@ -152,7 +166,7 @@ class Tiling(CombinatorialClass):
 
     # not sure this needs to be this long... I don't think I need it printed nice?
     def __str__(self) -> str:
-        # pylint: disable=too-many-locals
+        '''# pylint: disable=too-many-locals
         # pylint: disable=too-many-branches
         # pylint: disable=too-many-statements
         dim_i, dim_j = self.dimensions
@@ -240,6 +254,59 @@ class Tiling(CombinatorialClass):
         if self.assumptions or self.requirements:
             result = result[:-1]
 
-        return "".join(result)
+        return "".join(result)'''
+        dimensions = "Dimensions: (" + str(self._length) + ", " + str(self._height) + ")\n"
 
-Chord((0, 1, 1, 0))
+        obs_str = "Obstructions: "
+        obs_indent_len = len(obs_str)
+        for obstruction in self._obstructions:
+            obs_str += str(obstruction)
+            obs_str += ",\n" + " " * obs_indent_len
+        if len(self._obstructions) == 0:
+            obs_str = obs_str[:-1] + "\n"
+        else:
+            obs_str = obs_str[:-2-obs_indent_len] + "\n"
+
+        reqs_str = "Requirements: "
+        reqs_indent_len = len(reqs_str)
+        for req_list in self._requirements:
+            reqs_str += "{"
+            for req in req_list:
+                reqs_str += str(req) + "; "
+            reqs_str = reqs_str[:-2] + "},\n" + " " * reqs_indent_len
+        if len(self._requirements) == 0:
+            reqs_str = reqs_str[:-1] + "\n"
+        else:
+            reqs_str = reqs_str[:-2-reqs_indent_len] + "\n"
+
+        link_str = "Linkages: "
+        links_indent_len = len(link_str)
+        for linkage in self._linkages:
+            link_str += "{"
+            for coord in linkage:
+                link_str += str(coord) + ", "
+            link_str = link_str[:-2] + "},\n" + " " * links_indent_len
+        if len(self.linkages) == 0:
+            link_str = link_str[:-1]
+        else:
+            link_str = link_str[:-2-links_indent_len]
+
+        return(dimensions + obs_str + reqs_str + link_str)
+    
+    @classmethod
+    def from_dict(cls, d: dict) -> "Tiling":
+        # absolutely no idea if this is right
+        """Returns a Tiling object from a dictionary loaded from a JSON
+        serialized Tiling object."""
+        obstructions = map(GriddedChord.from_dict, d["obstructions"])
+        requirements = map(lambda x: map(GriddedChord.from_dict, x), d["requirements"])
+        linkages =  map(lambda x: map(tuple, x), d["linkages"])
+        assumptions = map(TrackingAssumption.from_dict, d.get("assumptions", []))
+        dimensions = d.get("dimensions")
+        return cls(
+            obstructions=obstructions,
+            requirements=requirements,
+            linkages=linkages,
+            dimensions=dimensions,
+            assumptions=assumptions,
+        )

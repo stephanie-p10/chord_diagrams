@@ -420,6 +420,8 @@ class GriddedChord(CombinatorialObject):
         if len(self._patt) != len(self._pos):
             raise ValueError("Pattern and position list have unequal lengths.")
         self._cells: FrozenSet[Cell] = frozenset(self._pos)
+        if self.contradictory():
+            raise ValueError("Contradictory positions given.")
     
     ### Generators for new GriddedChords ###
     @classmethod
