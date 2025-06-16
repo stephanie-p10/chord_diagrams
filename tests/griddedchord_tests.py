@@ -228,4 +228,9 @@ assert not gc1.is_connected([(0, 1), (1, 1), (2, 3), (2, 1), (3, 3), (3, 1)])
 assert gc1.is_connected([(0, 0), (1, 0)]) # single chord
 assert not gc1.is_connected([(0, 0)]) # empty chord
 
+assert gc1.in_cell((0,0))
+assert not gc1.in_cell((6,6))
+assert gc2.in_cell((1,1))
+assert not gc1.in_cell((2,2))
+
 print("all assertions passed")

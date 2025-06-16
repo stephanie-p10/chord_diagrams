@@ -556,7 +556,7 @@ class GriddedChord(CombinatorialObject):
         return (i for i, (_, pos) in enumerate(self) if pos == cell)
     
     def in_cell(self, cell: Cell) -> bool:
-        return len(i for i, (_, pos) in enumerate(self) if pos == cell) > 0
+        return any(pos == cell for i, (_, pos) in enumerate(self))
 
     def isolated_cells(self) -> Iterator[Cell]:
         """Yields the cells that contain only one chord of the gridded

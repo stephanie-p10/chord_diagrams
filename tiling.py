@@ -41,7 +41,9 @@ class Tiling(CombinatorialClass):
     def __init__(self,
         dimensions: Iterable[int] = (1, 1),
         obstructions: Iterable[GriddedChord] = tuple(),
+        point_obstructions: Iterable[Cell] = tuple(),
         requirements: Iterable[Iterable[GriddedChord]] = tuple(), # might need a case for requirement of having one point in a cell...
+        point_requirements: Iterable[Cell] = tuple(),
         linkages: Iterable[Iterable[Cell]] = tuple(),
         assumptions: Iterable[TrackingAssumption] = tuple()):
 
@@ -50,8 +52,15 @@ class Tiling(CombinatorialClass):
         self._height = dimensions[1]
         self._linkages = linkages
         self._obstructions = obstructions
+        self._point_obs = point_obstructions
         self._requirements = requirements
+        self._point_reqs = point_requirements
         self._assumptions = assumptions
+        self.cells = []
+        
+        for cell in product(range(self._length), range(self._height)):
+            if cell not in self._point_obs():
+                self.cells.append(cell)
 
     @property
     def obstructions(self):
@@ -68,6 +77,56 @@ class Tiling(CombinatorialClass):
     @property
     def assumptions(self):
         return self._assumptions
+    
+    def is_atom(self):
+        """Return True if the Tiling is a single gridded chord."""
+        single_size_1 = False
+        size_1_in_self = []
+        cells = list(product(range(self._length), range(self._height)))
+        for gc in GriddedChord.all_grids(Chord((1,1)), cells):
+            if self.contains(gc):
+                size_1_in_self.append(gc)
+
+        single_size_1 = (len(size_1_in_self) == 1)
+        
+        size_2_chords = [Chord((0,0,1,1)), Chord((0,1,0,1)), Chord((0,1,1,0))]
+        avoids_all_2s = True
+        for chord in size_2_chords:
+            for gc in GriddedChord.all_grids(chord, cells):
+                if self.contains(gc):
+                    avoids_all_2s = False
+                    break
+        return single_size_1 and avoids_all_2s
+
+    # currently this is almost the same as is_empty, should probably also be optimized.
+    def minimum_size_of_object(self):
+        """Return the size of the smallest object in the class."""
+        # finds sum of the maximum length requirements in each requirements list
+        sum_max_reqs = 0
+        for req_list in self.requirements:
+            if len(req_list) == 0:
+                return 0
+            req_lengths = [len(req) for req in req_list]
+            sum_max_reqs += max(req_lengths)
+
+        if sum_max_reqs == 0: # then there are no requirements, but we still need a chord of size one
+            sum_max_reqs += 1
+        
+        # proved maximum size of smallest chord that can be gridded:
+        max_len = sum_max_reqs * 2 - 1
+
+        all_chords = []
+        for num_chords in range(1, max_len + 1):
+            all_chords += list(Chord.of_length(num_chords))
+
+        # product of length and width to get valid cells can probaby be much improved.
+        cells = self.cells
+        for chord in all_chords:
+            for gc in GriddedChord.all_grids(chord, cells):
+                if self.contains(gc):
+                    return len(gc)
+        
+        return 0
     
     def is_empty(self) -> bool:
         """Checks if the tiling is empty.
@@ -96,29 +155,27 @@ class Tiling(CombinatorialClass):
         
         # proved maximum size of smallest chord that can be gridded:
         max_len = sum_max_reqs * 2 - 1
-        print(max_len)
-
+       
         all_chords = []
         for num_chords in range(1, max_len + 1):
             all_chords += list(Chord.of_length(num_chords))
 
         # product of length and width to get valid cells can probaby be much improved.
-        cells = list(product(range(self._length), range(self._height)))
-        all_gridded_chords = []
+        cells = self.cells
         for chord in all_chords:
-            all_gridded_chords += list(GriddedChord.all_grids(chord, cells))
+            for gc in GriddedChord.all_grids(chord, cells):
+                if self.contains(gc):
+                    return False
 
-        # now check if any of the chords work??
-        #for gc in all_gridded_chords:
-        #    if self.contains(gc):
-        #        print(gc)
-        return not any(self.contains(gc) for gc in all_gridded_chords)
+        return True
 
     def contains(self, gc: GriddedChord) -> bool:
         has_reqs = all(gc.contains(*req) for req in self._requirements)
+        has_point_reqs = all(gc.in_cell(cell) for cell in self._point_reqs)
         avoids_ob = not any(gc.contains(ob) for ob in self._obstructions)
+        avoids_point_obs = not any(gc.in_cell(cell) for cell in self._point_obs)
         links_connected = all(gc.is_connected(cells) for cells in self._linkages)
-        return has_reqs and avoids_ob and links_connected
+        return has_reqs and avoids_ob and links_connected and has_point_reqs and avoids_point_obs
 
     def __hash__(self) -> int:
         return (
@@ -293,20 +350,29 @@ class Tiling(CombinatorialClass):
 
         return(dimensions + obs_str + reqs_str + link_str)
     
+    def to_jsonable(self):
+        output: dict = super().to_jsonable()
+        output["obstructions"] = [gc.to_jsonable() for gc in self.obstructions]
+        output["requirements"] = [[gc.to_jsonable() for gc in req] for req in self.requirements]
+        output["linkages"] = self._linkages
+        output["dimensions"] = tuple([self._length, self._height])
+        output["assumptions"] = [assump.to_jsonable() for assump in self.assumptions]
+        return output
+
     @classmethod
     def from_dict(cls, d: dict) -> "Tiling":
-        # absolutely no idea if this is right
+        # reasonably sure this is correct, not sure about formatting
         """Returns a Tiling object from a dictionary loaded from a JSON
         serialized Tiling object."""
-        obstructions = map(GriddedChord.from_dict, d["obstructions"])
-        requirements = map(lambda x: map(GriddedChord.from_dict, x), d["requirements"])
-        linkages =  map(lambda x: map(tuple, x), d["linkages"])
-        assumptions = map(TrackingAssumption.from_dict, d.get("assumptions", []))
+        obstructions = tuple(map(GriddedChord.from_dict, d["obstructions"]))
+        requirements = tuple(map(lambda x: tuple(map(GriddedChord.from_dict, x)), d["requirements"]))
+        linkages =  tuple(map(lambda x: tuple(map(tuple, x)), d["linkages"]))
+        assumptions = tuple(map(TrackingAssumption.from_dict, d.get("assumptions", [])))
         dimensions = d.get("dimensions")
         return cls(
-            obstructions=obstructions,
-            requirements=requirements,
-            linkages=linkages,
+            obstructions=tuple(obstructions),
+            requirements=tuple(requirements),
+            linkages=tuple(linkages),
             dimensions=dimensions,
-            assumptions=assumptions,
+            assumptions=tuple(assumptions),
         )

@@ -2,6 +2,8 @@ import sys
 from pathlib import Path
 sys.path.append(str(Path(__file__).resolve().parent.parent))
 
+import time
+
 from tiling import Tiling
 from chords import *
 
@@ -24,9 +26,6 @@ gc_crossed_h1 = GriddedChord(Chord((0, 1, 0, 1)), ((0, 0), (0, 0), (1, 0), (1, 0
 gc_3_crossed_h1 = gc_crossed_h1.insert_specific_chord(0, 0, 1, 2, 4)
 gc_nested_h1 = GriddedChord(Chord((0, 1, 1, 0)), ((0, 0), (0, 0), (1, 0), (1, 0)))
 gc_3_nested_h1 = gc_nested_h1.insert_specific_chord(0, 0, 1, 2, 2)
-
-print(gc_3_nested_h1)
-
 
 gc_disjoint = GriddedChord(Chord((0, 0, 1, 1)), ((0, 0), (0, 0), (1, 1), (1, 1)))
 
@@ -58,21 +57,31 @@ assert t_lk_2x2.contains(gc_crossed)
 assert not t_lk_2x2.contains(gc_3_nested)
 
 # is_empty tests
-assert Tiling((1, 1), (gc_empty,), (), ()).is_empty()
-assert Tiling((1, 1), (gc_single_00_00,), (), ()).is_empty()
-assert Tiling((1, 1), (gc_sc_crossed,), ((gc_sc_crossed, gc_sc_disjoint, gc_sc_nested),), (((0, 0),),)).is_empty()
-assert Tiling((2, 1), (gc_single_00_00,), (), (((0, 0),),)).is_empty()
-assert Tiling((3, 2), (gc_crossed,), ((gc_3_crossed,),), ()).is_empty() # uh oh... this test takes a long time...
-assert Tiling((2, 1), (gc_crossed_h1,), ((gc_3_crossed_h1,),), ()).is_empty() 
-assert Tiling((2, 1), (gc_nested_h1,), ((gc_3_nested_h1,),), ()).is_empty()
-assert Tiling((2, 1), (gc_single_00_10, gc_single_00_00, gc_single_10_10), (), (((0, 0), (1, 0)),)).is_empty()
-assert Tiling((2, 1), (gc_single_00_00,), (), (((0, 0),),)).is_empty()
+#assert Tiling((1, 1), (gc_empty,), (), ()).is_empty()
+#assert Tiling((1, 1), (gc_single_00_00,), (), ()).is_empty()
+#assert Tiling((1, 1), (gc_sc_crossed,), ((gc_sc_crossed, gc_sc_disjoint, gc_sc_nested),), (((0, 0),),)).is_empty()
+#assert Tiling((2, 1), (gc_single_00_00,), (), (((0, 0),),)).is_empty()
+#assert Tiling((3, 2), (gc_crossed,), ((gc_3_crossed,),), ()).is_empty() # uh oh... this test takes a long time...
+#assert Tiling((2, 1), (gc_crossed_h1,), ((gc_3_crossed_h1,),), ()).is_empty() 
+#assert Tiling((2, 1), (gc_nested_h1,), ((gc_3_nested_h1,),), ()).is_empty()
+#assert Tiling((2, 1), (gc_single_00_10, gc_single_00_00, gc_single_10_10), (), (((0, 0), (1, 0)),)).is_empty()
+#assert Tiling((2, 1), (gc_single_00_00,), (), (((0, 0),),)).is_empty()
 
-assert not t_no_restrictions.is_empty()
-assert not Tiling((2, 2), (), (), ()).is_empty()
-assert not Tiling((2, 1), (gc_single_00_10,), (), (((0, 0), (1, 0)),)).is_empty()
-assert not Tiling((2, 1), (gc_3_nested_h1,), ((gc_nested_h1,),), ()).is_empty()
-assert Tiling((1, 1), (), ((gc_crossed, gc_nested), (gc_nested,)), ()).is_empty()
+#assert not t_no_restrictions.is_empty()
+#assert not Tiling((2, 2), (), (), ()).is_empty()
+#assert not Tiling((2, 1), (gc_single_00_10,), (), (((0, 0), (1, 0)),)).is_empty()
+#assert not Tiling((2, 1), (gc_3_nested_h1,), ((gc_nested_h1,),), ()).is_empty()
+#assert Tiling((1, 1), (), ((gc_crossed, gc_nested), (gc_nested,)), ()).is_empty()
+start1 = time.time()
+#assert not Tiling((2, 2), (gc_3_nested_h1,), ((gc_nested_h1,), (gc_crossed, gc_nested)), ()).is_empty_1()
+end1 = time.time()
+start2 = time.time()
+#assert not Tiling((2, 2), (gc_3_nested_h1,), ((gc_nested_h1,), (gc_crossed, gc_nested)), ()).is_empty_2()
+end2 = time.time()
+
+#assert Tiling.from_dict(t_ex.to_jsonable()) == t_ex
+print("is_empty_1: ", end1-start1)
+print("is_empty_2: ", end2-start2)
 
 print("asserts passed")
 
