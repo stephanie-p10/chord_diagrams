@@ -554,6 +554,9 @@ class GriddedChord(CombinatorialObject):
         >>> GriddedChord(Chord((0, 1, 0, 2, 2, 1)), ((0, 1), (1, 1), (0, 1), (1, 1), (1, 1), (1, 1))).points_in_cell((1, 1))
         (2, 3, 4, 5)"""
         return (i for i, (_, pos) in enumerate(self) if pos == cell)
+    
+    def in_cell(self, cell: Cell) -> bool:
+        return len(i for i, (_, pos) in enumerate(self) if pos == cell) > 0
 
     def isolated_cells(self) -> Iterator[Cell]:
         """Yields the cells that contain only one chord of the gridded
@@ -1014,10 +1017,11 @@ class GriddedChord(CombinatorialObject):
         positions = list(self._pos)
         positions.insert(source, (col_source, row))
         positions.insert(sink + 1, (col_sink, row)) # +1 needed to account for source being inserted first.
-        gc =  GriddedChord(patt, positions)
-        if gc.contradictory():
+        try:
+            gc =  GriddedChord(patt, positions)
+            return gc
+        except ValueError:
             return None
-        return gc
     
     def remove_chord(self, chord: int) -> "GriddedChord":
         #sCN: changed to work with chords
