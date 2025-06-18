@@ -176,6 +176,34 @@ class Tiling(CombinatorialClass):
         avoids_point_obs = not any(gc.in_cell(cell) for cell in self._point_obs)
         links_connected = all(gc.is_connected(cells) for cells in self._linkages)
         return has_reqs and avoids_ob and links_connected and has_point_reqs and avoids_point_obs
+    
+    def add_list_requirement(self, req_list: Iterable[GriddedChord]) -> "Tiling":
+        """
+        Return a new tiling with the requirement list added.
+        """
+        new_req = tuple(sorted(req_list))
+        return Tiling(
+            tuple(self._length, self._height),
+            self._obstructions,
+            self._point_obs,
+            sorted(self._requirements + (new_req,)),
+            self._point_reqs,
+            self._linkages,
+            self._assumptions,
+        )
+
+    def add_obstructions(self, gps: Iterable[GriddedChord]) -> "Tiling":
+        """Returns a new tiling with the obstructions added."""
+        new_obs = tuple(gps)
+        return Tiling(
+            tuple(self._length, self._height),
+            sorted(self._obstructions + new_obs),
+            self._point_obs,
+            self._requirements,
+            self._point_reqs,
+            self._linkages,
+            self._assumptions
+        )
 
     def __hash__(self) -> int:
         return (
