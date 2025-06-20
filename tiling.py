@@ -57,6 +57,11 @@ class Tiling(CombinatorialClass):
         self._point_reqs = point_requirements
         self._assumptions = assumptions
         self.cells = []
+
+        self._cached_properties = {}
+        #self._cached_properties["forward_map"] = RowColMap.identity((0, 0))
+        #self._cached_properties["backward_map"] = RowColMap.identity((0, 0))
+
         
         for cell in product(range(self._length), range(self._height)):
             if cell not in self._point_obs():
@@ -77,6 +82,23 @@ class Tiling(CombinatorialClass):
     @property
     def assumptions(self):
         return self._assumptions
+    
+    '''@property
+    def forward_map(self) -> RowColMap:
+        try:
+            return self._cached_properties["forward_map"]
+        except KeyError:
+            self._remove_empty_rows_and_cols()
+            return self._cached_properties["forward_map"]
+
+    @property
+    def backward_map(self) -> RowColMap:
+        try:
+            return self._cached_properties["backward_map"]
+        except KeyError:
+            backward_map = self.forward_map.reverse()
+            self._cached_properties["backward_map"] = backward_map
+            return backward_map'''
     
     def is_atom(self):
         """Return True if the Tiling is a single gridded chord."""

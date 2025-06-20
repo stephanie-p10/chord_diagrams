@@ -55,11 +55,15 @@ class RequirementInsertionStrategy(DisjointUnionStrategy[Tiling, GriddedChord]):
             return f"insert {req}"
         raise NotImplementedError
     
-    #sTodo: what is the purpose of the following two methods??
+    # fix with RowColMap later
     def forward_map(self, comb_class, obj, children = None):
-        return super().forward_map(comb_class, obj, children)
+        if children is None:
+            children = self.decomposition_function(comb_class)
+        if obj.avoids(*self.gcs):
+            return (obj, None)
+        return (None, obj)
     
-    #???
+    # This should probably be fixed up with RowColMap class when that gets implemented
     def backward_map(
         self,
         comb_class: Tiling,
@@ -71,7 +75,7 @@ class RequirementInsertionStrategy(DisjointUnionStrategy[Tiling, GriddedChord]):
         if children is None:
             children = self.decomposition_function(comb_class)
         idx = DisjointUnionStrategy.backward_map_index(objs)
-        yield children[idx].backward_map.map_gc(cast(GriddedChord, objs[idx]))
+        yield objs[idx]
 
     
     def __repr__(self) -> str:
