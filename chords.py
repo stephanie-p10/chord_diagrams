@@ -234,37 +234,50 @@ class Chord(Tuple):
         if (not self_has_colour and patt_has_colour) or (not patt_has_colour and self_has_colour):
             return []
         
-        if self_has_colour and len(colour_self) != len(self) * 2:
+        if self_has_colour and len(colour_self) != self._patt_length:
             raise Exception("Incorrect colour length for self")
         
-        if patt_has_colour and len(colour_patt) != len(patt) * 2:
+        if patt_has_colour and len(colour_patt) != patt._patt_length:
             raise Exception("Incorrect colour length for pattern given")
 
-        if len(self) == 0 or len(self) > len(patt):
+        if len(self) > len(patt):
             return []
         
         instances = []
+        
+        indexed_patt = list(enumerate(patt._pattern)) # matches each val in patt to an index
+        self_reindexed = Chord.reindex(self._pattern) # makes sure self is in "normal" form
 
-        for subchord in combinations(patt._chord, len(self)):
-            subchord_indices_in_patt = []
-            for i in subchord:
-                subchord_indices_in_patt.extend(patt._chord[i])
-            subchord_indices_in_patt.sort()
-
-            subchord_patt = []
-            for i in subchord_indices_in_patt:
-                subchord_patt.append(patt._pattern[i])
-
-            if Chord.to_standard(subchord_patt) == self:
+        # loops over patterns of length self in patt
+        for subslice in combinations(indexed_patt, self._patt_length): 
+            subpatt = [val for _, val in subslice] # extracts pattern information from sub pattern
+            if Chord.reindex(subpatt) == self_reindexed:
                 append = True
+                patt_indices = [idx for idx, _ in subslice] # extractes index information about sub pattern
                 if patt_has_colour and self_has_colour:
-                    for i in range(len(subchord_indices_in_patt)):
-                        if colour_patt[subchord_indices_in_patt[i]] != colour_self[i]:
-                            append = False
+                    # loops over indices of self and subpattern over length of patterns
+                    for idx_self, idx_patt in enumerate(patt_indices): 
+                        if colour_patt[idx_patt] != colour_self[idx_self]: 
+                            append = False 
                 if append:
-                    instances.append(subchord)
+                    instances.append(tuple(set(subpatt)))
 
         return instances
+
+    @classmethod
+    def reindex(cls, patt: Iterable) -> "Chord":
+        patt_vals = list(set(patt))
+        patt_vals.sort()
+        chord_map = {}
+
+        for i, val in enumerate(patt_vals):
+            chord_map[val] = i
+
+        reindexed_patt = []
+        for i in patt:
+            reindexed_patt.append(chord_map[i])
+
+        return Chord(reindexed_patt)
 
     # sCP, added examples
     def avoids(self, *chords: "Chord") -> bool:
@@ -602,7 +615,7 @@ class GriddedChord(CombinatorialObject):
         """Check if the gridded chord is the empty gridded chord."""
         return len(self) == 0
     
-    def is_point_chord(self) -> bool:
+    def is_point(self) -> bool:
         return self._chord._patt_length == 1
 
     def is_single_chord(self) -> bool:
@@ -726,7 +739,7 @@ class GriddedChord(CombinatorialObject):
         """Return true if self contains an occurrence of any of patts.
 
         Examples:
-        gc = GriddedChord(Chord((0, 1, 2, 0, 3, 4, 2, 3, 1, 4)), 
+        >>> gc = GriddedChord(Chord((0, 1, 2, 0, 3, 4, 2, 3, 1, 4)), 
                                ((0, 0), (1, 0), (1, 1), (0, 1), (3, 2), (4, 2), (1, 2), (3, 3), (1, 3), (4, 4)))
         >>> gc.contains(GriddedChord(Chord((0, 1, 0, 1)), ((0, 0), (1, 0), (0, 1), (1, 3))))
         True

@@ -42,6 +42,7 @@ assert gc1.contains(GriddedChord(Chord((0, 1, 0, 1)), ((0, 0), (0, 1), (1, 0), (
                     GriddedChord(Chord((0, 1, 1, 0)), ((0, 0), (0, 1), (3, 1), (3, 0))))
 assert gc1.contains(GriddedChord(Chord((0, 1, 0, 1)), ((0, 0), (0, 1), (1, 0), (3, 1))))
 assert not gc1.contains(GriddedChord(Chord((0, 1, 1, 0)), ((0, 0), (0, 1), (3, 1), (3, 0))))
+assert gc1.contains(GriddedChord(Chord((0,)), ((0,0),)))
 
 assert not gc1.avoids(GriddedChord(Chord((0, 1, 0, 1)), ((0, 0), (0, 1), (1, 0), (3, 1))), 
                     GriddedChord(Chord((0, 1, 1, 0)), ((0, 0), (0, 1), (3, 1), (3, 0))))
@@ -233,9 +234,9 @@ assert not gc1.in_cell((6,6))
 assert gc2.in_cell((1,1))
 assert not gc1.in_cell((2,2))
 
-assert GriddedChord(Chord((0,)), ((0,0),)).is_point_chord()
-assert not gc1.is_point_chord()
-assert not empty_c.is_point_chord()
-assert not GriddedChord(Chord((0,0)), ((0,0), (0,0))).is_point_chord()
+assert GriddedChord(Chord((0,)), ((0,0),)).is_point()
+assert not gc1.is_point()
+assert not empty_c.is_point()
+assert not GriddedChord(Chord((0,0)), ((0,0), (0,0))).is_point()
 
 print("all assertions passed")
