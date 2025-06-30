@@ -24,9 +24,24 @@ class ChordException(Exception):
         super().__init__(msg)
 
 class Chord(Tuple):
-    def __new__(cls, iterable: Iterable[int] = ()) -> "Chord":
-        """Creates and validates a new Chord instance. 
-        Examples:
+    def __init__(self, iterable: Iterable[int] = ()) -> None:
+        # Cache for data used when finding occurrences of self in a perm
+        self._cached_pattern_details: Optional[List[Tuple[int, int, int, int]]] = None
+        self._length = len(iterable)//2
+        self._pattern = tuple(iterable)
+        self._patt_length = len(iterable)
+
+        # Creates dictionary of chord number and vertices it connects
+        # (0, 1, 2, 1, 3, 3, 2, 0) becomes {0: (0, 7), 1: (1, 3), 2: (2, 6), (3: (4, 5)}
+        self._chord = {}
+        for i,c in enumerate(iterable):
+            if c not in self._chord:
+                self._chord[c] = (i, -1)
+            else:
+                self._chord[c] = (self._chord[c][0],i)
+
+    def assert_valid_chord(self) -> None:
+        """Examples:
         >>> Chord((0, 0, 1, 1))
         (0, 0, 1, 1)
 
@@ -42,8 +57,8 @@ class Chord(Tuple):
         >>> Chord.from_iterable_validated((0, None))
         Traceback (most recent call last):
         ...
-        TypeError: 'None' object is not an integer
-        """
+        TypeError: 'None' object is not an integer"""
+        iterable = self._pattern
 
         # Ensure length is even (uses bitwise operator)
         if len(iterable) % 2 ==1:
@@ -71,23 +86,6 @@ class Chord(Tuple):
                     raise ChordException(f"Duplicate chord {num}")
         if len(unpaired_chords) != 0:
             raise ChordException(f"The chord {unpaired_chords.pop()} is unpaired.")
-
-        return tuple.__new__(cls, iterable)
-
-    def __init__(self, iterable: Iterable[int] = ()) -> None:
-        # Cache for data used when finding occurrences of self in a perm
-        self._cached_pattern_details: Optional[List[Tuple[int, int, int, int]]] = None
-        self._length = len(iterable)//2
-        self._pattern = tuple(iterable)
-
-        # Creates dictionary of chord number and vertices it connects
-        # (0, 1, 2, 1, 3, 3, 2, 0) becomes {0: (0, 7), 1: (1, 3), 2: (2, 6), (3: (4, 5)}
-        self._chord = {}
-        for i,c in enumerate(iterable):
-            if c not in self._chord:
-                self._chord[c] = (i, -1)
-            else:
-                self._chord[c] = (self._chord[c][0],i)
 
     def __len__(self) -> int:
         return self._length
@@ -604,6 +602,9 @@ class GriddedChord(CombinatorialObject):
         """Check if the gridded chord is the empty gridded chord."""
         return len(self) == 0
     
+    def is_point_chord(self) -> bool:
+        return self._chord._patt_length == 1
+
     def is_single_chord(self) -> bool:
         # sCN: is_point_chord -> is_single_chord
         """Checks if the gridded chord is of length 1."""
@@ -1305,4 +1306,3 @@ class GriddedChord(CombinatorialObject):
 
     def __iter__(self) -> Iterator[Tuple[int, Cell]]:
         return zip(self._patt, self._pos)
-

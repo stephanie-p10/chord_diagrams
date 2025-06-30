@@ -233,4 +233,9 @@ assert not gc1.in_cell((6,6))
 assert gc2.in_cell((1,1))
 assert not gc1.in_cell((2,2))
 
+assert GriddedChord(Chord((0,)), ((0,0),)).is_point_chord()
+assert not gc1.is_point_chord()
+assert not empty_c.is_point_chord()
+assert not GriddedChord(Chord((0,0)), ((0,0), (0,0))).is_point_chord()
+
 print("all assertions passed")
