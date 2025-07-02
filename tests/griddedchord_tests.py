@@ -49,11 +49,10 @@ assert not gc1.avoids(GriddedChord(Chord((0, 1, 0, 1)), ((0, 0), (0, 1), (1, 0),
 assert not gc1.avoids(GriddedChord(Chord((0, 1, 0, 1)), ((0, 0), (0, 1), (1, 0), (3, 1)))) 
 assert gc1.avoids(GriddedChord(Chord((0, 1, 1, 0)), ((0, 0), (0, 1), (3, 1), (3, 0))))
 
-# technically this function is tested every time a GriddedChord instance is created, so you can't actually create a test without it yelling at you
-#assert not GriddedChord(Chord((0, 1, 0, 1)), ((0, 0), (1, 1), (1, 0), (2, 1))).contradictory()
-#assert GriddedChord(Chord((0, 1, 0, 1)), ((0, 0), (1, 1), (0, 1), (2, 1))).contradictory()
-#assert GriddedChord(Chord((0, 1, 0, 1)), ((0, 1), (1, 0), (1, 1), (2, 0))).contradictory()
-#assert GriddedChord(Chord((0, 1, 0, 1)), ((0, 1), (1, 0), (1, 1), (2, 0))).contradictory()
+assert not GriddedChord(Chord((0, 1, 0, 1)), ((0, 0), (1, 1), (1, 0), (2, 1))).contradictory()
+assert GriddedChord(Chord((0, 1, 0, 1)), ((0, 0), (1, 1), (0, 1), (2, 1))).contradictory()
+assert GriddedChord(Chord((0, 1, 0, 1)), ((0, 1), (1, 0), (1, 1), (2, 0))).contradictory()
+assert GriddedChord(Chord((0, 1, 0, 1)), ((0, 1), (1, 0), (1, 1), (2, 0))).contradictory()
 
 assert type(gc1.remove_cells([(0, 0)])) == GriddedChord
 assert gc1.remove_cells([(0, 0)]) == GriddedChord(Chord((0, 1, 2, 3, 1, 2, 0, 3)), ((0, 1), (1, 1), (2, 3), (2, 4), (2, 1), (3, 3), (3, 1), (4, 4)))

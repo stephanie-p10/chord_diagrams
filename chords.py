@@ -33,12 +33,12 @@ class Chord(Tuple):
 
         # Creates dictionary of chord number and vertices it connects
         # (0, 1, 2, 1, 3, 3, 2, 0) becomes {0: (0, 7), 1: (1, 3), 2: (2, 6), (3: (4, 5)}
-        self._chord = {}
+        self._chord_dict = {}
         for i,c in enumerate(iterable):
-            if c not in self._chord:
-                self._chord[c] = (i, -1)
+            if c not in self._chord_dict:
+                self._chord_dict[c] = (i, -1)
             else:
-                self._chord[c] = (self._chord[c][0],i)
+                self._chord_dict[c] = (self._chord_dict[c][0],i)
 
     def assert_valid_chord(self) -> None:
         """Examples:
@@ -346,7 +346,7 @@ class Chord(Tuple):
         Example:
             >>> Chord((0, 1, 1, 0, 2, 2)).chord_dict
             {0: (0, 3), 1: (1, 2), 2: (4, 5)}"""
-        return self._chord
+        return self._chord_dict
     
     # sToDo: test
     @classmethod
@@ -431,8 +431,14 @@ class GriddedChord(CombinatorialObject):
         if len(self._patt) != len(self._pos):
             raise ValueError("Pattern and position list have unequal lengths.")
         self._cells: FrozenSet[Cell] = frozenset(self._pos)
-        if self.contradictory():
-            raise ValueError("Contradictory positions given.")
+
+        # Creates dictionary of chord number and vertices it connects
+        # (0, 1, 2, 1, 3, 3, 2, 0) becomes {0: (0, 7), 1: (1, 3), 2: (2, 6), (3: (4, 5)}
+        self._chord_dict = self._chord.chord_dict()
+
+        # this was needed, but has problem with point placement when you try to place a single point and then another one
+        #if self.contradictory():
+        #    raise ValueError("Contradictory positions given.")
     
     ### Generators for new GriddedChords ###
     @classmethod
@@ -538,6 +544,9 @@ class GriddedChord(CombinatorialObject):
             if (len(pos_list) == len(chord) * 2):
                 yield cls(chord, pos_list)
 
+    @classmethod
+    def point_chord(cls, pos: Cell) -> "GriddedChord":
+        return GriddedChord(Chord((0,)), pos)
 
     ### Return information about GriddedChord instance ###
     def occurrences_in(self, other: "GriddedChord") -> Iterator[Tuple[int, ...]]:
@@ -609,6 +618,8 @@ class GriddedChord(CombinatorialObject):
             raise ValueError("You're lost, no valid direction")
         raise ValueError("The gridded chord does not occupy the cell")
 
+    def chord_dict(self) -> Dict[(int)]:
+        return self._chord_dict
 
     ### Retrun Boolean information ###
     def is_empty(self) -> bool:
@@ -956,19 +967,19 @@ class GriddedChord(CombinatorialObject):
                     Chord.to_standard([chord for chord, pos in self if chord in subchords]),
                     (pos for chord, pos in self if chord in subchords))
 
-    def get_bounding_box(self, col_source: int, col_sink: int) -> Tuple[int, int, int, int]:
+    def get_bounding_indices(self, col_source: int, col_sink: int) -> Tuple[int, int, int, int]:
         # sCN: previous method returned the restrictions on the values for a point inserted 
         # into a given cell for permutations. Changed to accomadate chords.
-        """Determines the range possible indices where a chord with source in row_source and sink 
-        in row_sink can be inserted into self.
+        """Determines the range possible indices where a chord with source in col_source and sink 
+        in col_sink can be inserted into self.
         Returns in order: (min index source, max index source, min index sink, max index sink)
         
         Examples:
-        >>> GriddedChord(Chord((0, 1, 1, 0)), ((0,0), (0,1), (2,1), (1,0))).get_bounding_box(0, 1)
+        >>> GriddedChord(Chord((0, 1, 1, 0)), ((0,0), (0,1), (2,1), (2,0))).get_bounding_indices(0, 1)
         0, 2, 2, 3
-        >>> GriddedChord(Chord((0, 1, 1, 0)), ((0,0), (1,1), (1,1), (1,0))).get_bounding_box(0, 1)
+        >>> GriddedChord(Chord((0, 1, 1, 0)), ((0,0), (1,1), (1,1), (1,0))).get_bounding_indices(0, 1)
         0, 1, 1, 4
-        >>> GriddedChord(Chord((0, 1, 0, 1)), ((0,0), (1,1), (1,0), (2,1))).get_bounding_box(0, 2)
+        >>> GriddedChord(Chord((0, 1, 0, 1)), ((0,0), (1,1), (1,0), (2,1))).get_bounding_indices(0, 2)
         0, 1, 3, 4
         """
         assert(col_source <= col_sink)
@@ -989,6 +1000,42 @@ class GriddedChord(CombinatorialObject):
         max_index_sink = min([idx for idx, _ in points_right_col_sink] + [len(self.patt)])
 
         return (min_index_source, max_index_source, min_index_sink, max_index_sink)
+    
+    # this was copied in for use in chord_placement
+    def get_bounding_box(self, cell: Cell) -> Tuple[int, int, int, int]:
+        """Determines the range of indices and values of the points in 
+        the gridded chord diagram that can be found in the Cell cell."""
+        row = list(self.get_points_row(cell[1]))
+        col = list(self.get_points_col(cell[0]))
+        if not row: # if there are no points in the selected row
+            above = list(self.get_points_above_row(cell[1]))
+            if not above:
+                maxval = len(self)
+            else:
+                maxval = min(point[1] for point in above)
+            below = list(self.get_points_below_row(cell[1]))
+            if not below:
+                minval = 0
+            else:
+                minval = max(p[1] for p in below) + 1
+        else:
+            maxval = max(p[1] for p in row) + 1
+            minval = min(p[1] for p in row)
+        if not col:
+            right = list(self.get_points_right_col(cell[0]))
+            if not right:
+                maxdex = len(self.patt) 
+            else:
+                maxdex = min(p[0] for p in right)
+            left = list(self.get_points_left_col(cell[0]))
+            if not left:
+                mindex = 0
+            else:
+                mindex = max(p[0] for p in left) + 1
+        else:
+            maxdex = max(p[0] for p in col) + 1
+            mindex = min(p[0] for p in col)
+        return (mindex, maxdex, minval, maxval)
 
 
     ### Modify instance of GriddedChord ###
@@ -1011,7 +1058,7 @@ class GriddedChord(CombinatorialObject):
         []
         """
         possible_chords = []
-        min_index_source, max_index_source, min_index_sink, max_index_sink = self.get_bounding_box(col_source, col_sink)
+        min_index_source, max_index_source, min_index_sink, max_index_sink = self.get_bounding_indices(col_source, col_sink)
         
         # sAsk: There is probably a better way to do this
         for source in range(min_index_source, max_index_source + 1):

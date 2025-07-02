@@ -1,6 +1,7 @@
 import json
 from itertools import chain, filterfalse, product
 from typing import (Any, Callable, Dict, FrozenSet, Iterable, Iterator, List, Optional, Set, Tuple)
+from collections import Counter, defaultdict
 
 from typing_extensions import TypedDict
 
@@ -14,8 +15,9 @@ from tilings.assumptions import (
     ComponentAssumption,
     SkewComponentAssumption,
     SumComponentAssumption,
-    TrackingAssumption,
 )
+from .assumptions import TrackingAssumption
+from algorithms.map import RowColMap
 
 __all__ = ["Tiling"]
 
@@ -27,8 +29,6 @@ Dimension = Tuple[int, int]
 GCTuple = Tuple[GriddedChord, ...]
 
 
-# sToDo: make way to handle single point obstructions/requirements
-
 class Tiling(CombinatorialClass):
     """Tiling class.
 
@@ -39,33 +39,76 @@ class Tiling(CombinatorialClass):
     cells and the active cells.
     """
     def __init__(self,
-        dimensions: Iterable[int] = (1, 1),
         obstructions: Iterable[GriddedChord] = tuple(),
-        point_obstructions: Iterable[Cell] = tuple(),
+        #point_obstructions: Iterable[Cell] = tuple(),
         requirements: Iterable[Iterable[GriddedChord]] = tuple(), # might need a case for requirement of having one point in a cell...
-        point_requirements: Iterable[Cell] = tuple(),
+        #point_requirements: Iterable[Cell] = tuple(),
         linkages: Iterable[Iterable[Cell]] = tuple(),
         assumptions: Iterable[TrackingAssumption] = tuple()):
 
         super().__init__()
-        self._length = dimensions[0]
-        self._height = dimensions[1]
         self._linkages = linkages
         self._obstructions = obstructions
-        self._point_obs = point_obstructions
+        #self._point_obs = point_obstructions
         self._requirements = requirements
-        self._point_reqs = point_requirements
+        #self._point_reqs = point_requirements
         self._assumptions = assumptions
-        self.cells = []
+        #self.cells = []
 
         self._cached_properties = {}
-        #self._cached_properties["forward_map"] = RowColMap.identity((0, 0))
-        #self._cached_properties["backward_map"] = RowColMap.identity((0, 0))
+        self._cached_properties["forward_map"] = RowColMap.identity((0, 0))
+        self._cached_properties["backward_map"] = RowColMap.identity((0, 0))
 
-        
-        for cell in product(range(self._length), range(self._height)):
-            if cell not in self._point_obs():
-                self.cells.append(cell)
+        # currently defaults cells with no requirements or obsturctions to be empty
+        # note: should this be defaulted to allowing other chords?
+        self._prepare_properties()
+
+    # also changed how acitve_cells and empty_cells are computed, no longer add point obs based on empty cells
+    def _prepare_properties(self) -> None:
+        """
+        Compute _active_cells, _empty_cells, _dimensions, and store them
+        """
+        active_cells = union_reduce(
+            set(ob.pos) for ob in self._obstructions if not ob.is_point()
+        )
+        active_cells.update(
+            *(union_reduce(set(comp.pos) for comp in req) for req in self._requirements)
+        )
+
+        max_row = 0
+        max_col = 0
+        for cell in active_cells:
+            max_col = max(max_col, cell[0])
+            max_row = max(max_row, cell[1])
+        dimensions = (max_col + 1, max_row + 1)
+
+        empty_cells = tuple(
+            cell
+            for cell in product(range(dimensions[0]), range(dimensions[1]))
+            if cell not in active_cells
+        )
+
+        # If the first obstruction is the empty perm, we shouldn't do any of this.
+        if len(self._obstructions) > 0 and len(self._obstructions[0]) > 0:
+            # We can assume that self._obstructions is sorted at this point, so to
+            #   extract the point obstructions, we just pass though them until we've
+            #   found the last one, then we slice the list there.
+            self._obstructions = sorted(self._obstructions) # not assuming, fix later sToDo
+            index = 0
+            for ob in self._obstructions:
+                if len(ob) > 1:
+                    break
+                index += 1  # Now the last point obstruction is at index [index-1]
+            non_point_obstructions = self._obstructions[index:]
+
+            new_point_obstructions = tuple(
+                GriddedChord(Chord(0,), (cell,)) for cell in empty_cells
+            )
+            self._obstructions = new_point_obstructions + non_point_obstructions
+
+        self._cached_properties["active_cells"] = frozenset(active_cells)
+        self._cached_properties["empty_cells"] = frozenset(empty_cells)
+        self._cached_properties["dimensions"] = dimensions
 
     @property
     def obstructions(self):
@@ -100,11 +143,32 @@ class Tiling(CombinatorialClass):
             self._cached_properties["backward_map"] = backward_map
             return backward_map'''
     
+    @property
+    def active_cells(self) -> CellFrozenSet:
+        """
+        Returns a set of all cells that do not contain a point obstruction,
+        i.e., not empty.
+        """
+        try:
+            return self._cached_properties["active_cells"]
+        except KeyError:
+            self._prepare_properties()
+            return self._cached_properties["active_cells"]
+
+    def cells_in_row(self, row: int) -> CellFrozenSet:
+        """Return all active cells in row."""
+        return frozenset((x, y) for (x, y) in self.active_cells if y == row)
+
+    def cells_in_col(self, col: int) -> CellFrozenSet:
+        """Return all active cells in column."""
+        return frozenset((x, y) for (x, y) in self.active_cells if x == col)
+
+    # sTODO this is currently incorrect, but ok for non crossing. the atom should be a set containing the smallest thing that can be made.
     def is_atom(self):
         """Return True if the Tiling is a single gridded chord."""
         single_size_1 = False
         size_1_in_self = []
-        cells = list(product(range(self._length), range(self._height)))
+        cells = self._cached_properties["active cells"]
         for gc in GriddedChord.all_grids(Chord((1,1)), cells):
             if self.contains(gc):
                 size_1_in_self.append(gc)
@@ -142,7 +206,7 @@ class Tiling(CombinatorialClass):
             all_chords += list(Chord.of_length(num_chords))
 
         # product of length and width to get valid cells can probaby be much improved.
-        cells = self.cells
+        cells = self._cached_properties["active cells"]
         for chord in all_chords:
             for gc in GriddedChord.all_grids(chord, cells):
                 if self.contains(gc):
@@ -183,7 +247,7 @@ class Tiling(CombinatorialClass):
             all_chords += list(Chord.of_length(num_chords))
 
         # product of length and width to get valid cells can probaby be much improved.
-        cells = self.cells
+        cells = self._cached_properties["active cells"]
         for chord in all_chords:
             for gc in GriddedChord.all_grids(chord, cells):
                 if self.contains(gc):
@@ -193,11 +257,9 @@ class Tiling(CombinatorialClass):
 
     def contains(self, gc: GriddedChord) -> bool:
         has_reqs = all(gc.contains(*req) for req in self._requirements)
-        has_point_reqs = all(gc.in_cell(cell) for cell in self._point_reqs)
         avoids_ob = not any(gc.contains(ob) for ob in self._obstructions)
-        avoids_point_obs = not any(gc.in_cell(cell) for cell in self._point_obs)
         links_connected = all(gc.is_connected(cells) for cells in self._linkages)
-        return has_reqs and avoids_ob and links_connected and has_point_reqs and avoids_point_obs
+        return has_reqs and avoids_ob and links_connected
     
     def add_list_requirement(self, req_list: Iterable[GriddedChord]) -> "Tiling":
         """
@@ -205,11 +267,8 @@ class Tiling(CombinatorialClass):
         """
         new_req = tuple(sorted(req_list))
         return Tiling(
-            tuple(self._length, self._height),
             self._obstructions,
-            self._point_obs,
             sorted(self._requirements + (new_req,)),
-            self._point_reqs,
             self._linkages,
             self._assumptions,
         )
@@ -218,14 +277,66 @@ class Tiling(CombinatorialClass):
         """Returns a new tiling with the obstructions added."""
         new_obs = tuple(gps)
         return Tiling(
-            tuple(self._length, self._height),
+            tuple(self._cached_properties["dimensions"][0], self._cached_properties["dimensions"][1]),
             sorted(self._obstructions + new_obs),
-            self._point_obs,
             self._requirements,
-            self._point_reqs,
             self._linkages,
             self._assumptions
         )
+    
+    def only_cell_in_col(self, cell: Cell) -> bool:
+        """Checks if the cell is the only active cell in the column."""
+        return sum(1 for (x, y) in self.active_cells if x == cell[0]) == 1
+
+    def only_cell_in_row(self, cell: Cell) -> bool:
+        """Checks if the cell is the only active cell in the row (besides other end of chord)."""
+        return sum(1 for (x, y) in self.active_cells if y == cell[1]) == 2
+    
+    #sTODO this is wrong! currently this works for when obstructions are simplified automatically.
+    @property
+    def point_cells(self) -> CellFrozenSet:
+        try:
+            return self._cached_properties["point_cells"]
+        except KeyError:
+            # finds all cells obstructing length one and two chords fully conatined within them
+            local_length_lt2_obcells = Counter(
+                ob.pos[0]
+                for ob in self._obstructions
+                if ob.is_localized() and (ob._patt == (0, 0) or ob._patt == (0, 1))
+            )
+            # finds cells that must only have a single point
+            point_cells = frozenset(
+                cell for cell in self.positive_cells if local_length_lt2_obcells[cell] == 2
+            )
+            self._cached_properties["point_cells"] = point_cells
+            return point_cells
+        
+    @property
+    def positive_cells(self) -> CellFrozenSet:
+        """Cells that must have something in them"""
+        try:
+            return self._cached_properties["positive_cells"]
+        except KeyError:
+            positive_cells = frozenset(
+                union_reduce(
+                    intersection_reduce(req.pos for req in reqs)
+                    for reqs in self._requirements
+                )
+            )
+            self._cached_properties["positive_cells"] = positive_cells
+            return positive_cells
+    
+    @property
+    def active_cells(self) -> CellFrozenSet:
+        """
+        Returns a set of all cells that do not contain a point obstruction,
+        i.e., not empty.
+        """
+        try:
+            return self._cached_properties["active_cells"]
+        except KeyError:
+            self._prepare_properties()
+            return self._cached_properties["active_cells"]
 
     def __hash__(self) -> int:
         return (
@@ -362,7 +473,7 @@ class Tiling(CombinatorialClass):
             result = result[:-1]
 
         return "".join(result)'''
-        dimensions = "Dimensions: (" + str(self._length) + ", " + str(self._height) + ")\n"
+        dimensions = "Dimensions: (" + str(self._cached_properties["dimensions"][0]) + ", " + str(self._cached_properties["dimensions"][1]) + ")\n"
 
         obs_str = "Obstructions: "
         obs_indent_len = len(obs_str)
@@ -405,7 +516,7 @@ class Tiling(CombinatorialClass):
         output["obstructions"] = [gc.to_jsonable() for gc in self.obstructions]
         output["requirements"] = [[gc.to_jsonable() for gc in req] for req in self.requirements]
         output["linkages"] = self._linkages
-        output["dimensions"] = tuple([self._length, self._height])
+        output["dimensions"] = tuple([self._cached_properties["dimensions"][0], self._cached_properties["dimensions"][1]])
         output["assumptions"] = [assump.to_jsonable() for assump in self.assumptions]
         return output
 
