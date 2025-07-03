@@ -369,8 +369,10 @@ class RequirementPlacement:
         gc in gcs.
 
         In particular, this returns the requirements that come from stretching
-        a gridded permutation in gps, such that the point at idx is the placed
+        a gridded chord diagram in gcs, such that the point at idx is the placed
         cell.
+
+        What you must have for the point at idx to be placed
         """
         placed_cell = self._placed_cell(cell)
         res = []
@@ -400,9 +402,9 @@ class RequirementPlacement:
         cells: Optional[Iterable[Cell]] = None,
     ) -> Tuple["Tiling", ...]:
         """
-        Return the tilings, where the placed point corresponds to the directionmost
+        Return the tilings where the placed point corresponds to the directionmost
         (the furtest in the given direction, ex: leftmost point) of an occurrence
-        of any point idx, gc(idx) for gridded chord diagrams in gpc, and idx in indices
+        of any point idx, gc(idx) for gridded chord diagrams in gcs, and idx in indices
         """
         if cells is not None:
             cells = frozenset(cells)
@@ -425,9 +427,12 @@ class RequirementPlacement:
             forced_obs = [
                 o1
                 for o1 in forced_obs
+                # if no other obstruction is contained in o1
                 if not any(o2 in o1 for o2 in filterfalse(o1.__eq__, forced_obs))
             ]
+            # reduces redundant obstructions
             reduced_obs = [o1 for o1 in obs if not any(o2 in o1 for o2 in forced_obs)]
+            # add the forced obstructions as long as they are not redundant
             reduced_obs.extend(filterfalse(reduced_obs.__contains__, forced_obs))
             res.append(
                 self._tiling.__class__(

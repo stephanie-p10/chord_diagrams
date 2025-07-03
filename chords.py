@@ -1172,12 +1172,12 @@ class GriddedChord(CombinatorialObject):
     ### Miscellaneous/Not sure what is happening ###
     # sAsk: not sure what this is doing, why it is important, and why I should care. Moving on... 
     def forced_point_of_requirement(
-        self, gps: Tuple["GriddedChord", ...], indices: Tuple[int, ...], direction: int
+        self, gcs: Tuple["GriddedChord", ...], indices: Tuple[int, ...], direction: int
     ) -> Optional[Tuple[int, int]]:
         """
-        Return the pair (x, y) where x is the gridded chord in gps that is
+        Return the pair (x, y) where x is the gridded chord in gcs that is
         farthest in the given direction in self, and y is index of the forced point
-        with respect to the gps and indices. If gps is avoided, then
+        with respect to the gps and indices. If gcs is avoided, then
         return None.
         """
 
@@ -1194,7 +1194,7 @@ class GriddedChord(CombinatorialObject):
             raise ValueError("You're lost, no valid direction")
 
         res: Optional[Tuple[int, int]] = None
-        for idx, gp in enumerate(gps):
+        for idx, gp in enumerate(gcs):
             forced_index_in_patt = indices[idx]
             for occurrence in gp.occurrences_in(self):
                 if res is None:

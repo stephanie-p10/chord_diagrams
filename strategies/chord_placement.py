@@ -2,7 +2,7 @@ import sys
 from pathlib import Path
 sys.path.append(str(Path(__file__).resolve().parent.parent))
 
-from typing import (Any, Callable, Dict, FrozenSet, Iterable, Iterator, List, Optional, Set, Tuple)
+from typing import (Any, Callable, Dict, FrozenSet, Iterable, Iterator, List, Optional, Set, Tuple, cast)
 
 #import tilings.strategies as strat
 from comb_spec_searcher import DisjointUnionStrategy, StrategyFactory
@@ -11,16 +11,16 @@ from comb_spec_searcher.strategies import Rule
 from comb_spec_searcher.strategies.strategy import VerificationStrategy
 from chords import Chord, GriddedChord
 from tiling import Tiling
+from algorithms.requirement_placement import RequirementPlacement
+from permuta.misc import DIR_EAST, DIR_NONE, DIR_NORTH, DIR_SOUTH, DIR_WEST, DIRS
 
 Cell = Tuple[int, int]
 ListRequirement = Tuple[GriddedChord, ...]
 
-'''
-# copy and pasted code that might be useful later when more functionality is implements (like RowColMap)
 class RequirementPlacementStrategy(DisjointUnionStrategy[Tiling, GriddedChord]):
     def __init__(
         self,
-        gps: Iterable[GriddedChord],
+        gcs: Iterable[GriddedChord],
         indices: Iterable[int],
         direction: int,
         own_col: bool = True,
@@ -28,15 +28,15 @@ class RequirementPlacementStrategy(DisjointUnionStrategy[Tiling, GriddedChord]):
         ignore_parent: bool = False,
         include_empty: bool = False,
     ):
-        self.gps = tuple(gps)
+        self.gcs = tuple(gcs) # I think this is going to be a single chord for chord pl strategy
         self.indices = tuple(indices)
         self.direction = direction
         self.own_row, self.own_col = own_row, own_col
         self.include_empty = include_empty
         self._placed_cells = tuple(
-            sorted(set(gp.pos[idx] for idx, gp in zip(self.indices, self.gps)))
+            sorted(set(gc.pos[idx] for idx, gc in zip(self.indices, self.gcs)))
         )
-        possibly_empty = self.include_empty or len(self.gps) > 1
+        possibly_empty = self.include_empty or len(self.gcs) > 1
         super().__init__(ignore_parent=ignore_parent, possibly_empty=possibly_empty)
 
     def _placed_cell(self, idx: int) -> Cell:
@@ -44,8 +44,8 @@ class RequirementPlacementStrategy(DisjointUnionStrategy[Tiling, GriddedChord]):
         return self._placed_cells[idx]
 
     def _child_idx(self, idx: int):
-        """Return the index of the child given the index of gps placed into."""
-        return self._placed_cells.index(self.gps[idx].pos[self.indices[idx]])
+        """Return the index of the child given the index of gcs placed into."""
+        return self._placed_cells.index(self.gcs[idx].pos[self.indices[idx]])
 
     def placement_class(self, tiling: Tiling) -> RequirementPlacement:
         return RequirementPlacement(tiling, own_col=self.own_col, own_row=self.own_row)
@@ -53,13 +53,13 @@ class RequirementPlacementStrategy(DisjointUnionStrategy[Tiling, GriddedChord]):
     def decomposition_function(self, comb_class: Tiling) -> Tuple[Tiling, ...]:
         placement_class = self.placement_class(comb_class)
         placed_tilings = placement_class.place_point_of_req(
-            self.gps, self.indices, self.direction
+            self.gcs, self.indices, self.direction
         )
         if self.include_empty:
-            return (comb_class.add_obstructions(self.gps),) + placed_tilings
+            return (comb_class.add_obstructions(self.gcs),) + placed_tilings
         return placed_tilings
 
-    def extra_parameters(
+    '''def extra_parameters(
         self, comb_class: Tiling, children: Optional[Tuple[Tiling, ...]] = None
     ) -> Tuple[Dict[str, str], ...]:
         if not comb_class.extra_parameters:
@@ -76,7 +76,7 @@ class RequirementPlacementStrategy(DisjointUnionStrategy[Tiling, GriddedChord]):
                 mapped_assumption = child.forward_map.map_assumption(
                     assumption
                 ).avoiding(child.obstructions)
-                if mapped_assumption.gps:
+                if mapped_assumption.gcs:
                     parent_var = comb_class.get_assumption_parameter(assumption)
                     child_var = child.get_assumption_parameter(mapped_assumption)
                     extra_parameters[0][parent_var] = child_var
@@ -96,7 +96,7 @@ class RequirementPlacementStrategy(DisjointUnionStrategy[Tiling, GriddedChord]):
                     extra_parameters[idx + 1 if self.include_empty else idx][
                         parent_var
                     ] = child_var
-        return extra_parameters
+        return extra_parameters'''
 
     def direction_string(self):
         if self.direction == DIR_EAST:
@@ -112,27 +112,27 @@ class RequirementPlacementStrategy(DisjointUnionStrategy[Tiling, GriddedChord]):
         placing = f"placing the {self.direction_string()} "
         if not (self.own_row and self.own_col):
             placing = f"partially {placing}"
-        if len(self.gps) == 1:
-            gp = self.gps[0]
+        if len(self.gcs) == 1:
+            gc = self.gcs[0]
             index = self.indices[0]
-            if len(gp) == 1:
-                return placing + f"point in cell {gp.pos[index]}"
-            if gp.is_localized():
+            if len(gc) == 1:
+                return placing + f"point in cell {gc.pos[index]}"
+            if gc.is_localized():
                 return (
-                    f"{placing}{(index, gp.patt[index])} point in "
-                    f"{gp.patt} in cell {gp.pos[index]}"
+                    f"{placing}{(index, gc.patt[index])} point in "
+                    f"{gc.patt} in cell {gc.pos[index]}"
                 )
-            return f"{placing}{(index, gp.patt[index])} point in {gp}"
-        if all(len(gp) == 1 for gp in self.gps):
-            col_indices = set(x for x, _ in [gp.pos[0] for gp in self.gps])
+            return f"{placing}{(index, gc.patt[index])} point in {gc}"
+        if all(len(gc) == 1 for gc in self.gcs):
+            col_indices = set(x for x, _ in [gc.pos[0] for gc in self.gcs])
             if len(col_indices) == 1:
                 return f"{placing}point in column {col_indices.pop()}"
-            row_indices = set(y for _, y in [gp.pos[0] for gp in self.gps])
+            row_indices = set(y for _, y in [gc.pos[0] for gc in self.gcs])
             if len(row_indices) == 1:
                 return f"{placing}point in row {row_indices.pop()}"
         return (
             f"{placing}point at indices {self.indices} from the requirement "
-            f"({', '.join(map(str, self.gps))})"
+            f"({', '.join(map(str, self.gcs))})"
         )
 
     def backward_cell_map(self, placed_cell: Cell, cell: Cell) -> Cell:
@@ -141,30 +141,32 @@ class RequirementPlacementStrategy(DisjointUnionStrategy[Tiling, GriddedChord]):
             x -= 2
         elif self.own_col and x == placed_cell[0] + 1:
             x -= 1
+        
         if self.own_row and y > placed_cell[1] + 1:
             y -= 2
         elif self.own_row and y == placed_cell[1] + 1:
             y -= 1
         return x, y
 
-    def forward_gp_map(self, gp: GriddedChord, forced_index: int) -> GriddedChord:
+    def forward_gc_map(self, gc: GriddedChord, forced_index: int) -> GriddedChord:
+        """Returns what gc would be mapped to in the child class where forced_index is placed"""
         new_pos: List[Cell] = []
-        forced_val = gp.patt[forced_index]
-        for idx, (x, y) in enumerate(gp.pos):
-            if idx == forced_index:
-                if self.own_col:
+        forced_val = gc.patt[forced_index]
+        for idx, (x, y) in enumerate(gc.pos):
+            if gc.patt[idx] == forced_val:
+                if self.own_col and idx == forced_index:
                     x += 1
                 if self.own_row:
                     y += 1
                 new_pos.append((x, y))
             else:
-                val = gp.patt[idx]
+                val = gc.patt[idx]
                 if self.own_col and idx >= forced_index:
                     x += 2
                 if self.own_row and val >= forced_val:
                     y += 2
                 new_pos.append((x, y))
-        return GriddedChord(gp.patt, new_pos)
+        return GriddedChord(gc.patt, new_pos)
 
     def backward_map(
         self,
@@ -175,17 +177,15 @@ class RequirementPlacementStrategy(DisjointUnionStrategy[Tiling, GriddedChord]):
         if children is None:
             children = self.decomposition_function(comb_class)
         idx = DisjointUnionStrategy.backward_map_index(objs)
-        gp: GriddedChord = children[idx].backward_map.map_gp(
-            cast(GriddedChord, objs[idx])
-        )
+        gc: GriddedChord = children[idx] # fix with .backward_map.map_gp(cast(GriddedChord, objs[idx])) when RowColMap implemented in GriddedChord
         if self.include_empty:
             if idx == 0:
-                yield gp
+                yield gc
                 return
             idx -= 1
         placed_cell = self._placed_cell(idx)
         yield GriddedChord(
-            gp.patt, [self.backward_cell_map(placed_cell, cell) for cell in gp.pos]
+            gc.patt, [self.backward_cell_map(placed_cell, cell) for cell in gc.pos]
         )
 
     def forward_map(
@@ -195,23 +195,23 @@ class RequirementPlacementStrategy(DisjointUnionStrategy[Tiling, GriddedChord]):
         children: Optional[Tuple[Tiling, ...]] = None,
     ) -> Tuple[Optional[GriddedChord], ...]:
         indices = obj.forced_point_of_requirement(
-            self.gps, self.indices, self.direction
+            self.gcs, self.indices, self.direction
         )
         if children is None:
             children = self.decomposition_function(comb_class)
         if indices is None:
-            return (children[0].forward_map.map_gp(obj),) + tuple(
+            return (children[0],) + tuple(
                 None for _ in range(len(children) - 1)
-            )
-        gps_index, forced_index = indices
-        child_index = self._child_idx(gps_index)
+            ) # fix with children[0] -> children[0].forward_map.map_gp(obj) when implemented
+        gcs_index, forced_index = indices
+        child_index = self._child_idx(gcs_index)
         if self.include_empty:
             child_index += 1
-        gp = self.forward_gp_map(obj, forced_index)
+        gp = self.forward_gc_map(obj, forced_index)
         return (
             tuple(None for _ in range(child_index))
-            + (children[child_index].forward_map.map_gp(gp),)
-            + tuple(None for _ in range(len(children) - 1))
+            + (children[child_index],) # fix with children[0] -> children[0].forward_map.map_gp(obj) when implemented
+            + tuple(None for _ in range(child_index, len(children) - 1))
         )
 
     def __str__(self) -> str:
@@ -219,7 +219,7 @@ class RequirementPlacementStrategy(DisjointUnionStrategy[Tiling, GriddedChord]):
 
     def __repr__(self) -> str:
         return (
-            f"RequirementPlacementStrategy(gps={self.gps}, "
+            f"RequirementPlacementStrategy(gcs={self.gcs}, "
             f"indices={self.indices}, direction={self.direction}, "
             f"own_col={self.own_col}, own_row={self.own_row}, "
             f"ignore_parent={self.ignore_parent}, "
@@ -232,7 +232,7 @@ class RequirementPlacementStrategy(DisjointUnionStrategy[Tiling, GriddedChord]):
         d.pop("workable")
         d.pop("inferrable")
         d.pop("possibly_empty")
-        d["gps"] = tuple(gp.to_jsonable() for gp in self.gps)
+        d["gcs"] = tuple(gc.to_jsonable() for gc in self.gcs)
         d["indices"] = self.indices
         d["direction"] = self.direction
         d["own_col"] = self.own_col
@@ -242,27 +242,5 @@ class RequirementPlacementStrategy(DisjointUnionStrategy[Tiling, GriddedChord]):
 
     @classmethod
     def from_dict(cls, d: dict) -> "RequirementPlacementStrategy":
-        gps = tuple(GriddedChord.from_dict(gp) for gp in d.pop("gps"))
-        return cls(gps=gps, **d)'''
-
-class RequirementPlacementStrategy(DisjointUnionStrategy[Tiling, GriddedChord]):
-    def __init__(
-        self,
-        gps: Iterable[GriddedChord],
-        indices: Iterable[int],
-        direction: int,
-        own_col: bool = True,
-        own_row: bool = True,
-        ignore_parent: bool = False,
-        include_empty: bool = False,
-    ):
-        self.gps = tuple(gps)
-        self.indices = tuple(indices)
-        self.direction = direction
-        self.own_row, self.own_col = own_row, own_col
-        self.include_empty = include_empty
-        self._placed_cells = tuple(
-            sorted(set(gp.pos[idx] for idx, gp in zip(self.indices, self.gps)))
-        )
-        possibly_empty = self.include_empty or len(self.gps) > 1
-        super().__init__(ignore_parent=ignore_parent, possibly_empty=possibly_empty)
+        gcs = tuple(GriddedChord.from_dict(gc) for gc in d.pop("gcs"))
+        return cls(gcs=gcs, **d)
