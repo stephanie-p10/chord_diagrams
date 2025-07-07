@@ -83,7 +83,7 @@ class TrackingAssumption:
         return {
             "class_module": c.__module__,
             "assumption": c.__name__,
-            "gps": [gc.to_jsonable() for gc in self.gcs],
+            "gcs": [gc.to_jsonable() for gc in self.gcs],
         }
 
     @classmethod

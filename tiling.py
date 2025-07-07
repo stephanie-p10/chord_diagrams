@@ -110,6 +110,76 @@ class Tiling(CombinatorialClass):
         self._cached_properties["empty_cells"] = frozenset(empty_cells)
         self._cached_properties["dimensions"] = dimensions
 
+    def _minimize_mapping(self) -> RowColMap:
+        """
+        Returns a pair of dictionaries, that map rows/columns to an
+        equivalent set of rows/columns where empty ones have been removed.
+        Also returns a boolean describing whether this mapping is the identity
+        mapping which saves some later computation.
+        """
+        active_cells = self.active_cells
+        assert active_cells
+        col_set = set(c[0] for c in active_cells)
+        row_set = set(c[1] for c in active_cells)
+        col_list, row_list = sorted(col_set), sorted(row_set)
+        identity = (self.dimensions[0] == len(col_list)) and (
+            self.dimensions[1] == len(row_list)
+        )
+        col_mapping = {x: actual for actual, x in enumerate(col_list)}
+        row_mapping = {y: actual for actual, y in enumerate(row_list)}
+        return RowColMap(row_map=row_mapping, col_map=col_mapping, is_identity=identity)
+
+    def _remove_empty_rows_and_cols(self) -> None:
+        """Remove empty rows and columns."""
+        # Produce the mapping between the two tilings
+        if not self.active_cells:
+            assert GriddedChord.empty_chord() not in self.obstructions
+            self._cached_properties["forward_map"] = RowColMap.identity((0, 0))
+            self._obstructions = (GriddedChord.single_cell((0,), (0, 0)),)
+            self._requirements = tuple()
+            self._assumptions = tuple()
+            self._cached_properties["dimensions"] = (1, 1)
+            return
+        forward_map = self._minimize_mapping()
+        self._cached_properties["forward_map"] = forward_map
+        # We still may need to remove point obstructions if the empty row or col
+        # was on the end so we do it outside the next if statement.
+        self._obstructions = tuple(
+            forward_map.map_gc(ob)
+            for ob in self.obstructions
+            if not ob.is_point() or forward_map.is_mappable_gc(ob)
+        )
+
+        if not forward_map.is_identity():
+            self._requirements = tuple(
+                tuple(forward_map.map_gc(req) for req in reqlist)
+                for reqlist in self._requirements
+            )
+            self._assumptions = tuple(
+                sorted(
+                    forward_map.map_assumption(assumption)
+                    for assumption in self._assumptions
+                )
+            )
+            self._linkages = tuple(
+                tuple(forward_map.map_cell(cell) for cell in linkage if forward_map.is_mappable_cell(cell))
+                for linkage in self._linkages
+            )
+            self._cached_properties["active_cells"] = frozenset(
+                forward_map.map_cell(cell)
+                for cell in self._cached_properties["active_cells"]
+                if forward_map.is_mappable_cell(cell)
+            )
+            self._cached_properties["empty_cells"] = frozenset(
+                forward_map.map_cell(cell)
+                for cell in self._cached_properties["empty_cells"]
+                if forward_map.is_mappable_cell(cell)
+            )
+            self._cached_properties["dimensions"] = (
+                forward_map.max_col() + 1,
+                forward_map.max_row() + 1,
+            )
+
     @property
     def obstructions(self):
         return self._obstructions
@@ -126,7 +196,16 @@ class Tiling(CombinatorialClass):
     def assumptions(self):
         return self._assumptions
     
-    '''@property
+    @property
+    def dimensions(self):
+        try:
+            dims = (self._cached_properties["dimensions"])
+            return dims
+        except KeyError:
+            self._prepare_properties()
+            return self._cached_properties["dimensions"]
+
+    @property
     def forward_map(self) -> RowColMap:
         try:
             return self._cached_properties["forward_map"]
@@ -141,7 +220,7 @@ class Tiling(CombinatorialClass):
         except KeyError:
             backward_map = self.forward_map.reverse()
             self._cached_properties["backward_map"] = backward_map
-            return backward_map'''
+            return backward_map
     
     @property
     def active_cells(self) -> CellFrozenSet:
@@ -154,6 +233,54 @@ class Tiling(CombinatorialClass):
         except KeyError:
             self._prepare_properties()
             return self._cached_properties["active_cells"]
+        
+    # I don't think we care about linkages; if a linkage has a row of empty cells, then we can still reduce.
+    def _remove_empty_rows_and_cols(self) -> None:
+        """Remove empty rows and columns."""
+        # Produce the mapping between the two tilings
+        if not self.active_cells:
+            assert GriddedChord.empty_chord() not in self.obstructions
+            self._cached_properties["forward_map"] = RowColMap.identity((0, 0))
+            self._obstructions = (GriddedChord.single_cell(Chord(0,), (0, 0)),)
+            self._requirements = tuple()
+            self._assumptions = tuple()
+            self._cached_properties["dimensions"] = (1, 1)
+            return
+        forward_map = self._minimize_mapping()
+        self._cached_properties["forward_map"] = forward_map
+        # We still may need to remove point obstructions if the empty row or col
+        # was on the end so we do it outside the next if statement.
+        self._obstructions = tuple(
+            forward_map.map_gp(ob)
+            for ob in self.obstructions
+            if not ob.is_point_perm() or forward_map.is_mappable_gp(ob)
+        )
+
+        if not forward_map.is_identity():
+            self._requirements = tuple(
+                tuple(forward_map.map_gp(req) for req in reqlist)
+                for reqlist in self._requirements
+            )
+            self._assumptions = tuple(
+                sorted(
+                    forward_map.map_assumption(assumption)
+                    for assumption in self._assumptions
+                )
+            )
+            self._cached_properties["active_cells"] = frozenset(
+                forward_map.map_cell(cell)
+                for cell in self._cached_properties["active_cells"]
+                if forward_map.is_mappable_cell(cell)
+            )
+            self._cached_properties["empty_cells"] = frozenset(
+                forward_map.map_cell(cell)
+                for cell in self._cached_properties["empty_cells"]
+                if forward_map.is_mappable_cell(cell)
+            )
+            self._cached_properties["dimensions"] = (
+                forward_map.max_col() + 1,
+                forward_map.max_row() + 1,
+            )
 
     def cells_in_row(self, row: int) -> CellFrozenSet:
         """Return all active cells in row."""
@@ -162,6 +289,20 @@ class Tiling(CombinatorialClass):
     def cells_in_col(self, col: int) -> CellFrozenSet:
         """Return all active cells in column."""
         return frozenset((x, y) for (x, y) in self.active_cells if x == col)
+    
+    def get_assumption_parameter(self, assumption: TrackingAssumption) -> str:
+        """
+        Return the variable associated with the given assumption.
+
+        Raise ValueError if the assumptions is not on the tiling.
+        """
+        try:
+            idx = tuple(self._assumptions).index(assumption)
+        except ValueError as e:
+            raise ValueError(
+                f"following assumption not on tiling: '{assumption}'"
+            ) from e
+        return f"k_{idx}"
 
     # sTODO this is currently incorrect, but ok for non crossing. the atom should be a set containing the smallest thing that can be made.
     def is_atom(self):

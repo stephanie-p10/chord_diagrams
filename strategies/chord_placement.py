@@ -177,7 +177,7 @@ class RequirementPlacementStrategy(DisjointUnionStrategy[Tiling, GriddedChord]):
         if children is None:
             children = self.decomposition_function(comb_class)
         idx = DisjointUnionStrategy.backward_map_index(objs)
-        gc: GriddedChord = children[idx] # fix with .backward_map.map_gp(cast(GriddedChord, objs[idx])) when RowColMap implemented in GriddedChord
+        gc: GriddedChord = children[idx].backward_map.map_gc(cast(GriddedChord, objs[idx]))
         if self.include_empty:
             if idx == 0:
                 yield gc
@@ -200,17 +200,17 @@ class RequirementPlacementStrategy(DisjointUnionStrategy[Tiling, GriddedChord]):
         if children is None:
             children = self.decomposition_function(comb_class)
         if indices is None:
-            return (children[0],) + tuple(
+            return (children[0].forward_map.map_gc(obj),) + tuple(
                 None for _ in range(len(children) - 1)
-            ) # fix with children[0] -> children[0].forward_map.map_gp(obj) when implemented
+                )
         gcs_index, forced_index = indices
         child_index = self._child_idx(gcs_index)
         if self.include_empty:
             child_index += 1
-        gp = self.forward_gc_map(obj, forced_index)
+        gc = self.forward_gc_map(obj, forced_index)
         return (
             tuple(None for _ in range(child_index))
-            + (children[child_index],) # fix with children[0] -> children[0].forward_map.map_gp(obj) when implemented
+            + (children[child_index].forward_map.map_gc(gc),)
             + tuple(None for _ in range(child_index, len(children) - 1))
         )
 

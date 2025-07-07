@@ -39,7 +39,7 @@ class ObstructionInferralStrategy(DisjointUnionStrategy[Tiling, GriddedChord]):
         child = children[0]
         params: Dict[str, str] = {}
         for assumption in comb_class.assumptions:
-            mapped_assumption = (assumption).avoiding( # fix with child.forward_map.map_assumption when implemented
+            mapped_assumption = child.forward_map.map_assumption(assumption).avoiding(
                 child.obstructions
             )
             if mapped_assumption.gcs:

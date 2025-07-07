@@ -55,28 +55,28 @@ class RequirementInsertionStrategy(DisjointUnionStrategy[Tiling, GriddedChord]):
             return f"insert {req}"
         raise NotImplementedError
     
-    # fix with RowColMap later
-    def forward_map(self, comb_class, obj, children = None):
-        if children is None:
-            children = self.decomposition_function(comb_class)
-        if obj.avoids(*self.gcs):
-            return (obj, None)
-        return (None, obj)
-    
-    # This should probably be fixed up with RowColMap class when that gets implemented
     def backward_map(
         self,
         comb_class: Tiling,
         objs: Tuple[Optional[GriddedChord], ...],
         children: Optional[Tuple[Tiling, ...]] = None,
     ) -> Iterator[GriddedChord]:
-        
-        """Maps from a child class from the strategy to... """
         if children is None:
             children = self.decomposition_function(comb_class)
         idx = DisjointUnionStrategy.backward_map_index(objs)
-        yield objs[idx]
+        yield children[idx].backward_map.map_gc(cast(GriddedChord, objs[idx]))
 
+    def forward_map(
+        self,
+        comb_class: Tiling,
+        obj: GriddedChord,
+        children: Optional[Tuple[Tiling, ...]] = None,
+    ) -> Tuple[Optional[GriddedChord], Optional[GriddedChord]]:
+        if children is None:
+            children = self.decomposition_function(comb_class)
+        if obj.avoids(*self.gcs):
+            return (children[0].forward_map.map_gc(obj), None)
+        return (None, children[1].forward_map.map_gc(obj))
     
     def __repr__(self) -> str:
         args = ", ".join([f"gcs={self.gcs}", f"ignore_parent={self.ignore_parent}"])
