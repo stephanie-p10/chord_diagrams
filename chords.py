@@ -630,7 +630,7 @@ class GriddedChord(CombinatorialObject):
         return self._chord._patt_length == 1
 
     def is_single_chord(self) -> bool:
-        # sCN: is_point_chord -> is_single_chord
+        # sCN: ord -> is_single_chord
         """Checks if the gridded chord is of length 1."""
         return len(self) == 1
 

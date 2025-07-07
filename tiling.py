@@ -251,14 +251,14 @@ class Tiling(CombinatorialClass):
         # We still may need to remove point obstructions if the empty row or col
         # was on the end so we do it outside the next if statement.
         self._obstructions = tuple(
-            forward_map.map_gp(ob)
+            forward_map.map_gc(ob)
             for ob in self.obstructions
-            if not ob.is_point_perm() or forward_map.is_mappable_gp(ob)
+            if not ob.is_point() or forward_map.is_mappable_gc(ob)
         )
 
         if not forward_map.is_identity():
             self._requirements = tuple(
-                tuple(forward_map.map_gp(req) for req in reqlist)
+                tuple(forward_map.map_gc(req) for req in reqlist)
                 for reqlist in self._requirements
             )
             self._assumptions = tuple(
@@ -281,6 +281,52 @@ class Tiling(CombinatorialClass):
                 forward_map.max_col() + 1,
                 forward_map.max_row() + 1,
             )
+
+    def sub_tiling(
+        self,
+        cells: Iterable[Cell],
+        factors: bool = False,
+        add_assumptions: Iterable[TrackingAssumption] = tuple(),
+    ) -> "Tiling":
+        """Return the tiling using only the obstructions and requirements
+        completely contained in the given cells. If factors is set to True,
+        then it assumes that the first cells confirms if a gridded perm uses only
+        the cells."""
+        obstructions = tuple(
+            ob
+            for ob in self.obstructions
+            if (factors and ob.pos[0] in cells) or all(c in cells for c in ob.pos)
+        )
+        requirements = tuple( # tuple -> Tiling.sort_requirements when implemented sToDo
+            req
+            for req in self.requirements
+            if (factors and req[0].pos[0] in cells)
+            or all(c in cells for c in chain.from_iterable(r.pos for r in req))
+        )
+        assumptions = tuple(
+            assump.__class__(
+                gc
+                for gc in assump.gcs
+                if (factors and gc.pos[0] in cells) or all(c in cells for c in gc.pos)
+            )
+            for assump in self.assumptions
+        ) + tuple(add_assumptions)
+        linkages = tuple(
+            link
+            for link in self.linkages
+            if (factors and link[0] in cells)
+            or all(cell in cells for cell in link)
+        )
+        
+        # TODO: check sum/skew assumptions (this comment was inherited)
+        return self.__class__(
+            obstructions,
+            requirements,
+            linkages,
+            tuple(sorted(set(assump for assump in assumptions if assump.gcs))),
+            simplify=False,
+            sorted_input=True,
+        )
 
     def cells_in_row(self, row: int) -> CellFrozenSet:
         """Return all active cells in row."""
@@ -424,6 +470,24 @@ class Tiling(CombinatorialClass):
             self._linkages,
             self._assumptions
         )
+    
+    def add_assumptions(
+        self, assumptions: Iterable[TrackingAssumption], clean: bool = True
+    ) -> "Tiling":
+        """Returns a new tiling with the added assumptions."""
+        tiling = Tiling(
+            self._obstructions,
+            self._requirements,
+            self._linkages,
+            self._assumptions + tuple(assumptions),
+            remove_empty_rows_and_cols=False,
+            derive_empty=False,
+            simplify=False,
+            sorted_input=True,
+        )
+        #if clean: ## fix when implemented
+        #    tiling.clean_assumptions()
+        return tiling
     
     def only_cell_in_col(self, cell: Cell) -> bool:
         """Checks if the cell is the only active cell in the column."""
