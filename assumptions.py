@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING, Iterable, List, Optional, Tuple, Type
 
 from permuta import Perm
 
-from .chords import GriddedChord
+from chords import GriddedChord
 
 Cell = Tuple[int, int]
 

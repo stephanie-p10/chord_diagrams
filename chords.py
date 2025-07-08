@@ -434,7 +434,7 @@ class GriddedChord(CombinatorialObject):
 
         # Creates dictionary of chord number and vertices it connects
         # (0, 1, 2, 1, 3, 3, 2, 0) becomes {0: (0, 7), 1: (1, 3), 2: (2, 6), (3: (4, 5)}
-        self._chord_dict = self._chord.chord_dict()
+        self._chord_dict = self._chord.chord_dict
 
         # this was needed, but has problem with point placement when you try to place a single point and then another one
         #if self.contradictory():
@@ -546,7 +546,7 @@ class GriddedChord(CombinatorialObject):
 
     @classmethod
     def point_chord(cls, pos: Cell) -> "GriddedChord":
-        return GriddedChord(Chord((0,)), pos)
+        return GriddedChord(Chord((0,)), (pos,))
 
     ### Return information about GriddedChord instance ###
     def occurrences_in(self, other: "GriddedChord") -> Iterator[Tuple[int, ...]]:
@@ -618,7 +618,7 @@ class GriddedChord(CombinatorialObject):
             raise ValueError("You're lost, no valid direction")
         raise ValueError("The gridded chord does not occupy the cell")
 
-    def chord_dict(self) -> Dict[(int)]:
+    def chord_dict(self) -> dict[(int)]:
         return self._chord_dict
 
     ### Retrun Boolean information ###

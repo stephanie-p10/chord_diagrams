@@ -16,7 +16,7 @@ from tilings.assumptions import (
     SkewComponentAssumption,
     SumComponentAssumption,
 )
-from .assumptions import TrackingAssumption
+from assumptions import TrackingAssumption
 from algorithms.map import RowColMap
 
 __all__ = ["Tiling"]
@@ -40,24 +40,17 @@ class Tiling(CombinatorialClass):
     """
     def __init__(self,
         obstructions: Iterable[GriddedChord] = tuple(),
-        #point_obstructions: Iterable[Cell] = tuple(),
-        requirements: Iterable[Iterable[GriddedChord]] = tuple(), # might need a case for requirement of having one point in a cell...
-        #point_requirements: Iterable[Cell] = tuple(),
+        requirements: Iterable[Iterable[GriddedChord]] = tuple(), 
         linkages: Iterable[Iterable[Cell]] = tuple(),
         assumptions: Iterable[TrackingAssumption] = tuple()):
 
         super().__init__()
         self._linkages = linkages
         self._obstructions = obstructions
-        #self._point_obs = point_obstructions
         self._requirements = requirements
-        #self._point_reqs = point_requirements
         self._assumptions = assumptions
-        #self.cells = []
 
         self._cached_properties = {}
-        self._cached_properties["forward_map"] = RowColMap.identity((0, 0))
-        self._cached_properties["backward_map"] = RowColMap.identity((0, 0))
 
         # currently defaults cells with no requirements or obsturctions to be empty
         # note: should this be defaulted to allowing other chords?
@@ -96,13 +89,13 @@ class Tiling(CombinatorialClass):
             self._obstructions = sorted(self._obstructions) # not assuming, fix later sToDo
             index = 0
             for ob in self._obstructions:
-                if len(ob) > 1:
+                if len(ob.patt) > 1:
                     break
                 index += 1  # Now the last point obstruction is at index [index-1]
-            non_point_obstructions = self._obstructions[index:]
+            non_point_obstructions = tuple(self._obstructions[index:])
 
             new_point_obstructions = tuple(
-                GriddedChord(Chord(0,), (cell,)) for cell in empty_cells
+                GriddedChord(Chord((0,)), (cell,)) for cell in empty_cells
             )
             self._obstructions = new_point_obstructions + non_point_obstructions
 
@@ -460,12 +453,13 @@ class Tiling(CombinatorialClass):
             self._assumptions,
         )
 
-    def add_obstructions(self, gps: Iterable[GriddedChord]) -> "Tiling":
+    def add_obstructions(self, gcs: Iterable[GriddedChord]) -> "Tiling":
         """Returns a new tiling with the obstructions added."""
-        new_obs = tuple(gps)
+        new_obs = tuple(gcs)
+        #print(sorted(self._obstructions + new_obs))
+        all_obs = sorted(self._obstructions + new_obs)
         return Tiling(
-            tuple(self._cached_properties["dimensions"][0], self._cached_properties["dimensions"][1]),
-            sorted(self._obstructions + new_obs),
+            all_obs,
             self._requirements,
             self._linkages,
             self._assumptions

@@ -36,6 +36,7 @@ class RequirementInsertionStrategy(DisjointUnionStrategy[Tiling, GriddedChord]):
         Return a tuple of tiling. The first one avoids all the pattern in the
         list while the other contain one of the patterns in the list.
         """
+        #print(comb_class.add_obstructions(self.gcs).obstructions)
         return comb_class.add_obstructions(self.gcs), comb_class.add_list_requirement(
             self.gcs
         )
@@ -64,7 +65,7 @@ class RequirementInsertionStrategy(DisjointUnionStrategy[Tiling, GriddedChord]):
         if children is None:
             children = self.decomposition_function(comb_class)
         idx = DisjointUnionStrategy.backward_map_index(objs)
-        yield children[idx].backward_map.map_gc(cast(GriddedChord, objs[idx]))
+        return children[idx].backward_map.map_gc(cast(GriddedChord, objs[idx]))
 
     def forward_map(
         self,
@@ -75,6 +76,8 @@ class RequirementInsertionStrategy(DisjointUnionStrategy[Tiling, GriddedChord]):
         if children is None:
             children = self.decomposition_function(comb_class)
         if obj.avoids(*self.gcs):
+            #print(children[0].forward_map)
+            #print(children[0].forward_map.map_gc(obj))
             return (children[0].forward_map.map_gc(obj), None)
         return (None, children[1].forward_map.map_gc(obj))
     
@@ -96,5 +99,5 @@ class RequirementInsertionStrategy(DisjointUnionStrategy[Tiling, GriddedChord]):
 
     @classmethod
     def from_dict(cls, d: dict) -> "RequirementInsertionStrategy":
-        gps = [GriddedChord.from_dict(gp) for gp in d.pop("gps")]
-        return cls(gps=gps, **d)
+        gcs = [GriddedChord.from_dict(gc) for gc in d.pop("gps")]
+        return cls(gcs=gcs, **d)

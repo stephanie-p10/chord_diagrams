@@ -25,7 +25,7 @@ class RowColMap:
     """
 
     def __init__(
-        self, row_map: Dict[int, int], col_map: Dict[int, int], is_identity: bool
+        self, row_map: Dict[int, int], col_map: Dict[int, int], is_identity: bool = False
     ) -> None:
         self._row_map = row_map
         self._col_map = col_map
@@ -61,6 +61,26 @@ class RowColMap:
         Indicate if the map is the identity map.
         """
         return self._is_identity
+    
+    def is_mappable_row(self, row: int) -> bool:
+        """
+        Return True if the image of the row is defined.
+        """
+        return row in self._row_map
+    
+    def is_mappable_col(self, col: int) -> bool:
+        """
+        Return True if the image of the column is defined.
+        """
+        return col in self._col_map
+
+    
+    def is_mappable_cell(self, cell: Cell) -> bool:
+        """
+        Return True if the cell can be mapped, i.e. if the image of the row
+        and the column of the are defined by the map.
+        """
+        return self.is_mappable_col(cell[0]) and self.is_mappable_row(cell[1])
 
     def is_mappable_gc(self, gc: "GriddedChord") -> bool:
         """
@@ -81,15 +101,8 @@ class RowColMap:
         If some of the gridded permutation tracked by the assumption cannot be mapped
         they are removed from the assumption.
         """
-        gcs = tuple(self.map_gc(gc) for gc in assumption.gps if self.is_mappable_gc(gc))
+        gcs = tuple(self.map_gc(gc) for gc in assumption.gcs if self.is_mappable_gc(gc))
         return assumption.__class__(gcs)
-
-    def is_mappable_cell(self, cell: Cell) -> bool:
-        """
-        Return True if the cell can be mapped, i.e. if the image of the row
-        and the column of the are defined by the map.
-        """
-        return self.is_mappable_col(cell[0]) and self.is_mappable_row(cell[1])
 
     def map_cell(self, cell: Cell) -> Cell:
         """
@@ -97,23 +110,11 @@ class RowColMap:
         """
         return (self.map_col(cell[0]), self.map_row(cell[1]))
 
-    def is_mappable_row(self, row: int) -> bool:
-        """
-        Return True if the image of the row is defined.
-        """
-        return row in self._row_map
-
     def map_row(self, row: int) -> int:
         """
         Map the row according to the map.
         """
         return self._row_map[row]
-
-    def is_mappable_col(self, col: int) -> bool:
-        """
-        Return True if the image of the column is defined.
-        """
-        return col in self._col_map
 
     def map_col(self, col: int) -> int:
         """
@@ -134,3 +135,6 @@ class RowColMap:
         s += f"    row map: {self._row_map}\n"
         s += f"    col map: {self._col_map}\n"
         return s
+
+    def __eq__(self, other: "RowColMap") -> bool:
+        return self._row_map == other._row_map and self._col_map == other._col_map
