@@ -42,7 +42,8 @@ class Tiling(CombinatorialClass):
         obstructions: Iterable[GriddedChord] = tuple(),
         requirements: Iterable[Iterable[GriddedChord]] = tuple(), 
         linkages: Iterable[Iterable[Cell]] = tuple(),
-        assumptions: Iterable[TrackingAssumption] = tuple()):
+        assumptions: Iterable[TrackingAssumption] = tuple(),
+        simplify: bool = True):
 
         super().__init__()
         self._linkages = linkages
@@ -55,6 +56,9 @@ class Tiling(CombinatorialClass):
         # currently defaults cells with no requirements or obsturctions to be empty
         # note: should this be defaulted to allowing other chords?
         self._prepare_properties()
+
+        if simplify:
+            self._simplify
 
     # also changed how acitve_cells and empty_cells are computed, no longer add point obs based on empty cells
     def _prepare_properties(self) -> None:
@@ -102,6 +106,9 @@ class Tiling(CombinatorialClass):
         self._cached_properties["active_cells"] = frozenset(active_cells)
         self._cached_properties["empty_cells"] = frozenset(empty_cells)
         self._cached_properties["dimensions"] = dimensions
+
+    def _simplify(self) -> None:
+        pass
 
     def _minimize_mapping(self) -> RowColMap:
         """
@@ -488,8 +495,8 @@ class Tiling(CombinatorialClass):
         return sum(1 for (x, y) in self.active_cells if x == cell[0]) == 1
 
     def only_cell_in_row(self, cell: Cell) -> bool:
-        """Checks if the cell is the only active cell in the row (besides other end of chord)."""
-        return sum(1 for (x, y) in self.active_cells if y == cell[1]) == 2
+        """Checks if the cell is the only active cell in the row"""
+        return sum(1 for (x, y) in self.active_cells if y == cell[1]) == 1
     
     #sTODO this is wrong! currently this works for when obstructions are simplified automatically.
     @property
@@ -501,11 +508,11 @@ class Tiling(CombinatorialClass):
             local_length_lt2_obcells = Counter(
                 ob.pos[0]
                 for ob in self._obstructions
-                if ob.is_localized() and (ob._patt == (0, 0) or ob._patt == (0, 1))
+                if ob.is_localized() and (ob._patt == (0, 0) or ob._patt == (0, 1) or ob._patt == (1,0))
             )
             # finds cells that must only have a single point
             point_cells = frozenset(
-                cell for cell in self.positive_cells if local_length_lt2_obcells[cell] == 2
+                cell for cell in self.positive_cells if local_length_lt2_obcells[cell] == 3
             )
             self._cached_properties["point_cells"] = point_cells
             return point_cells

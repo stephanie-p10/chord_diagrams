@@ -12,7 +12,7 @@ from comb_spec_searcher.strategies.strategy import VerificationStrategy
 from chords import Chord, GriddedChord
 from tiling import Tiling
 from algorithms.requirement_placement import RequirementPlacement
-from permuta.misc import DIR_EAST, DIR_NONE, DIR_NORTH, DIR_SOUTH, DIR_WEST, DIRS
+from misc import DIR_EAST, DIR_NONE, DIR_NORTH, DIR_SOUTH, DIR_WEST, DIRS
 
 Cell = Tuple[int, int]
 ListRequirement = Tuple[GriddedChord, ...]

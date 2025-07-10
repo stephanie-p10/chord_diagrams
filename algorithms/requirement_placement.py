@@ -5,10 +5,10 @@ sys.path.append(str(Path(__file__).resolve().parent.parent))
 from itertools import chain, filterfalse
 from typing import TYPE_CHECKING, Dict, FrozenSet, Iterable, List, Optional, Tuple
 
-from permuta.misc import DIR_EAST, DIR_NONE, DIR_NORTH, DIR_SOUTH, DIR_WEST, DIRS
+from misc import DIR_EAST, DIR_NONE, DIR_NORTH, DIR_SOUTH, DIR_WEST, DIRS
 from assumptions import TrackingAssumption
 from chords import Chord, GriddedChord
-from steph_chords.tiling import Tiling
+from tiling import Tiling
 
 Cell = Tuple[int, int]
 Dir = int
@@ -32,10 +32,10 @@ class RequirementPlacement:
         - `dirs`: The directions used for placement (default to all
           directions).
           The possible directions are:
-            - `permuta.misc.DIR_NORTH`
-            - `permuta.misc.DIR_SOUTH`
-            - `permuta.misc.DIR_EAST`
-            - `permuta.misc.DIR_WEST`
+            - `misc.DIR_NORTH`
+            - `misc.DIR_SOUTH`
+            - `misc.DIR_EAST`
+            - `misc.DIR_WEST`
     """
 
     def __init__(
@@ -56,7 +56,7 @@ class RequirementPlacement:
         self._stretched_obstructions_cache: ObsCache = {}
         self._stretched_requirements_cache: ReqsCache = {}
         self._stretched_assumptions_cache: AssumpCache = {}
-        self._stretched_linkages_cache: Linkages
+        self._stretched_linkages_cache: LinkCache = {}
         if self.own_row and self.own_col:
             self.directions = frozenset(DIRS)
         elif self.own_row:
@@ -156,7 +156,7 @@ class RequirementPlacement:
         newpos = [
             self._point_translation(gc, index, placed_cell) for index in range(len(gc.pos))
         ]
-        return gc.__class__(gc.patt, newpos)
+        return gc.__class__(gc._chord, newpos)
 
     # sCN: places the other end of a chord correctly
     # this translates a given chord when a point within the chord was placed.
@@ -178,7 +178,7 @@ class RequirementPlacement:
             else self._placed_cell(gc.pos[point_index], i != point_index)
             for i in range(len(gc.pos))
         ]
-        return gc.__class__(gc.patt, new_pos)
+        return gc.__class__(gc._chord, new_pos)
 
     # sCN: added boolean to tell if the placed cell is the intended one or the obligatory other endpoint
     def _placed_cell(self, cell: Cell, is_other_end: bool = False) -> Cell:
@@ -203,8 +203,9 @@ class RequirementPlacement:
         """
         placed_cell = self._placed_cell(cell)
         return [
-            GriddedChord((0, 0), (placed_cell, placed_cell)),
-            GriddedChord((0, 1), (placed_cell, placed_cell)),
+            GriddedChord(Chord((0, 0)), (placed_cell, placed_cell)),
+            GriddedChord(Chord((0, 1)), (placed_cell, placed_cell)),
+            GriddedChord(Chord((1, 0)), (placed_cell, placed_cell))
         ]
 
     def _point_requirements(self, cell: Cell) -> List[ListRequirement]:
@@ -213,7 +214,7 @@ class RequirementPlacement:
         is a point.
         """
         placed_cell = self._placed_cell(cell)
-        return [[GriddedChord((0,), (placed_cell,))]]
+        return [[GriddedChord(Chord((0,)), (placed_cell,))]]
 
     def _stretch_gridded_chord(self, gc: GriddedChord, cell: Cell) -> Iterable[GriddedChord]:
         """
@@ -404,7 +405,7 @@ class RequirementPlacement:
         """
         Return the tilings where the placed point corresponds to the directionmost
         (the furtest in the given direction, ex: leftmost point) of an occurrence
-        of any point idx, gc(idx) for gridded chord diagrams in gcs, and idx in indices
+        of any point [idx, gc(idx)] for gridded chord diagrams in gcs, and idx in indices
         """
         if cells is not None:
             cells = frozenset(cells)
@@ -439,8 +440,7 @@ class RequirementPlacement:
                     reduced_obs,
                     reqs + [remaining_req],
                     links,
-                    assumptions=assump,
-                    already_minimized_obs=True,
+                    assumptions=assump
                 )
             )
         return tuple(res)
@@ -459,7 +459,7 @@ class RequirementPlacement:
         given direction.
         """
         assert direction in (DIR_EAST, DIR_WEST)
-        req = [GriddedChord((0,), (cell,)) for cell in self._tiling.cells_in_col(index)]
+        req = [GriddedChord(Chord((0,)), (cell,)) for cell in self._tiling.cells_in_col(index)]
         return self.place_point_of_req(req, tuple(0 for _ in req), direction)
 
     def row_placement(self, index: int, direction: Dir) -> Tuple["Tiling", ...]:
@@ -468,7 +468,7 @@ class RequirementPlacement:
         direction.
         """
         assert direction in (DIR_NORTH, DIR_SOUTH)
-        req = [GriddedChord((0,), (cell,)) for cell in self._tiling.cells_in_row(index)]
+        req = [GriddedChord(Chord((0,)), (cell,)) for cell in self._tiling.cells_in_row(index)]
         return self.place_point_of_req(req, tuple(0 for _ in req), direction)
 
     def empty_col(self, index: int) -> "Tiling":
@@ -490,3 +490,4 @@ class RequirementPlacement:
                 GriddedChord((0,), (cell,)) for cell in self._tiling.cells_in_row(index)
             )
         )
+    

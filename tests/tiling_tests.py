@@ -35,21 +35,21 @@ gc_sc_nested = GriddedChord.single_cell(Chord((0, 1, 1, 0)), (0, 0))
 gc_sc_disjoint = GriddedChord.single_cell(Chord((0, 0, 1, 1)), (0, 0))
 
 # Tilings:
-t_no_restrictions = Tiling((1, 1))
-t_av_single = Tiling((1, 1), (gc_single_00_00,), (), ())
-t_cn_single = Tiling((1, 1), (), ((gc_single_00_00,),))
-t_lk_single = Tiling((2, 2), (), (), (((0, 0),),))
-t_lk_2x2 = Tiling((2, 2), (), (), (((0, 0), (0, 1), (1, 0), (1, 1)),))
-t_ex = Tiling((2, 2), (gc_single_00_00, gc_single_11_11), ((gc_single_01_11, gc_disjoint), (gc_nested,)), (((0, 0), (0, 1), (1, 0)), ((1, 0), (1, 1))))
+t_no_restrictions = Tiling()
+t_av_single = Tiling((gc_single_00_00,), (), ())
+t_cn_single = Tiling((), ((gc_single_00_00,),))
+t_lk_single = Tiling( (), (), (((0, 0),),))
+t_lk_2x2 = Tiling((), (), (((0, 0), (0, 1), (1, 0), (1, 1)),))
+t_ex = Tiling((gc_single_00_00, gc_single_11_11), ((gc_single_01_11, gc_disjoint), (gc_nested,)), (((0, 0), (0, 1), (1, 0)), ((1, 0), (1, 1))))
 
 # contains tests
 assert t_no_restrictions.contains(gc_single_00_00)
 assert t_cn_single.contains(gc_single_00_00)
 assert t_cn_single.contains(gc_sc_crossed)
-assert not Tiling((2, 2), (gc_nested,), ((gc_single_00_00,),)).contains(gc_crossed)
-assert Tiling((2, 2), (gc_nested,), ((gc_single_00_10,),)).contains(gc_crossed)
-assert Tiling((2, 2), (gc_3_nested,), ((gc_single_00_10,),)).contains(gc_nested)
-assert not Tiling((2, 2), (gc_nested,), ((gc_single_00_10,),)).contains(gc_3_nested)
+assert not Tiling( (gc_nested,), ((gc_single_00_00,),)).contains(gc_crossed)
+assert Tiling( (gc_nested,), ((gc_single_00_10,),)).contains(gc_crossed)
+assert Tiling((gc_3_nested,), ((gc_single_00_10,),)).contains(gc_nested)
+assert not Tiling((gc_nested,), ((gc_single_00_10,),)).contains(gc_3_nested)
 assert not t_lk_single.contains(gc_single_00_10)
 assert t_lk_single.contains(gc_single_00_00)
 assert not t_lk_single.contains(gc_sc_disjoint)
@@ -72,16 +72,23 @@ assert not t_lk_2x2.contains(gc_3_nested)
 #assert not Tiling((2, 1), (gc_single_00_10,), (), (((0, 0), (1, 0)),)).is_empty()
 #assert not Tiling((2, 1), (gc_3_nested_h1,), ((gc_nested_h1,),), ()).is_empty()
 #assert Tiling((1, 1), (), ((gc_crossed, gc_nested), (gc_nested,)), ()).is_empty()
-start1 = time.time()
+#start1 = time.time()
 #assert not Tiling((2, 2), (gc_3_nested_h1,), ((gc_nested_h1,), (gc_crossed, gc_nested)), ()).is_empty_1()
-end1 = time.time()
-start2 = time.time()
+#end1 = time.time()
+#start2 = time.time()
 #assert not Tiling((2, 2), (gc_3_nested_h1,), ((gc_nested_h1,), (gc_crossed, gc_nested)), ()).is_empty_2()
-end2 = time.time()
+#end2 = time.time()
 
 #assert Tiling.from_dict(t_ex.to_jsonable()) == t_ex
-print("is_empty_1: ", end1-start1)
-print("is_empty_2: ", end2-start2)
+#print("is_empty_1: ", end1-start1)
+#print("is_empty_2: ", end2-start2)
+
+t = Tiling((GriddedChord(Chord((0,1)), ((0,1), (0,1))), GriddedChord(Chord((0,0)), ((0,1), (0,1))), GriddedChord(Chord((1,0)), ((0,1), (0,1))), GriddedChord(Chord((0,1)), ((0,0), (0,0))), GriddedChord(Chord((0,0)), ((0,0), (0,0))), GriddedChord(Chord((1,0)), ((0,0), (0,0)))),
+           ((GriddedChord(Chord((0,)), ((0,0),)),),(GriddedChord(Chord((0,)), ((0,1),)),)))
+
+
+
+print(t.point_cells)
 
 print("asserts passed")
 
