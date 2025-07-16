@@ -26,6 +26,7 @@ For some set H of grids, a tiling T gets split into:
 """
 
 # gcs = H
+# sToDo: need factory for picking gcs to feed to strategy
 class RequirementInsertionStrategy(DisjointUnionStrategy[Tiling, GriddedChord]):
     def __init__(self, gcs: Iterable[GriddedChord], ignore_parent: bool = False):
         super().__init__(ignore_parent=ignore_parent)

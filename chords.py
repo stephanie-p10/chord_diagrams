@@ -341,7 +341,7 @@ class Chord(Tuple):
 
     # sCP, sCN: changed name from chord -> chord_dict, added example
     @property
-    def chord_dict(self) -> dict[(int)]:
+    def chord_dict(self) -> dict[int: Cell]:
         """Returns the chord dictionary
         Example:
             >>> Chord((0, 1, 1, 0, 2, 2)).chord_dict
@@ -435,6 +435,7 @@ class GriddedChord(CombinatorialObject):
         # Creates dictionary of chord number and vertices it connects
         # (0, 1, 2, 1, 3, 3, 2, 0) becomes {0: (0, 7), 1: (1, 3), 2: (2, 6), (3: (4, 5)}
         self._chord_dict = self._chord.chord_dict
+
 
         # this was needed, but has problem with point placement when you try to place a single point and then another one
         #if self.contradictory():
@@ -590,7 +591,7 @@ class GriddedChord(CombinatorialObject):
                 if (i != j and chord1 != chord2))
         )
 
-    def forced_point_index(self, cell: Cell, direction: int) -> int:
+    def forced_chord(self, cell: Cell, direction: int) -> int:
     # sCN: returns most extreme chord in each case, not point
         """Search in the cell given for the chord with the strongest force with
         respect to the given force.
@@ -618,6 +619,7 @@ class GriddedChord(CombinatorialObject):
             raise ValueError("You're lost, no valid direction")
         raise ValueError("The gridded chord does not occupy the cell")
 
+    @property
     def chord_dict(self) -> dict[(int)]:
         return self._chord_dict
 
@@ -1002,9 +1004,12 @@ class GriddedChord(CombinatorialObject):
         return (min_index_source, max_index_source, min_index_sink, max_index_sink)
     
     # this was copied in for use in chord_placement
+    # sToDo: needs tests!
     def get_bounding_box(self, cell: Cell) -> Tuple[int, int, int, int]:
         """Determines the range of indices and values of the points in 
-        the gridded chord diagram that can be found in the Cell cell."""
+        the gridded chord diagram that can be found in cell.
+        
+        Returns in order:  min index, max index, min value, max value"""
         row = list(self.get_points_row(cell[1]))
         col = list(self.get_points_col(cell[0]))
         if not row: # if there are no points in the selected row
@@ -1078,10 +1083,11 @@ class GriddedChord(CombinatorialObject):
         positions = list(self._pos)
         positions.insert(source, (col_source, row))
         positions.insert(sink + 1, (col_sink, row)) # +1 needed to account for source being inserted first.
-        try:
-            gc =  GriddedChord(patt, positions)
+        
+        gc =  GriddedChord(patt, positions)
+        if not gc.contradictory():
             return gc
-        except ValueError:
+        else:
             return None
     
     def remove_chord(self, chord: int) -> "GriddedChord":

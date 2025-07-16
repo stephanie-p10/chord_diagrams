@@ -490,6 +490,7 @@ class Tiling(CombinatorialClass):
         #    tiling.clean_assumptions()
         return tiling
     
+    # stopped here
     def only_cell_in_col(self, cell: Cell) -> bool:
         """Checks if the cell is the only active cell in the column."""
         return sum(1 for (x, y) in self.active_cells if x == cell[0]) == 1
@@ -497,6 +498,12 @@ class Tiling(CombinatorialClass):
     def only_cell_in_row(self, cell: Cell) -> bool:
         """Checks if the cell is the only active cell in the row"""
         return sum(1 for (x, y) in self.active_cells if y == cell[1]) == 1
+    
+    def obs_in_cell(self, cell: Cell) -> tuple[int]:
+        """Returns the indices obstructions in cell"""
+
+    def reqs_in_cell(self, cell: Cell) -> tuple[int]:
+        """Returns the indices of requirments lists where at least one requirment in the list has a point in cell"""
     
     #sTODO this is wrong! currently this works for when obstructions are simplified automatically.
     @property
@@ -516,6 +523,20 @@ class Tiling(CombinatorialClass):
             )
             self._cached_properties["point_cells"] = point_cells
             return point_cells
+        
+    @property
+    def chord_cells(self) -> CellFrozenSet:
+        try:
+            return self._cached_properties["chord_cells"]
+        except KeyError:
+            local_len_2_obcells = Counter(
+                ob.pos[0]
+                for ob in self._obstructions
+                if ob.is_localized() and (ob._patt == (0,1) or ob._patt == (1,0))
+            )
+            chord_cells = frozenset(cell for cell in self.positive_cells if local_len_2_obcells[cell] == 2)
+            self._cached_properties["chord_cells"] = chord_cells
+            return chord_cells
         
     @property
     def positive_cells(self) -> CellFrozenSet:
