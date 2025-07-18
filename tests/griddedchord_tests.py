@@ -160,6 +160,12 @@ assert GriddedChord(Chord((0, 1, 2, 0, 2, 1)), ((0, 0), (0, 1), (1, 1), (1, 0), 
 assert GriddedChord(Chord((0, 1, 2, 0, 2, 1)), ((0, 0), (0, 1), (1, 1), (1, 0), (2, 1), (3, 1))).remove_chord(3) == GriddedChord(Chord((0, 1, 2, 0, 2, 1)), ((0, 0), (0, 1), (1, 1), (1, 0), (2, 1), (3, 1)))
 assert GriddedChord(Chord((0, 1, 2, 0, 2, 1)), ((0, 0), (0, 1), (1, 1), (1, 0), (2, 1), (3, 1))).remove_chord(2) == GriddedChord(Chord((0, 1, 0, 1)), ((0, 0), (0, 1), (1, 0), (3, 1)))
 
+for chord in sorted(gc3.all_subchords(return_all_subpatts=True)):
+    print(chord)
+print()
+for chord in set(GriddedChord(Chord((0, 1, 2, 2, 0, 1)), ((0, 0), (1, 0), (1, 1), (1, 1), (2, 0), (2, 0))).all_subchords(proper=False, return_all_subpatts=True)):
+    print(chord)
+# sToDo: these tests should be updated; originally we just wanted to have them return actual chords, now there is a parameter to return all subpatts
 assert set(gc3.all_subchords()) == set([GriddedChord(), GriddedChord(Chord((0, 0)), ((0, 0), (1, 0))), GriddedChord(Chord((0, 0)), ((1, 1), (2, 1)))])
 assert set(GriddedChord(Chord((0, 1, 2, 2, 0, 1)), ((0, 0), (1, 0), (1, 1), (1, 1), (2, 0), (2, 0))).all_subchords(proper=False)) == set([
     GriddedChord(),
@@ -238,5 +244,11 @@ assert GriddedChord(Chord((0,)), ((0,0),)).is_point()
 assert not gc1.is_point()
 assert not empty_c.is_point()
 assert not GriddedChord(Chord((0,0)), ((0,0), (0,0))).is_point()
+
+all_grids = GriddedChord.all_grids(Chord((1, 2, 2, 0)), ((0,0), (1,1)))
+
+print()
+for grid in all_grids:
+    print(grid)
 
 print("all assertions passed")

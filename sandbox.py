@@ -1,4 +1,4 @@
 from chords import Chord, GriddedChord
 
-c = Chord((0,1,1,0))
-print(type(c))
+GriddedChord(Chord((0, 1, 1, 2, 0, 2)), ((0, 0), (0, 1), (1, 1), (2, 2), (2, 0), (3, 2)))
+

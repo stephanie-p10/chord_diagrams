@@ -176,14 +176,18 @@ class Chord(Tuple):
         return Chord(result_list)
     
     @classmethod
-    def to_standard(cls, iterable):
-        # Keeps track of standard order chords items in iterable will be mapped to.
+    def to_standard(cls, iterable, in_relative_order: bool = False):
+         # Keeps track of standard order chords items in iterable will be mapped to.
         chord_map = {}
+        chord_list = iterable
+        if in_relative_order:
+           chord_list = sorted(list(set(chord_list)))
+            
         # Keeps track of what chord the next new item in iterable will be mapped to.
         next_index = 0
         
         # Maps each item in iterable to its appropriate chord.
-        for item in iterable:
+        for item in chord_list:
             if item not in chord_map:
                 chord_map[item] = next_index
                 next_index += 1
@@ -496,6 +500,72 @@ class GriddedChord(CombinatorialObject):
         GriddedChord(Chord((0, 0, 1, 1)), ((0, 0), (0, 0), (0, 0), (0, 0)))
         """
         positions_so_far = [[]]
+        
+        def append_pos_lists(curr_positions: List[List[Cell]], 
+                        possible_cells: List[Cell], 
+                        patt: Iterable[int],
+                        new_val: int= None):
+            """Returns the list of all positions that can be created by extending a
+            position in positions_curr with a cell in positions_possible
+            
+            source_idx is the source index of the chord in the position about to be added
+            
+            last_source_idx is the index of where the largest chord so far started"""
+            appended_positions = []
+            # loops through every current position list, and checks (then adds) every possible cell as a new list
+            for pos_lst in curr_positions:
+                for cell in possible_cells:
+                    # x-coordinate of the most recent cell
+                    last_x = pos_lst[-1][0] if len(pos_lst) > 0 else -1
+                    valid_x = (cell[0] >= last_x) # the x-coordinates must be in increasing order
+
+                    valid_y = True
+                    for idx, pos in enumerate(pos_lst):
+                        chord_val = patt[idx]
+                        # if the chord we are adding is already in the pattern, the other end must have the same y value
+                        if new_val == chord_val:
+                            valid_y = (cell[1] == pos[1])
+                            break
+                        # if the chord we are adding is less then some chord in the pattern, it must have a smaller or equal y value
+                        elif new_val < chord_val:
+                            valid_y = (cell[1] <= pos[1])
+                        # if the chord we are adding is more then some chord in the pattern, it must have a greater or equal y value
+                        elif new_val > chord_val:
+                            valid_y = (cell[1] >= pos[1])
+                        
+                        if valid_y == False:
+                            break
+                
+                    # extend pos_lst by cell iff it has a valid x and y coordinate.
+                    if valid_x and valid_y:
+                        pos_lst_extended = pos_lst.copy()
+                        pos_lst_extended.append(cell)
+                        appended_positions.append(pos_lst_extended)
+                        
+            return appended_positions
+
+        # runs over every item in the chord to build the posible position lists to the length of the chord
+        for chord_val in chord:
+            # updates the possible positions lists to include positions for (idx, chord_val)
+            positions_so_far = append_pos_lists(positions_so_far, cells, chord.get_pattern(), chord_val)
+            
+        for pos_list in positions_so_far:
+            if (len(pos_list) == len(chord.get_pattern())):
+                yield cls(chord, pos_list)
+
+    @classmethod
+    def all_patt_grids(cls, chord: Chord, cells): # copy in case I screw it up
+        """Returns all possible griddings of chord in cells
+        
+        Examples: 
+        >>> GriddedChord.all_grids(Chord((0, 0, 1, 1)), [(0, 0)])
+        GriddedChord(Chord((0, 0, 1, 1)), ((0, 0), (0, 0), (0, 0), (0, 0)))
+        >>> GriddedChord.all_grids(Chord((0, 0, 1, 1)), [(0, 0), (0, 1)])
+        GriddedChord(Chord((0, 0, 1, 1)), ((0, 0), (0, 0), (0, 1), (0, 1)))
+        GriddedChord(Chord((0, 0, 1, 1)), ((0, 0), (0, 0), (0, 1), (0, 1)))
+        GriddedChord(Chord((0, 0, 1, 1)), ((0, 0), (0, 0), (0, 0), (0, 0)))
+        """
+        positions_so_far = [[]]
         source_vals = {} # chord value : source
         last_source_idx = -1
         
@@ -542,7 +612,7 @@ class GriddedChord(CombinatorialObject):
                 last_source_idx = idx
             
         for pos_list in positions_so_far:
-            if (len(pos_list) == len(chord) * 2):
+            if (len(pos_list) == len(chord.get_pattern())):
                 yield cls(chord, pos_list)
 
     @classmethod
@@ -960,14 +1030,25 @@ class GriddedChord(CombinatorialObject):
         new_grid = GriddedChord(Chord.to_standard(patt), positions)
         return new_grid
 
-    def all_subchords(self, proper: bool = True) -> Iterator["GriddedChord"]:
-        """Yields all gridded subchords."""
+    def all_subchords(self, proper: bool = True, return_all_subpatts: bool = False) -> Iterator["GriddedChord"]:
+        """Yields all gridded subchords.
+        
+        If proper is True, returns only proper subchords
+        
+        If return_all_subpatts is True, then all subpatts are returned, even if they are not chord diagrams"""
         # loops through all sizes of subchords, taking into account if we are looking for proper subchords or not
-        for subchord_length in range(len(self) if proper else len(self) + 1):
-            for subchords in combinations(range(len(self)), subchord_length):
-                yield type(self)(
-                    Chord.to_standard([chord for chord, pos in self if chord in subchords]),
-                    (pos for chord, pos in self if chord in subchords))
+        if return_all_subpatts == False:
+            for subchord_length in range(len(self) if proper else len(self) + 1):
+                for subchords in combinations(range(len(self)), subchord_length):
+                    yield type(self)(
+                        Chord.to_standard([chord for chord, pos in self if chord in subchords]),
+                        (pos for chord, pos in self if chord in subchords))
+        else:   
+            for subchord_length in range(len(self.patt) if proper else len(self.patt) + 1):
+                for indices in combinations(range(len(self.patt)), subchord_length):
+                    yield type(self)(
+                        Chord.to_standard([self.patt[idx] for idx in range(len(self.patt)) if idx in indices], True),
+                        (self.pos[idx] for idx in range(len(self.patt)) if idx in indices))
 
     def get_bounding_indices(self, col_source: int, col_sink: int) -> Tuple[int, int, int, int]:
         # sCN: previous method returned the restrictions on the values for a point inserted 

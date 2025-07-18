@@ -86,9 +86,17 @@ assert not t_lk_2x2.contains(gc_3_nested)
 t = Tiling((GriddedChord(Chord((0,1)), ((0,1), (0,1))), GriddedChord(Chord((0,0)), ((0,1), (0,1))), GriddedChord(Chord((1,0)), ((0,1), (0,1))), GriddedChord(Chord((0,1)), ((0,0), (0,0))), GriddedChord(Chord((0,0)), ((0,0), (0,0))), GriddedChord(Chord((1,0)), ((0,0), (0,0)))),
            ((GriddedChord(Chord((0,)), ((0,0),)),),(GriddedChord(Chord((0,)), ((0,1),)),)))
 
+small_tiling = Tiling((),
+                      ((GriddedChord(Chord((0,1)), ((0,0), (1,1))),),))
+
+large_list = small_tiling.all_chords_on_tiling(3, True)
 
 
-print(t.point_cells)
+
+for chord in large_list:
+    print(chord)
+
+#print(t.point_cells)
 
 print("asserts passed")
 
