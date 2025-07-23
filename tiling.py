@@ -280,11 +280,12 @@ class Tiling(CombinatorialClass):
                 forward_map.max_row() + 1,
             )
 
+    # proved bound has -1 at the end, but I'm not sure how to account for reqs that are not valid chord diagrams
     def maximum_length_of_minimum_gridded_chord(self) -> int:
         """Returns the maximum length of the minimum gridded permutation that
         can be gridded on the tiling.
         """
-        return 2 * sum(max(map(len, reqs)) for reqs in self.requirements) - 1
+        return 2 * sum(max(map(len, reqs)) for reqs in self.requirements)
 
     def sub_tiling(
         self,
@@ -435,9 +436,12 @@ class Tiling(CombinatorialClass):
                     for subchord in list(combinations(chord, chord_size)):
                         subchord = Chord.to_standard(subchord, True)
                         chords_on_tiling.update(filter(self.contains, GriddedChord.all_grids(subchord, cells)))
-                        #if chord_size == 3:
+                        #if chord_size == 2:
                             #print(list(GriddedChord.all_grids(subchord, cells)))
-                    #print()
+                            #print(list(filter(self.contains, GriddedChord.all_grids(subchord, cells))))
+                    #if chord_size == 2:
+                        #print()
+                print(chord_size)
                     
         return chords_on_tiling
 
@@ -486,6 +490,7 @@ class Tiling(CombinatorialClass):
         has_reqs = all(gc.contains(*req) for req in self._requirements)
         avoids_ob = not any(gc.contains(ob) for ob in self._obstructions)
         links_connected = all(gc.is_connected(cells) for cells in self._linkages)
+        #print(has_reqs, avoids_ob, links_connected)
         return has_reqs and avoids_ob and links_connected
     
     def add_list_requirement(self, req_list: Iterable[GriddedChord]) -> "Tiling":

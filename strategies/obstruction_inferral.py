@@ -98,11 +98,13 @@ class ObstructionInferralFactory(StrategyFactory[Tiling]):
     A strategy used for adding obstruction that the tiling avoids, but not
     currently in the obstructions.
 
+    need to figure out if maxlen is chord diagram size or pattern size
+
     Note: it isn't really a generator. This is utilised to avoid the need to
     recompute new_obs which is needed for the strategy.
     """
 
-    def __init__(self, maxlen: Optional[int] = 3):
+    def __init__(self, maxlen: Optional[int] = 2):
         self.maxlen = maxlen
         super().__init__()
 
@@ -113,9 +115,9 @@ class ObstructionInferralFactory(StrategyFactory[Tiling]):
         return AllObstructionInferral(tiling, self.maxlen).new_obs()
 
     def __call__(self, comb_class: Tiling) -> Iterator[ObstructionInferralStrategy]:
-        gps = self.new_obs(comb_class)
-        if gps:
-            yield ObstructionInferralStrategy(gps)
+        gcs = self.new_obs(comb_class)
+        if gcs:
+            yield ObstructionInferralStrategy(gcs)
 
     def to_jsonable(self) -> dict:
         d: dict = super().to_jsonable()

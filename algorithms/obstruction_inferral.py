@@ -38,18 +38,22 @@ class ObstructionInferral(abc.ABC):
             return self._new_obs
 
         chords_to_check = tuple(self.potential_new_obs())
-        if not chords_to_check: # if there are no chords to check, there are no possible obstructions we would want to add with the given parameters
+        if not chords_to_check: # if there are no chords to check, there are no possible obstructions can add with the given parameters
             self._new_obs = []
             return self._new_obs
 
-        max_len_of_chords_to_check = max(map(len, chords_to_check))
+        max_len_in_chords_to_check = 2 * max(map(lambda chord: len(chord.patt), chords_to_check))
         max_length = (
             self._tiling.maximum_length_of_minimum_gridded_chord()
-            + max_len_of_chords_to_check
+            + max_len_in_chords_to_check
         )
-        chords_on_tiling = self._tiling.all_chords_on_tiling(max_length, True) # A list of all gridded chord diagrams griddable on the tiling 
+        print(max_len_in_chords_to_check, self._tiling.maximum_length_of_minimum_gridded_chord())
+        chords_on_tiling = self._tiling.all_chords_on_tiling(max_length) # A list of all gridded chord diagrams griddable on the tiling 
                                                                                # of up to max_length
+        #print(chords_on_tiling)
+        #print("chords on tiling generated")
         chords_left = set(chords_to_check) # found by .potential_new_obs()
+        #print("chords left generated")
         for gc in chords_on_tiling: # loop over every gridded chord that can be gridded on the tiling, up to max_length
             to_remove: List[GriddedChord] = []
             for chord in chords_left: # for every potential new ob to check
@@ -99,12 +103,13 @@ class SubobstructionInferral(ObstructionInferral):
 class AllObstructionInferral(ObstructionInferral):
     """
     Algorithm to compute the tiling created by adding all
-    obstruction of length up to obstruction_length which can be added.
+    obstructions with up to obstruction_length number of points.
     """
 
     def __init__(self, tiling: "Tiling", obstruction_length: Optional[int]) -> None:
         super().__init__(tiling)
         self._obs_len = obstruction_length
+        print(obstruction_length)
 
     @property
     def obstruction_length(self) -> Optional[int]:
@@ -129,7 +134,7 @@ class AllObstructionInferral(ObstructionInferral):
         no_req_tiling = self._tiling.__class__(self._tiling.obstructions)
         n = self._obs_len
         pot_obs = filter(self.not_required, no_req_tiling.all_chords_on_tiling(n, True)) 
-        return list(GriddedChord(gc.patt, gc.pos) for gc in pot_obs)
+        return list(GriddedChord(gc._chord, gc.pos) for gc in pot_obs)
 
 
 class EmptyCellInferral(AllObstructionInferral):

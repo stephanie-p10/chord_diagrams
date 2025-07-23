@@ -93,9 +93,33 @@ large_list = small_tiling.all_chords_on_tiling(3, True)
 
 
 
-for chord in large_list:
+#for chord in large_list:
+    #print(chord)
+
+def crossed_chord(pos):
+    return GriddedChord(Chord((0, 1, 0, 1)), (pos,) *4)
+def single_chord(pos_left, pos_right):
+    return GriddedChord(Chord((0,0)), (pos_left, pos_right))
+
+non_crossing = Tiling(obstructions=(single_chord((1, 1), (3, 1)), 
+                                    crossed_chord((1, 1)), 
+                                    crossed_chord((3, 1)), 
+                                    single_chord((0, 0), (0, 0)), 
+                                    single_chord((2, 0), (2, 0)),
+                                    GriddedChord(Chord((0,1)), ((0,0), (0,0))), 
+                                    GriddedChord(Chord((1,0)), ((0,0), (0,0))),
+                                    GriddedChord(Chord((0,1)), ((2,0), (2,0))), 
+                                    GriddedChord(Chord((1,0)), ((2,0), (2,0)))),
+                      requirements=([single_chord((0, 0), (2, 0))],))
+
+#print()
+#print(non_crossing.contains(GriddedChord(Chord((1, 0)), ((3, 1), (3, 1)))))
+
+for chord in non_crossing.all_chords_on_tiling(4, False):
     print(chord)
 
+print()
+print(non_crossing.contains(GriddedChord(Chord((0, 1, 1, 0)), ((0, 0), (1, 1), (1, 1), (2, 0)))))
 #print(t.point_cells)
 
 print("asserts passed")
