@@ -46,10 +46,10 @@ class Tiling(CombinatorialClass):
         simplify: bool = True):
 
         super().__init__()
-        self._linkages = linkages
-        self._obstructions = obstructions
-        self._requirements = requirements
-        self._assumptions = assumptions
+        self._linkages = tuple(linkages)
+        self._obstructions = tuple(obstructions)
+        self._requirements = tuple(requirements)
+        self._assumptions = tuple(assumptions)
 
         self._cached_properties = {}
 
@@ -565,6 +565,10 @@ class Tiling(CombinatorialClass):
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, Tiling):
             return False
+        #print(self.obstructions == other.obstructions, 
+        #      self.requirements == other.requirements, 
+        #      self.linkages == other.linkages, 
+        #      self.assumptions == other.assumptions)
         return (
             self.obstructions == other.obstructions
             and self.requirements == other.requirements

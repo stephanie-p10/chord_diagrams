@@ -15,7 +15,7 @@ import heapq
 from itertools import combinations, product
 from typing import TYPE_CHECKING, Dict, List, Tuple
 
-from chords import GriddedChord
+from chords import GriddedChord, Chord
 from tiling import Tiling
 
 if TYPE_CHECKING:
@@ -346,10 +346,16 @@ class _RowColSeparationSingleApplication:
             ob
             for ob in self._tiling.obstructions
             if len(ob.patt) == 2 and not ob.is_single_cell()
-        )
+        ) # all obstructions of length 2 that aren't in the same cell
         for ob in filtered_obs:
             c1, c2 = ob.pos
-            if c1[1] == c2[1]:
+            spanning_chord = GriddedChord(Chord((0, 0)), (c1, c2))
+            # This bool is to make sure that there isn't some requirement with a chord
+            # over c1 and c2 that means they must be in the same row
+            chord_spans_cells_in_req = any([any([req.contains(spanning_chord) for req in reqlist])
+                                             for reqlist 
+                                             in self._tiling.requirements])
+            if c1[1] == c2[1] and not chord_spans_cells_in_req: 
                 ineq = self._row_cell_order(ob)
                 self._add_ineq(ineq, row_m)
             elif c1[0] == c2[0]:
@@ -359,6 +365,7 @@ class _RowColSeparationSingleApplication:
         return self._ineq_matrices
 
     def row_ineq_graph(self):
+        #print("in row_ineq_graph:", self._complete_ineq_matrices())
         return Graph(self._active_cells, self._complete_ineq_matrices()[0])
 
     def col_ineq_graph(self):
@@ -394,10 +401,10 @@ class _RowColSeparationSingleApplication:
 
     def _separates_tiling(self, row_order, col_order) -> Tiling:
         cell_map = self._get_cell_map(row_order, col_order)
-        obs = self.map_obstructions(cell_map)
-        reqs = self.map_requirements(cell_map)
-        assump = self.map_assumptions(cell_map)
-        link = self.map_linkages(cell_map)
+        obs = tuple(self.map_obstructions(cell_map))
+        reqs = tuple(self.map_requirements(cell_map))
+        assump = tuple(self.map_assumptions(cell_map))
+        link = tuple(self.map_linkages(cell_map))
         return self._tiling.__class__(
             obstructions=obs, requirements=reqs, linkages=link, assumptions=assump
         )
@@ -411,6 +418,7 @@ class _RowColSeparationSingleApplication:
         This method does not account for any cleaning occuring in the initializer. For
         the complete cell map use `get_cell_map`.
         """
+        #print("in _get_cell_map:", row_order)
         cell_map: Dict[Cell, Cell] = {}
         row_map: Dict[Cell, int] = {}
         for i, row in enumerate(row_order):
@@ -432,7 +440,7 @@ class _RowColSeparationSingleApplication:
     def map_requirements(self, cell_map: Dict[Cell, Cell]):
         """Map the requirements of a tiling according to the cell map."""
         for req_list in self._tiling.requirements:
-            yield [self._map_gridded_chord(cell_map, req) for req in req_list]
+            yield tuple(self._map_gridded_chord(cell_map, req) for req in req_list)
 
     def map_assumptions(self, cell_map: Dict[Cell, Cell]):
         """Map the assumptions of a tiling according to the cell map."""
@@ -472,7 +480,7 @@ class _RowColSeparationSingleApplication:
         according to the cell_map
         """
         pos = (cell_map[c] for c in gc.pos)
-        gc = gc.__class__(gc.patt, pos)
+        gc = gc.__class__(Chord(gc.patt), pos)
         return gc
 
     def separable(self):
@@ -489,6 +497,7 @@ class _RowColSeparationSingleApplication:
         """
         Return the one the possible maximal separation of the tiling.
         """
+        #print("in separated_tiling:", self.max_row_order, self.max_col_order)
         return self._separates_tiling(self.max_row_order, self.max_col_order)
 
     def get_cell_map(self) -> Dict[Cell, Cell]:
