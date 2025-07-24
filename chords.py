@@ -541,7 +541,7 @@ class GriddedChord(CombinatorialObject):
                         pos_lst_extended = pos_lst.copy()
                         pos_lst_extended.append(cell)
                         appended_positions.append(pos_lst_extended)
-                        
+
             return appended_positions
 
         # runs over every item in the chord to build the posible position lists to the length of the chord
@@ -696,7 +696,7 @@ class GriddedChord(CombinatorialObject):
     ### Retrun Boolean information ###
     def is_empty(self) -> bool:
         """Check if the gridded chord is the empty gridded chord."""
-        return len(self) == 0
+        return len(self.patt) == 0
     
     def is_point(self) -> bool:
         return self._chord._patt_length == 1

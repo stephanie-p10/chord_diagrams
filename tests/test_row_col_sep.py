@@ -26,7 +26,7 @@ non_crossing = Tiling(obstructions=(GriddedChord(Chord((0,)), ((0, 1),)),
                       requirements=((GriddedChord(Chord((0, 0)), ((0, 0), (2, 0))),),), 
                       simplify=False)
 
-nc_separated = Tiling(obstructions=(GriddedChord(Chord((0,)), ((0, 1),)),
+nc_separated = Tiling(obstructions=sorted((GriddedChord(Chord((0,)), ((0, 1),)),
                                     GriddedChord(Chord((0,)), ((0, 2),)),
                                     GriddedChord(Chord((0,)), ((1, 0),)),
                                     GriddedChord(Chord((0,)), ((1, 1),)),
@@ -34,11 +34,23 @@ nc_separated = Tiling(obstructions=(GriddedChord(Chord((0,)), ((0, 1),)),
                                     GriddedChord(Chord((0,)), ((2, 2),)),
                                     GriddedChord(Chord((0,)), ((3, 0),)),
                                     GriddedChord(Chord((0,)), ((3, 2),)),
+                                    GriddedChord(Chord((0, 0)), ((0, 0), (0, 0))),
+                                    GriddedChord(Chord((0, 0)), ((2, 0), (2, 0))),
+                                    GriddedChord(Chord((0, 1)), ((0, 0), (0, 0))),
+                                    GriddedChord(Chord((0, 1)), ((0, 0), (2, 0))),
+                                    GriddedChord(Chord((0, 1)), ((2, 0), (2, 0))),
+                                    GriddedChord(Chord((1, 0)), ((0, 0), (0, 0))),
+                                    GriddedChord(Chord((1, 0)), ((0, 0), (2, 0))),
+                                    GriddedChord(Chord((1, 0)), ((2, 0), (2, 0))),
+                                    GriddedChord(Chord((1, 0)), ((1, 2), (3, 1))), # it should have gotten rid of this...
                                     GriddedChord(Chord((0, 1, 0, 1)), ((1, 2), (1, 2), (1, 2), (1, 2))),
-                                    GriddedChord(Chord((0, 1, 0, 1)), ((3, 1), (3, 1), (3, 1), (3, 1)))),
+                                    GriddedChord(Chord((0, 1, 0, 1)), ((3, 1), (3, 1), (3, 1), (3, 1)))),),
                       requirements=((GriddedChord(Chord((0, 0)), ((0, 0), (2, 0))),),))
 
+#print(nc_separated)
+
 sep = RowColSeparation(non_crossing)
+print(sep.separated_tiling())
 
 assert sep.separated_tiling() == nc_separated
 

@@ -431,7 +431,7 @@ class _RowColSeparationSingleApplication:
 
     def map_obstructions(self, cell_map: Dict[Cell, Cell]):
         """Map the obstruction of a tiling according to the cell map."""
-        non_point_obs = (ob for ob in self._tiling.obstructions if len(ob) > 1)
+        non_point_obs = (ob for ob in self._tiling.obstructions if len(ob.patt) > 1)
         for ob in non_point_obs:
             ob = self._map_gridded_chord(cell_map, ob)
             if not ob.contradictory():

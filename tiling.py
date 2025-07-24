@@ -60,6 +60,8 @@ class Tiling(CombinatorialClass):
         if simplify:
             self._simplify
 
+        self._remove_empty_rows_and_cols()
+
     # also changed how acitve_cells and empty_cells are computed, no longer add point obs based on empty cells
     def _prepare_properties(self) -> None:
         """
@@ -330,7 +332,6 @@ class Tiling(CombinatorialClass):
             linkages,
             tuple(sorted(set(assump for assump in assumptions if assump.gcs))),
             simplify=False,
-            sorted_input=True,
         )
 
     def cells_in_row(self, row: int) -> CellFrozenSet:
@@ -454,10 +455,12 @@ class Tiling(CombinatorialClass):
         """
         # if any obstruction is empty, no chords can be gridded since all grids contain the empty grid.
         if any(ob.is_empty() for ob in self.obstructions):
+            #print("contains empty obstruction")
             return True
         
         # if any req list is empty or has all empty grids, only the empty grid can be gridded. 
         if any(all(req.is_empty() for req in req_list) for req_list in self.requirements) and len(self.requirements) >= 1:
+            #print("contains empty requirements list")
             return True
         
         sum_max_reqs = 0
@@ -478,10 +481,12 @@ class Tiling(CombinatorialClass):
             all_chords += list(Chord.of_length(num_chords))
 
         # product of length and width to get valid cells can probaby be much improved.
-        cells = self._cached_properties["active cells"]
+        cells = self._cached_properties["active_cells"]
         for chord in all_chords:
             for gc in GriddedChord.all_grids(chord, cells):
+                #print(gc)
                 if self.contains(gc):
+                    #print("found contains")
                     return False
 
         return True

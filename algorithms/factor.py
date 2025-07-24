@@ -7,7 +7,7 @@ from itertools import chain, combinations
 from typing import TYPE_CHECKING, Dict, Iterable, Iterator, List, Optional, Set, Tuple
 
 from permuta.misc import UnionFind
-from chords import GriddedChord
+from chords import GriddedChord, Chord
 from tilings.assumptions import ComponentAssumption, TrackingAssumption
 from tilings.misc import partitions_iterator
 
@@ -162,9 +162,11 @@ class Factor:
         if self._factors_obs_and_reqs is not None:
             return self._factors_obs_and_reqs
         if self._tiling.is_empty():
-            return [((GriddedChord((), []),), tuple(), tuple())]
+            return [((GriddedChord(Chord(), []),), tuple(), tuple())]
+        
         factors = []
         for component in self.get_components():
+            #print(component)
             obstructions = tuple(
                 ob for ob in self._tiling.obstructions if ob.pos[0] in component
             )
@@ -196,6 +198,7 @@ class Factor:
         """
         Returns all the irreducible factors of the tiling.
         """
+        #print(self._get_factors_obs_and_reqs())
         return tuple(
             self._tiling.__class__(
                 obstructions=f[0],
