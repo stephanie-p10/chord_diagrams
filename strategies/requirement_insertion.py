@@ -38,9 +38,7 @@ class RequirementInsertionStrategy(DisjointUnionStrategy[Tiling, GriddedChord]):
         list while the other contain one of the patterns in the list.
         """
         #print(comb_class.add_obstructions(self.gcs).obstructions)
-        return comb_class.add_obstructions(self.gcs), comb_class.add_list_requirement(
-            self.gcs
-        )
+        return comb_class.add_obstructions(self.gcs), comb_class.add_list_requirement(self.gcs)
     
     def formal_step(self) -> str:
         """
@@ -102,3 +100,176 @@ class RequirementInsertionStrategy(DisjointUnionStrategy[Tiling, GriddedChord]):
     def from_dict(cls, d: dict) -> "RequirementInsertionStrategy":
         gcs = [GriddedChord.from_dict(gc) for gc in d.pop("gps")]
         return cls(gcs=gcs, **d)
+    
+
+class AbstractRequirementInsertionFactory(StrategyFactory[Tiling]):
+    """
+    Bases class for requirement insertion on tilings.
+
+    It will create batch rules based on the containment or not of
+    requirements.  The requirement  used are  provided by `req_list_to_insert`
+    """
+
+    def __init__(self, ignore_parent: bool = False):
+        self.ignore_parent = ignore_parent
+
+    @abc.abstractmethod
+    def req_lists_to_insert(self, tiling: Tiling) -> Iterator[ListRequirement]:
+        """
+        Iterator over all the requirement list to insert to create the batch
+        rules.
+        """
+
+    def __call__(self, comb_class: Tiling) -> Iterator[RequirementInsertionStrategy]:
+        """
+        Iterator over all the requirement insertion rules.
+        """
+        for req_list in list(set(self.req_lists_to_insert(comb_class))):
+            yield RequirementInsertionStrategy(req_list, self.ignore_parent)
+
+    def to_jsonable(self) -> dict:
+        d: dict = super().to_jsonable()
+        d["ignore_parent"] = self.ignore_parent
+        return d
+
+    @classmethod
+    def from_dict(cls, d: dict) -> "AbstractRequirementInsertionFactory":
+        return cls(**d)
+
+    def __repr__(self) -> str:
+        return f"{self.__class__.__name__}(ignore_parent={self.ignore_parent})"
+
+class RequirementInsertionWithRestrictionFactory(AbstractRequirementInsertionFactory):
+    """
+    As RequirementInsertion, but a set of pattern to avoids and a maximum
+    length can be provided.
+    """
+
+    def __init__(
+        self,
+        maxreqlen: int,
+        extra_basis: Optional[List[Chord]] = None,
+        ignore_parent: bool = False,
+    ):
+        if extra_basis is None:
+            self.extra_basis = []
+        else:
+            assert isinstance(extra_basis, list) # EXTRA_BASIS_ERR
+            assert all(isinstance(chord, Chord) for chord in extra_basis) # EXTRA_BASIS_ERR
+            self.extra_basis = extra_basis
+        self.maxreqlen = maxreqlen
+        super().__init__(ignore_parent)
+
+    def to_jsonable(self) -> dict:
+        d: dict = super().to_jsonable()
+        d["maxreqlen"] = self.maxreqlen
+        d["extra_basis"] = self.extra_basis
+        return d
+
+    @classmethod
+    def from_dict(cls, d: dict) -> "RequirementInsertionWithRestrictionFactory":
+        if d["extra_basis"] is None:
+            extra_basis = None
+        else:
+            extra_basis = [Chord(p) for p in d["extra_basis"]]
+        d.pop("extra_basis")
+        return cls(extra_basis=extra_basis, **d)
+
+    def __repr__(self) -> str:
+        args = ", ".join(
+            [
+                f"maxreqlen={self.maxreqlen}",
+                f"extra_basis={self.extra_basis}",
+                f"ignore_parent={self.ignore_parent}",
+            ]
+        )
+        return f"{self.__class__.__name__}({args})"
+    
+# sToDo: do we want all patts or just chord patts inserted?
+class RequirementInsertionFactory(RequirementInsertionWithRestrictionFactory):
+    """
+    Insert all possible requirements the obstruction allows if the tiling does
+    not have requirements.
+
+    If <limited_insertion> is true, the default behavior, requirements will only be
+    inserted on Tilings that have no requirements.
+    """
+
+    def __init__(
+        self,
+        maxreqlen: int = 2,
+        extra_basis: Optional[List[Chord]] = None,
+        limited_insertion: bool = True,
+        ignore_parent: bool = False,
+        allow_factorable_insertions: bool = False,
+    ) -> None:
+        self.limited_insertion = limited_insertion
+        self.allow_factorable_insertions = allow_factorable_insertions
+        super().__init__(maxreqlen, extra_basis, ignore_parent)
+
+    def req_lists_to_insert(self, tiling: Tiling) -> Iterator[ListRequirement]:
+        obs_tiling = Tiling(
+            tiling.obstructions,
+            remove_empty_rows_and_cols=False,
+            derive_empty=False,
+            simplify=False,
+            #sorted_input=True,
+        )
+        for length in range(1, self.maxreqlen + 1):
+            for gc in obs_tiling.all_chords_on_tiling(length, True):
+                if (self.allow_factorable_insertions or len(gc.factors()) == 1) and all(
+                    p not in gc.patt for p in self.extra_basis
+                ):
+                    yield (GriddedChord(Chord(gc.patt), gc.pos),)
+
+    def __call__(self, comb_class: Tiling) -> Iterator[RequirementInsertionStrategy]:
+        if self.limited_insertion and comb_class.requirements:
+            return
+        yield from super().__call__(comb_class)
+
+    def __str__(self) -> str:
+        if self.maxreqlen == 1:
+            return "point insertion"
+        if self.extra_basis:
+            perm_class = f" from Av{(self.extra_basis)}"
+        else:
+            perm_class = ""
+        return f"requirement insertion{perm_class} up to length {self.maxreqlen}"
+
+    def __repr__(self) -> str:
+        args = ", ".join(
+            [
+                f"maxreqlen={self.maxreqlen}",
+                f"extra_basis={self.extra_basis!r}",
+                f"limited_insertion={self.limited_insertion}",
+                f"ignore_parent={self.ignore_parent}",
+                f"allow_factorable_insertions={self.allow_factorable_insertions}",
+            ]
+        )
+        return f"{self.__class__.__name__}({args})"
+
+    def to_jsonable(self) -> dict:
+        d: dict = super().to_jsonable()
+        d["limited_insertion"] = self.limited_insertion
+        d["allow_factorable_insertions"] = self.allow_factorable_insertions
+        return d
+
+    @classmethod
+    def from_dict(cls, d: dict) -> "RequirementInsertionWithRestrictionFactory":
+        if d["limited_insertion"] is None:
+            extra_basis = None
+        else:
+            extra_basis = [Chord(c) for c in d["extra_basis"]]
+        d.pop("extra_basis")
+        limited_insertion = d.pop("limited_insertion")
+        maxreqlen = d.pop("maxreqlen")
+        allow_factorable_insertions = d.pop("allow_factorable_insertions", False)
+        return cls(
+            maxreqlen=maxreqlen,
+            extra_basis=extra_basis,
+            limited_insertion=limited_insertion,
+            allow_factorable_insertions=allow_factorable_insertions,
+            **d,
+        )
+    
+#sToDo: other reqins factories could be moved over from permutations tilings

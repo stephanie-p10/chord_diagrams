@@ -43,24 +43,28 @@ class Tiling(CombinatorialClass):
         requirements: Iterable[Iterable[GriddedChord]] = tuple(), 
         linkages: Iterable[Iterable[Cell]] = tuple(),
         assumptions: Iterable[TrackingAssumption] = tuple(),
-        simplify: bool = True):
+        simplify: bool = True,
+        remove_empty_rows_and_cols: bool = True,
+        derive_empty: bool = True):
 
         super().__init__()
         self._linkages = tuple(linkages)
         self._obstructions = tuple(obstructions)
         self._requirements = tuple(requirements)
         self._assumptions = tuple(assumptions)
-
         self._cached_properties = {}
 
         # currently defaults cells with no requirements or obsturctions to be empty
         # note: should this be defaulted to allowing other chords?
-        self._prepare_properties()
+        if derive_empty and "empty_cells" not in self._cached_properties:
+            self._prepare_properties()
 
         if simplify:
-            self._simplify
+            self._simplify()
 
-        self._remove_empty_rows_and_cols()
+        if remove_empty_rows_and_cols:
+            self._remove_empty_rows_and_cols()
+        
 
     # also changed how acitve_cells and empty_cells are computed, no longer add point obs based on empty cells
     def _prepare_properties(self) -> None:
@@ -408,6 +412,7 @@ class Tiling(CombinatorialClass):
         return 0
     
     # sToDo this is inefficient and in permutations there is a class that does this efficiently
+    # gridded_perms_of_length -> all_chords_on_tiling
     def all_chords_on_tiling(self, size: int = 0, use_non_chord_patts: bool = False) -> list[GriddedChord]:
         """Returns all patterns with up to size points that can be gridded on the tiling"""
         all_chords = []
@@ -442,7 +447,7 @@ class Tiling(CombinatorialClass):
                             #print(list(filter(self.contains, GriddedChord.all_grids(subchord, cells))))
                     #if chord_size == 2:
                         #print()
-                print(chord_size)
+                #print(chord_size)
                     
         return chords_on_tiling
 

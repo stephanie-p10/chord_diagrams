@@ -2,7 +2,7 @@ import sys
 from pathlib import Path
 sys.path.append(str(Path(__file__).resolve().parent.parent))
 
-from strategies.requirement_insertion import RequirementInsertionStrategy
+from strategies.requirement_insertion import RequirementInsertionStrategy, RequirementInsertionFactory
 from chords import GriddedChord, Chord
 from tiling import Tiling
 
@@ -63,5 +63,14 @@ assert insert_single_chord.backward_map(non_crossing, insert_single_chord.forwar
 assert insert_single_chord.backward_map(non_crossing, insert_single_chord.forward_map(non_crossing, obj_nc_avoids)) == obj_nc_avoids
 
 
+req_ins_factory = RequirementInsertionFactory()
 
+# sToDo: put in assert
+print("Testing factory")
+for strat in req_ins_factory(non_crossing):
+    print("Strategy:")
+    for part in strat.decomposition_function(non_crossing):
+        print(part)
+        print()
+    print()
 
