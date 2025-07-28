@@ -52,9 +52,7 @@ class RequirementPlacementStrategy(DisjointUnionStrategy[Tiling, GriddedChord]):
 
     def decomposition_function(self, comb_class: Tiling) -> Tuple[Tiling, ...]:
         placement_class = self.placement_class(comb_class)
-        placed_tilings = placement_class.place_point_of_req(
-            self.gcs, self.indices, self.direction
-        )
+        placed_tilings = placement_class.place_chord(self.gcs, self.direction)
         if self.include_empty:
             return (comb_class.add_obstructions(self.gcs),) + placed_tilings
         return placed_tilings

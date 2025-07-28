@@ -20,8 +20,7 @@ ReqList = Tuple[GriddedChord, ...]
 
 
 class Factor:
-    """
-    Algorithm to compute the factorisation of a tiling.
+    """Algorithm to compute the factorisation of a tiling.
 
     Two active cells are in the same factor if they are in the same row
     or column, or they share an obstruction or a requirement.
@@ -29,7 +28,6 @@ class Factor:
     If using tracking assumptions, then two cells will also be in the same
     factor if they are covered by the same assumption.
     """
-
     def __init__(self, tiling: "Tiling") -> None:
         self._tiling = tiling
         self._active_cells = tiling.active_cells

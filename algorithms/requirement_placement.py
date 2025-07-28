@@ -624,9 +624,15 @@ class RequirementPlacement:
         links += self.stretch_links(placed_cell)
 
         return Tiling(obs, reqs, links, self._tiling.assumptions)
-
-
-
-
     
-    
+    def place_chord(self, req_placed: GriddedChord, dir: int) -> Tiling:
+        source_placed_tiling = self.place_point(req_placed, dir, True)
+        source_placement_class = self.__class__(source_placed_tiling, self.own_row, self.own_col, self.directions)
+
+        _, val_placed = self.directionmost_point(req_placed, dir)
+        place_source_idx, place_sink_idx = req_placed.chord_dict[val_placed]
+
+        source_placed_req = self._gridded_chord_translation_with_point(req_placed, place_source_idx)
+
+        chord_placed = source_placement_class.place_point(source_placed_req, dir, False)
+        return chord_placed

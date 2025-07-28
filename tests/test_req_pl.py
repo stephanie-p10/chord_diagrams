@@ -280,3 +280,8 @@ assert placement1owncol.point_dir_obs((0, 0), DIR_WEST) == [GriddedChord(Chord((
                                                        GriddedChord(Chord((0,)), ((0, 1),)),]
 
 print(placement_nc.place_point(GriddedChord(Chord((0,0)), ((0,0), (0,0))), 3, True))
+print()
+place = placement_nc.place_chord(GriddedChord(Chord((0,0)), ((0,0), (0,0))), 3)
+place._remove_empty_rows_and_cols()
+print(place)
+
