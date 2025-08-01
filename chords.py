@@ -689,6 +689,40 @@ class GriddedChord(CombinatorialObject):
             raise ValueError("You're lost, no valid direction")
         raise ValueError("The gridded chord does not occupy the cell")
 
+    def get_active_cells(self) -> FrozenSet[Cell]:
+        """Returns set of cells the gridded chord occupies"""
+        return self._cells
+    
+    def find_factors(self, point_rows) -> list["GriddedChord"]:
+        """Returns a list of the factors of the gridded Cayley permutation.
+        If two different cells are in the same row or column then label them
+        as together in component list using union sort.
+        Then put together the cells that are in the same factors and return
+        the sub gridded Cayley permutation of the cells."""
+        cells = list(self.get_active_cells())
+        n = len(cells)
+        component = list(range(n))
+        for idx, cell in enumerate(cells):
+            for idx2, cell2 in enumerate(cells):
+                if idx != idx2:
+                    if cell[0] == cell2[0] or (
+                        cell[1] == cell2[1]
+                        and (
+                            cell[1] not in point_rows # only one value in the row
+                            or self.patt
+                            in (Chord([0, 1]), Chord([1, 0]))
+                        )
+                    ):
+                        component[idx2] = component[idx]
+        factors = []
+        for i in set(component):
+            factor = []
+            for j in range(n):
+                if component[j] == i:
+                    factor.append(cells[j])
+            factors.append(factor)
+        return [self.get_subchord_in_cells(cells) for cells in factors]
+
     @property
     def chord_dict(self) -> dict[(int)]:
         return self._chord_dict

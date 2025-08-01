@@ -18,6 +18,7 @@ from tilings.assumptions import (
 )
 from assumptions import TrackingAssumption
 from algorithms.map import RowColMap
+from algorithms.simplify import SimplifyObstructionsAndRequirements
 
 __all__ = ["Tiling"]
 
@@ -182,13 +183,13 @@ class Tiling(CombinatorialClass):
             self._cached_properties["positive_cells"] = positive_cells
             return positive_cells
         
-    #sTODO this is wrong! currently this works for when obstructions are simplified automatically.
+    #sTODO this is wrong! currently this works for allowing non chord patterns
     @property
     def point_cells(self) -> CellFrozenSet:
         try:
             return self._cached_properties["point_cells"]
         except KeyError:
-            # finds all cells obstructing length one and two chords fully conatined within them
+            # finds all cells obstructing length one and two chords fully contained within them
             local_length_lt2_obcells = Counter(
                 ob.pos[0]
                 for ob in self._obstructions
@@ -215,9 +216,11 @@ class Tiling(CombinatorialClass):
             self._cached_properties["chord_cells"] = chord_cells
             return chord_cells
         
-    # sToDo
     def _simplify(self) -> None:
-        pass
+        simplify_algo = SimplifyObstructionsAndRequirements(self.obstructions, self.requirements, self._cached_properties["dimensions"])
+        simplify_algo.simplify()
+        self._obstructions = simplify_algo.obstructions
+        self._requirements = simplify_algo.requirements
 
     def _minimize_mapping(self) -> RowColMap:
         """

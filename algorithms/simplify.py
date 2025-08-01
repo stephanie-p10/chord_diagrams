@@ -1,3 +1,7 @@
+import sys
+from pathlib import Path
+sys.path.append(str(Path(__file__).resolve().parent.parent))
+
 """
 This module contains the SimplifyObstructionsAndRequirements class, which is used to
 remove redundant obstructions and requirements and also reduce obstructions by removing factors
@@ -20,6 +24,7 @@ def binomial(x: int, y: int) -> int:
         return 0
 
 
+# sTODO: a lot of this class has redundant code compared to tilings
 class SimplifyObstructionsAndRequirements:
     """
     This class contains method for reducing and removing redundant obstructions and requirements.
@@ -39,13 +44,13 @@ class SimplifyObstructionsAndRequirements:
     def remove_redundant_gridded_chords(
         self, gridded_chords: Iterable["GriddedChord"]
     ) -> tuple["GriddedChord", ...]:
-        """Remove gcps that are implied by other gcps."""
+        """Remove gcs that are implied by other gcs."""
         redundant_gcs = set()
         new_gridded_chords = list(gridded_chords)
-        for gcp in gridded_chords:
-            for gcp2 in gridded_chords:
-                if gcp != gcp2 and gcp2.contains(gcp):
-                    redundant_gcs.add(gcp2)
+        for gc in gridded_chords:
+            for gc2 in gridded_chords:
+                if gc != gc2 and gc2.contains(gc):
+                    redundant_gcs.add(gc2)
         for gcs in redundant_gcs:
             new_gridded_chords.remove(gcs)
         return tuple(new_gridded_chords)
@@ -56,9 +61,10 @@ class SimplifyObstructionsAndRequirements:
 
     def remove_redundant_requirements(self) -> None:
         """Remove requirements that are implied by other requirements in the same list."""
+        #print(*self.obstructions)
         self.requirements = tuple(
             self.remove_redundant_gridded_chords(
-                tuple(req for req in req_list if req.avoids(self.obstructions))
+                tuple(req for req in req_list if req.avoids(*self.obstructions))
             )
             for req_list in self.requirements
         )
@@ -67,10 +73,13 @@ class SimplifyObstructionsAndRequirements:
         """Remove requirements lists that are implied by other requirements lists."""
         indices = []
         for i, req_list_1 in enumerate(self.requirements):
-            for j, req_list_2 in enumerate(self.requirements):
-                if i != j and j not in indices:
-                    if any(req.contains(req_list_2) for req in req_list_1):
-                        indices.append(i)
+            if all(any(self.implied_by_requirement(req, req_list_2)
+                    for j, req_list_2 in enumerate(self.requirements)
+                    if j != i and j not in indices
+                )
+                for req in req_list_1
+            ): 
+                indices.append(i)
         self.requirements = tuple(
             req for i, req in enumerate(self.requirements) if i not in indices
         )
@@ -118,31 +127,32 @@ class SimplifyObstructionsAndRequirements:
         Splits an obstruction into its factors and removes the factors that are
         implied by the requirements.
         """
-        cells = ob.find_active_cells()
+        cells = set(ob.get_active_cells())
         for factor in ob.find_factors(self.point_rows()):
             if self.implied_by_requirements(factor):
-                cells.difference_update(factor.find_active_cells())
-        return ob.sub_gridded_cayley_perm(cells)
+                cells.difference_update(factor.get_active_cells())
+        return ob.get_subchord_in_cells(cells)
 
-    def point_rows(self) -> set[int]:
+    # sToDo: fix where this comes from: it is duplicated from tilings?
+    def point_rows(self) -> set[int]: 
         """
-        Returns the point rows of the tiling.
+        Returns the point rows of the tiling. -> when only one value is in the row
 
-        # TODO: be passed from the tiling in the init to avoid duplicated code?
+        #TODO: be passed from the tiling in the init to avoid duplicated code?
         """
         point_rows = set()
         counter_dict: dict[int, int] = defaultdict(int)
         for ob in self.obstructions:
-            if ob.pattern in (CayleyPermutation([0, 1]), CayleyPermutation([1, 0])):
-                if ob.positions[0][1] == ob.positions[1][1]:
-                    counter_dict[ob.positions[0][1]] += 1
+            if ob.patt in (Chord([0, 1]), Chord([1, 0])):
+                if ob.pos[0][1] == ob.pos[1][1]:
+                    counter_dict[ob.pos[0][1]] += 1
         for row, count in counter_dict.items():
             n = len(self.cells_in_row(row))
             if 2 * binomial(n, 2) + 2 * n == count:
                 point_rows.add(row)
         return point_rows
 
-    def cells_in_row(self, row: int) -> set[tuple[int, int]]:
+    def cells_in_row(self, row: int) -> set[tuple[int, int]]: # this looks like it should be in the tilings repo
         """Returns the set of active cells in the given row."""
         cells = set()
         for cell in self.active_cells():
@@ -150,7 +160,7 @@ class SimplifyObstructionsAndRequirements:
                 cells.add(cell)
         return cells
 
-    def active_cells(self) -> set[tuple[int, int]]:
+    def active_cells(self) -> set[tuple[int, int]]: # should be in tilings repo
         """Returns the set of active cells in the tiling.
         (Cells are active if they do not contain a point obstruction.)"""
         active_cells = set(
@@ -158,17 +168,17 @@ class SimplifyObstructionsAndRequirements:
         )
         for ob in self.obstructions:
             if len(ob) == 1:
-                active_cells.discard(ob.positions[0])
+                active_cells.discard(ob.pos[0])
         return active_cells
 
     def implied_by_requirement(
-        self, gcp: "GriddedCayleyPerm", req_list: Iterable["GriddedCayleyPerm"]
+        self, gc: "GriddedChord", req_list: Iterable["GriddedChord"]
     ) -> bool:
         """Check whether a gridded Cayley permutation is implied by a requirement."""
-        return all(req.contains_gridded_cperm(gcp) for req in req_list)
+        return all(req.contains(gc) for req in req_list)
 
-    def implied_by_requirements(self, gcp: "GriddedCayleyPerm") -> bool:
+    def implied_by_requirements(self, gc: "GriddedChord") -> bool:
         """Check whether a gridded Cayley permutation is implied by the requirements."""
         return any(
-            self.implied_by_requirement(gcp, req_list) for req_list in self.requirements
+            self.implied_by_requirement(gc, req_list) for req_list in self.requirements
         )
