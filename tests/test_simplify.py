@@ -7,35 +7,20 @@ from algorithms.simplify import SimplifyObstructionsAndRequirements
 from chords import GriddedChord, Chord
 from tiling import Tiling
 
-obs_contains = SimplifyObstructionsAndRequirements((GriddedChord(Chord((0, 1, 0, 1)), ((0,0),)*4), GriddedChord(Chord((0, 0)), ((0,0), (0,0)))),
+ob_containing_ob = SimplifyObstructionsAndRequirements((GriddedChord(Chord((0, 1, 0, 2, 1, 2)), ((0,0),)*6), GriddedChord(Chord((0, 1, 0, 1)), ((0,0),)*4)),
                                                    (), 
                                                    (1, 1))
+ob_containing_ob.remove_redundant_obstructions()
+assert ob_containing_ob.obstructions == (GriddedChord(Chord((0, 1, 0, 1)), ((0,0),)*4),)
 
-obs_contains.remove_redundant_obstructions()
-
-assert obs_contains.obstructions == (GriddedChord(Chord((0, 0)), ((0, 0), (0, 0))),)
-
-size_2_obs = SimplifyObstructionsAndRequirements((GriddedChord(Chord((0, 0, 1, 1)), ((0, 0), (0, 0), (1, 0), (1, 0))),
-                                                  GriddedChord(Chord((0, 1, 0, 1)), ((0, 0), (0, 0), (1, 0), (1, 0))),
-                                                  GriddedChord(Chord((0, 1, 1, 0)), ((0, 0), (0, 0), (1, 0), (1, 0))),
-                                                  ),
-                                                  (), 
-                                                  (2, 1))
-
-size_2_obs.remove_redundant_obstructions()
-
-#print(size_2_obs.obstructions)
-
-empty = SimplifyObstructionsAndRequirements((GriddedChord(Chord((0, 0)), ((0,0), (0,0))),),
+req_containing_ob = SimplifyObstructionsAndRequirements((GriddedChord(Chord((0, 0)), ((0,0), (0,0))),),
                                             ((GriddedChord(Chord((0, 1, 0, 1)), ((0, 0), (0, 0), (0, 0), (0, 0))),),), 
                                             (1,1))
-print(empty.obstructions, empty.requirements)
+req_containing_ob.simplify()
+assert req_containing_ob.obstructions == (GriddedChord(Chord((0, 0)), ((0,0), (0,0))),)
+assert req_containing_ob.requirements == ()
 
-empty.simplify()
-
-print(empty.obstructions, empty.requirements)
-
-all_from_21 = SimplifyObstructionsAndRequirements((GriddedChord(Chord((0,)), ((1, 0),)),
+"""all_from_21 = SimplifyObstructionsAndRequirements((GriddedChord(Chord((0,)), ((1, 0),)),
                                                    GriddedChord(Chord((0, 0)), ((0, 0), (0, 0))),
                                                    GriddedChord(Chord((0, 0)), ((2, 0), (2, 0))),
 
@@ -57,18 +42,26 @@ all_from_21 = SimplifyObstructionsAndRequirements((GriddedChord(Chord((0,)), ((1
                                                     ((GriddedChord(Chord((0, 0)), ((0, 0), (2, 0))),),),
                                                     (3, 1))
 
-all_from_21.simplify()
+all_from_21.simplify()"""
 
-print()
-#print(all_from_21.obstructions)
-print()
-#print(all_from_21.requirements)
-print()
-
-redundant_req = SimplifyObstructionsAndRequirements((),
-                                                    ((GriddedChord(Chord((0, 1, 0, 1)), ((0, 0), (0, 0), (0, 0), (0, 0))),),
-                                                     (GriddedChord(Chord((0, 0)), ((0, 0), (0, 0))),),), 
+req_containing_req = SimplifyObstructionsAndRequirements((),
+                                                    ((GriddedChord(Chord((0, 1, 0, 2, 1, 2)), ((0, 0), )*6),
+                                                      GriddedChord(Chord((0, 1, 0, 1)), ((0, 0), )*4),),), 
                                                     (1,1))
+req_containing_req.remove_redundant_requirements()
+assert req_containing_req.requirements == ((GriddedChord(Chord((0, 1, 0, 1)), ((0, 0), (0, 0), (0, 0), (0, 0))),),)
 
-redundant_req.remove_redundant_lists_requirements()
-print(redundant_req.requirements)
+reqlist_containing_reqlist = SimplifyObstructionsAndRequirements((),
+                                                    ((GriddedChord(Chord((0, 1, 0, 2, 1, 2)), ((0, 0), )*6),),
+                                                      (GriddedChord(Chord((0, 1, 0, 1)), ((0, 0), )*4),),), 
+                                                    (1,1))
+reqlist_containing_reqlist.remove_redundant_lists_requirements()
+assert reqlist_containing_reqlist.requirements == (((GriddedChord(Chord((0, 1, 0, 2, 1, 2)), ((0, 0), )*6),),))
+
+reqlist_containing_ob = SimplifyObstructionsAndRequirements((GriddedChord(Chord((0, 1, 0, 1)), ((0,0),)*4),),
+                                                            ((GriddedChord(Chord((0, 1, 0, 1)), ((0,0),)*4),
+                                                             GriddedChord(Chord((0, 1, 1, 0)), ((0,0),)*4),),),
+                                                            (1, 1))
+reqlist_containing_ob.remove_redundant_requirements()
+assert reqlist_containing_ob.requirements == ((GriddedChord(Chord((0,1,1,0)), ((0,0),)*4),),)
+assert reqlist_containing_ob.obstructions == (GriddedChord(Chord((0, 1, 0, 1)), ((0,0),)*4),)

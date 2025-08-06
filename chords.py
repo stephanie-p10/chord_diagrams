@@ -86,7 +86,38 @@ class Chord(Tuple):
                     raise ChordException(f"Duplicate chord {num}")
         if len(unpaired_chords) != 0:
             raise ChordException(f"The chord {unpaired_chords.pop()} is unpaired.")
+        
+    def is_valid_chord(self) -> bool:
+        iterable = self._pattern
 
+        # Ensure length is even (uses bitwise operator)
+        if len(iterable) % 2 ==1:
+            return False
+        
+        # Loops through and checks conditions for a valid chord
+        max_chord_seen = -1
+        unpaired_chords = set()
+        for num in iterable:
+            if not isinstance(num, int):
+                return False
+            # The chord num skiped a number from the biggest chord seen so far.
+            if num > max_chord_seen + 1:
+                return False
+            # The chord num is the next chord after the biggest chord seen so far.
+            elif num == max_chord_seen + 1:
+                max_chord_seen = num
+                # First time seeing num, so it is currently unseen
+                unpaired_chords.add(max_chord_seen) 
+            elif num <= max_chord_seen:
+                if num in unpaired_chords:
+                    # num was seen once, now we are seeing it a second time, so the chord has become paired.
+                    unpaired_chords.remove(num) 
+                else:
+                    return False
+        if len(unpaired_chords) != 0:
+            return False
+        
+        return True
     def __len__(self) -> int:
         return self._length
     

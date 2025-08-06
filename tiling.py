@@ -46,7 +46,8 @@ class Tiling(CombinatorialClass):
         assumptions: Iterable[TrackingAssumption] = tuple(),
         simplify: bool = True,
         remove_empty_rows_and_cols: bool = True,
-        derive_empty: bool = True):
+        derive_empty: bool = True,
+        expand: bool = True):
 
         super().__init__()
         self._linkages = tuple(linkages)
@@ -65,6 +66,9 @@ class Tiling(CombinatorialClass):
 
         if remove_empty_rows_and_cols:
             self._remove_empty_rows_and_cols()
+
+        if expand:
+            pass #sToDo
         
 
     # also changed how acitve_cells and empty_cells are computed, no longer add point obs based on empty cells

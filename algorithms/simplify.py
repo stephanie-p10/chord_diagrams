@@ -182,3 +182,6 @@ class SimplifyObstructionsAndRequirements:
         return any(
             self.implied_by_requirement(gc, req_list) for req_list in self.requirements
         )
+    
+
+    

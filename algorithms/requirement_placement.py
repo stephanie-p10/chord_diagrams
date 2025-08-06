@@ -293,6 +293,8 @@ class RequirementPlacement:
             - `misc.DIR_EAST`
             - `misc.DIR_WEST`
     """
+    #sToDo: update to assume the tiling is described by valid chords. 
+    # Maybe check a valid_chords parameter in the tiling that says whether chords are simplified or not?
     def __init__(
         self,
         tiling: "Tiling",

@@ -1,4 +1,8 @@
 from chords import Chord, GriddedChord
 
-GriddedChord(Chord((0, 1, 1, 2, 0, 2)), ((0, 0), (0, 1), (1, 1), (3, 1), (3, 0), (4, 1)))
+list_of_chords = Chord.of_length(4)
+
+for chord in list_of_chords: 
+       
+    print(chord)
 
