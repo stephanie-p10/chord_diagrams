@@ -118,10 +118,10 @@ class Chord(Tuple):
             return False
         
         return True
+    
     def __len__(self) -> int:
         return self._length
     
-    # s added
     def get_pattern(self) -> list[int]:
         """Returns the pattern of the chord as a list"""
         return self._pattern
@@ -182,7 +182,6 @@ class Chord(Tuple):
             selected = self[index]
         return self.remove_chord(selected)
     
-    # sCP, sAsk: it feels like there is a better way to do this
     # sToDo: test with this function commented out, then get rid
     def standardize(self, original_list: list) -> "Chord":
         """Return a Chord based on the original list ordering.
@@ -208,7 +207,7 @@ class Chord(Tuple):
     
     @classmethod
     def to_standard(cls, iterable, in_relative_order: bool = False):
-         # Keeps track of standard order chords items in iterable will be mapped to.
+        # Keeps track of standard order chords items in iterable will be mapped to.
         chord_map = {}
         chord_list = iterable
         if in_relative_order:
@@ -226,7 +225,6 @@ class Chord(Tuple):
         # Puts iterable in standard order using chord_map to map items to their chord values.
         return cls(tuple(chord_map[item] for item in iterable))
 
-    # sCP: similar method for this was implemented in occurances_in
     def _contains(self, patt: "Chord") -> bool:
         """Determines if a chord contains an instance of patt
         Examples:
@@ -250,7 +248,7 @@ class Chord(Tuple):
         """
         return all(self._contains(patt) for patt in chords)
 
-    # sCN: changed function majorly in structure
+    # sCN: changed function in structure from what it was for permutations
     def occurrences_in(self, patt: "Chord", colour_self: Iterator = None, 
                        colour_patt: Iterator[int] = None) -> Iterator[Tuple[int, ...]]:
         """Find all indices of occurrences of self in patt. 
@@ -314,7 +312,7 @@ class Chord(Tuple):
 
         return Chord(reindexed_patt)
 
-    # sCP, added examples
+    # added examples
     def avoids(self, *chords: "Chord") -> bool:
         """
         Check if self avoids all chords.
@@ -328,7 +326,6 @@ class Chord(Tuple):
         """
         return all(not self._contains(patt) for patt in chords)
 
-    # sCP
     def insert(self, m: Optional[int] = None, n: Optional[int] = None) -> "Chord":
         """Return the Chord acquired by inserting a new chord at a specified index. The 
         new chord is inserted at m-points from the root and n-points from the root. 
@@ -374,7 +371,7 @@ class Chord(Tuple):
         
         return Chord.to_standard([val for val in self if val in selected])
 
-    # sCP, sCN: changed name from chord -> chord_dict, added example
+    # sCN: changed name from chord -> chord_dict, added example
     @property
     def chord_dict(self) -> dict[int: Cell]:
         """Returns the chord dictionary
@@ -384,6 +381,7 @@ class Chord(Tuple):
         return self._chord_dict
     
     # sToDo: test
+    # from DRP
     @classmethod
     def __generate(cls, n: int):
         """
@@ -473,6 +471,7 @@ class GriddedChord(CombinatorialObject):
 
 
         # this was needed, but has problem with point placement when you try to place a single point and then another one
+        # sToDo: once expand is implemented, put in this check or ignore based on if chord should be expanded or not
         #if self.contradictory():
         #    raise ValueError("Contradictory positions given.")
     
@@ -487,8 +486,8 @@ class GriddedChord(CombinatorialObject):
         return cls(Chord(), ())
     
     @classmethod 
+    # sCN: point_chord -> single_chord
     def single_chord(cls, cells: Iterable[Cell]) -> "GriddedChord":
-        # sCN: point_chord -> single_chord
         """Construct the single gridded chord using the cells given. If only one cell 
         is given, will construct the single gridded chord with both ends in the same cell
         
@@ -650,9 +649,10 @@ class GriddedChord(CombinatorialObject):
     def point_chord(cls, pos: Cell) -> "GriddedChord":
         return GriddedChord(Chord((0,)), (pos,))
 
+
     ### Return information about GriddedChord instance ###
+    # sToDo: could be generalized to recognize patterns that are not indexed the same
     def occurrences_in(self, other: "GriddedChord") -> Iterator[Tuple[int, ...]]:
-        # sToDo: could be generalized to recognize patterns that are not indexed the same
         """Returns all occurrences of self in other.
 
         Examples:
@@ -725,11 +725,11 @@ class GriddedChord(CombinatorialObject):
         return self._cells
     
     def find_factors(self, point_rows) -> list["GriddedChord"]:
-        """Returns a list of the factors of the gridded Cayley permutation.
+        """Returns a list of the factors of the gridded chord diagrams.
         If two different cells are in the same row or column then label them
         as together in component list using union sort.
         Then put together the cells that are in the same factors and return
-        the sub gridded Cayley permutation of the cells."""
+        the sub gridded chord of the cells."""
         cells = list(self.get_active_cells())
         n = len(cells)
         component = list(range(n))
@@ -758,6 +758,7 @@ class GriddedChord(CombinatorialObject):
     def chord_dict(self) -> dict[(int)]:
         return self._chord_dict
 
+
     ### Retrun Boolean information ###
     def is_empty(self) -> bool:
         """Check if the gridded chord is the empty gridded chord."""
@@ -767,12 +768,11 @@ class GriddedChord(CombinatorialObject):
         return self._chord._patt_length == 1
 
     def is_single_chord(self) -> bool:
-        # sCN: ord -> is_single_chord
         """Checks if the gridded chord is of length 1."""
-        return len(self) == 1
+        return len(self) == 1 and len(self._patt) == 2
 
+    # sToDo: why is this function just calling another? redundant?
     def is_localized(self) -> bool:
-        # sToDo: why is this function just calling another? redundant?
         """Check if the gridded chord occupies only a single cell."""
         return self.is_single_cell()
 
@@ -789,7 +789,6 @@ class GriddedChord(CombinatorialObject):
         return len(set(x for (x, _) in self._cells)) == 1
 
     def is_isolated(self, indices: Iterable[int]) -> bool:
-        # sCN: added check for chords being in same column
         """Checks if the cells at the indices do not share a row or column with
         any other cell in the gridded chord.
         
@@ -840,7 +839,7 @@ class GriddedChord(CombinatorialObject):
         True
         >>> GriddedChord(Chord((0, 1, 0, 1)), ((0, 0), (1, 0), (0, 0), (2, 0))).is_connected([(0, 0)]))
         True"""
-        # sAsk: is linkage everything strictly inside, or everything with one end inside. (strictly for now)
+        # likage is decided to be everything strictly contained in must be connected.
         subchord = self
         if len(cells) != 0:
             subchord = self.get_subchord_in_cells(cells)
@@ -1116,8 +1115,6 @@ class GriddedChord(CombinatorialObject):
                         (self.pos[idx] for idx in range(len(self.patt)) if idx in indices))
 
     def get_bounding_indices(self, col_source: int, col_sink: int) -> Tuple[int, int, int, int]:
-        # sCN: previous method returned the restrictions on the values for a point inserted 
-        # into a given cell for permutations. Changed to accomadate chords.
         """Determines the range possible indices where a chord with source in col_source and sink 
         in col_sink can be inserted into self.
         Returns in order: (min index source, max index source, min index sink, max index sink)
@@ -1149,7 +1146,7 @@ class GriddedChord(CombinatorialObject):
 
         return (min_index_source, max_index_source, min_index_sink, max_index_sink)
     
-    # this was copied in for use in chord_placement
+    # this is used for chord_placement
     # sToDo: needs tests!
     def get_bounding_box(self, cell: Cell) -> Tuple[int, int, int, int]:
         """Determines the range of indices and values of the points in 
@@ -1190,8 +1187,8 @@ class GriddedChord(CombinatorialObject):
 
 
     ### Modify instance of GriddedChord ###
+    # sCN: insert_point changed to insert_chord 
     def insert_chord(self, row: int, col_source: int, col_sink: int) -> Iterator["GriddedChord"]:
-        # sCN: insert_point changed to insert_chord, functionality changed appropriately
         """Insert a new point into cell of the gridded chord, such that the
         point is added to the underlying pattern with the position at the cell.
         Yields all gridded chords where the point has been mixed into the points
@@ -1211,7 +1208,7 @@ class GriddedChord(CombinatorialObject):
         possible_chords = []
         min_index_source, max_index_source, min_index_sink, max_index_sink = self.get_bounding_indices(col_source, col_sink)
         
-        # sAsk: There is probably a better way to do this
+        # sTODO: there is probably a better way to do this
         for source in range(min_index_source, max_index_source + 1):
             for sink in range(max(source, min_index_sink), max_index_sink + 1):
                 chord = self.insert_specific_chord(row, col_source, col_sink, source, sink)
@@ -1219,8 +1216,8 @@ class GriddedChord(CombinatorialObject):
                     possible_chords.append(chord)
         return possible_chords
 
+    # sCN: insert_specific_point -> insert_specific_chord. Also changed number of parameters to work with chords
     def insert_specific_chord(self, row: int, col_source: int, col_sink: int, source: int, sink: int) -> "GriddedChord":
-        # sCN: insert_specific_point -> insert_specific_chord, changed numebr of parameters, adapted to chords appropriately
         #sToDo: code check for vaild gridded chord required
         """Insert a new chord in row, with source and sink in col_source and col_sink respecitively, at indices source and sink.
         """
@@ -1237,7 +1234,6 @@ class GriddedChord(CombinatorialObject):
             return None
     
     def remove_chord(self, chord: int) -> "GriddedChord":
-        #sCN: changed to work with chords
         """Remove the chord of the int given. Doesn't do anything if an incorrect chord is given.
         
         Examples:
@@ -1253,9 +1249,7 @@ class GriddedChord(CombinatorialObject):
         return type(self)(patt, pos)
 
     def remove_chord_idx(self, index) -> "GriddedChord":
-    # sCN: used cleaner list notation
-        """Returns the Gridded Chord with the chord at index removed.
-        """
+        """Returns the Gridded Chord with the chord at index removed."""
         avoid_chord = self._patt[index]
         new_chords = [chord for chord, _ in self if chord != avoid_chord]
         new_positions = [pos for chord, pos in self if chord != avoid_chord]
@@ -1265,7 +1259,6 @@ class GriddedChord(CombinatorialObject):
         return GriddedChord(new_patt, new_positions)
     
     def remove_cells(self, cells: Iterable[Cell]) -> "GriddedChord":
-    # sCN: old method was perm specific
         """Remove any chords in the cell given and return a new gridded
         chord.
         
@@ -1286,8 +1279,6 @@ class GriddedChord(CombinatorialObject):
             if chord not in chords_to_remove:
                 remaining_chords.append(chord)
                 remaining_positions.append(pos)
-        
-        #print(Chord.to_standard(remaining_chords))
 
         return type(self)(
             Chord.to_standard(remaining_chords),
@@ -1322,7 +1313,7 @@ class GriddedChord(CombinatorialObject):
 
 
     ### Miscellaneous/Not sure what is happening ###
-    # sAsk: not sure what this is doing, why it is important, and why I should care. Moving on... 
+    # used for finding extreme point for point placement
     def forced_point_of_requirement(
         self, gcs: Tuple["GriddedChord", ...], indices: Tuple[int, ...], direction: int
     ) -> Optional[Tuple[int, int]]:
@@ -1357,7 +1348,6 @@ class GriddedChord(CombinatorialObject):
                         res = idx, new_res
         return res
     
-    # sToDo: not sure what this is doing, need to look more at union find algorithm
     # sToDo: tests
     def factors(self) -> List["GriddedChord"]:
         """Return a list containing the factors of a gridded chord.
@@ -1378,29 +1368,6 @@ class GriddedChord(CombinatorialObject):
                 all_factors[x] = [cell]
         factor_cells = list(set(cells) for cells in all_factors.values())
         return [self.get_subchord_in_cells(comp) for comp in factor_cells]
-
-    # this method does not seem relavent, also don't know what it is doing sAsk
-    '''
-    def extend(self, c: int, r: int) -> Iterator["GriddedChord"]:
-        """Add n+1 to all possible positions in chord and all allowed positions given
-        that placement."""
-        n = len(self)
-        if n == 0:
-            yield from (
-                GriddedChord((0,0), ((x, y),)) for x in range(c) for y in range(r)
-            )
-        else:
-            min_y = max(y for _, (_, y) in self)
-            yield from (
-                self.insert_specific_chord((x, y), index, n)
-                for index in range(n + 1)
-                for x in range(
-                    self._pos[index - 1][0] if index > 0 else 0,
-                    self._pos[index][0] + 1 if index < n else c,
-                )
-                for y in range(min_y, r)
-            )'''
-
 
     ### Data processing and printing ###
     @property
@@ -1511,6 +1478,8 @@ class GriddedChord(CombinatorialObject):
         return self._patt == other._patt and self._pos == other._pos
 
     def __lt__(self, other: "GriddedChord") -> bool:
+        if len(other._patt) != len(self._patt):
+            return len(self._patt) < len(other._patt)
         return (self._patt, self._pos) < (other._patt, other._pos)
 
     def __contains__(self, other: "GriddedChord") -> bool:
@@ -1518,3 +1487,4 @@ class GriddedChord(CombinatorialObject):
 
     def __iter__(self) -> Iterator[Tuple[int, Cell]]:
         return zip(self._patt, self._pos)
+    
