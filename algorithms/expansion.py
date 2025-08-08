@@ -12,7 +12,7 @@ from chords import Chord, GriddedChord
 from tiling import Tiling
 Cell = Tuple[int, int]
 
-class Expansion:
+class Expansion: 
     """
     This class contains method for expanding the non chord patterns 
     in obstructions and requirements to chord patterns
