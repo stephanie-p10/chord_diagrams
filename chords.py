@@ -456,7 +456,7 @@ class Chord(Tuple):
 
 class GriddedChord(CombinatorialObject):
     def __init__(
-        self, chord: Chord = Chord(()), positions: Iterable[Cell] = ()
+        self, chord: Chord = Chord((),), positions: Iterable[Cell] = ()
     ) -> None:
         self._chord = chord
         self._patt = chord.get_pattern()

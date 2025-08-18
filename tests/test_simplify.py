@@ -18,7 +18,7 @@ req_containing_ob = SimplifyObstructionsAndRequirements((GriddedChord(Chord((0, 
                                             (1,1))
 req_containing_ob.simplify()
 assert req_containing_ob.obstructions == (GriddedChord(Chord((0, 0)), ((0,0), (0,0))),)
-assert req_containing_ob.requirements == ()
+assert req_containing_ob.requirements == ((),)
 
 """all_from_21 = SimplifyObstructionsAndRequirements((GriddedChord(Chord((0,)), ((1, 0),)),
                                                    GriddedChord(Chord((0, 0)), ((0, 0), (0, 0))),

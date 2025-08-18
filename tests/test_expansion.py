@@ -53,4 +53,6 @@ assert set([tuple(list) for list in size_two_reqs_algo._requirements]) == set([(
                                                      GriddedChord(Chord((0, 0, 1, 1)), ((0, 0), (0, 0), (0, 0), (0, 0) )), 
                                                      GriddedChord(Chord((0, 1, 0, 1)), ((0, 0), (0, 0), (0, 0), (0, 0) )),),])
 
+print("asserts passed")
+
 

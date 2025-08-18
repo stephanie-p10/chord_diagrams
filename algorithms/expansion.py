@@ -9,7 +9,6 @@ from typing import TYPE_CHECKING, Iterable, Tuple, List
 from itertools import product, chain
 
 from chords import Chord, GriddedChord
-from tiling import Tiling
 Cell = Tuple[int, int]
 
 class Expansion: 
@@ -85,15 +84,11 @@ class Expansion:
         return list(set(expanded_chords))
         
     def expand_gridded_chord(self, gc: GriddedChord, obs) -> Iterable[GriddedChord]:
+        """Returns a list of all the possible ways gc can be expanded into a valid chord."""
         chord = gc._chord
-        if chord.is_valid_chord():
-            return [gc]
-        
         chords_to_build = [gc]
 
-        count = 0
         while (chords_to_build != [] and not chords_to_build[0]._chord.is_valid_chord()):
-            count += 1
             extened_chords_to_build = []
             for chord in chords_to_build:
                 extened_chords_to_build += self._expand_single_point(chord, obs)
@@ -104,27 +99,31 @@ class Expansion:
     def expand_gridded_chords(self, 
                               gcs_to_expand: Iterable["GriddedChord"],
                               gcs_to_avoid: Iterable["GriddedChord"]):
+        """Returns a list of all the possible chords that come from expanding each chord in 
+        gcs_to_expand to valid chord diagrams in all possible ways"""
         new_gcs = []
         gcs = sorted(gcs_to_expand)
+        
         for gc in gcs:
             new_gcs += self.expand_gridded_chord(gc, gcs_to_avoid)
 
         return new_gcs
 
     def expand_obstructions(self) -> None:
-        obs = self._obstructions
+        """Expands the obstructions into chord patterns in all possible ways"""
+        obs = sorted(self._obstructions)
         new_obs = []
 
-        for idx, ob in enumerate(obs):
+        for ob in obs:
             # we want to delete and then expand this 
             expanded = self.expand_gridded_chord(ob, new_obs)
             for new_ob in expanded:
                 new_obs.append(new_ob)
 
-        self._obstructions = new_obs
+        self._obstructions = tuple(new_obs)
 
     # sToDo: this is slightly inefficient, where since we expand requirments regarless if they contain smaller ones in 
     # the same list. If this is the case, the bigger requirement is redundant
     def expand_requirements(self):
-        self._requirements = list((self.expand_gridded_chords(reqlist, self._obstructions) for reqlist in self._requirements))
+        self._requirements = tuple((tuple(self.expand_gridded_chords(reqlist, self._obstructions)) for reqlist in self._requirements))
 

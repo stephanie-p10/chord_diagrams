@@ -35,11 +35,11 @@ gc_sc_nested = GriddedChord.single_cell(Chord((0, 1, 1, 0)), (0, 0))
 gc_sc_disjoint = GriddedChord.single_cell(Chord((0, 0, 1, 1)), (0, 0))
 
 # Tilings:
-t_no_restrictions = Tiling()
+t_no_restrictions = Tiling((), (), (), (), derive_empty=False)
 t_av_single = Tiling((gc_single_00_00,), (), ())
 t_cn_single = Tiling((), ((gc_single_00_00,),))
-t_lk_single = Tiling( (), (), (((0, 0),),))
-t_lk_2x2 = Tiling((), (), (((0, 0), (0, 1), (1, 0), (1, 1)),))
+t_lk_single = Tiling( (), (), (((0, 0),),), derive_empty=False)
+t_lk_2x2 = Tiling((), (), (((0, 0), (0, 1), (1, 0), (1, 1)),), derive_empty=False)
 t_ex = Tiling((gc_single_00_00, gc_single_11_11), ((gc_single_01_11, gc_disjoint), (gc_nested,)), (((0, 0), (0, 1), (1, 0)), ((1, 0), (1, 1))))
 
 # contains tests
@@ -57,34 +57,39 @@ assert t_lk_2x2.contains(gc_crossed)
 assert not t_lk_2x2.contains(gc_3_nested)
 
 # is_empty tests
-#assert Tiling((1, 1), (gc_empty,), (), ()).is_empty()
-#assert Tiling((1, 1), (gc_single_00_00,), (), ()).is_empty()
-#assert Tiling((1, 1), (gc_sc_crossed,), ((gc_sc_crossed, gc_sc_disjoint, gc_sc_nested),), (((0, 0),),)).is_empty()
-#assert Tiling((2, 1), (gc_single_00_00,), (), (((0, 0),),)).is_empty()
-#assert Tiling((3, 2), (gc_crossed,), ((gc_3_crossed,),), ()).is_empty() # uh oh... this test takes a long time...
-#assert Tiling((2, 1), (gc_crossed_h1,), ((gc_3_crossed_h1,),), ()).is_empty() 
-#assert Tiling((2, 1), (gc_nested_h1,), ((gc_3_nested_h1,),), ()).is_empty()
-#assert Tiling((2, 1), (gc_single_00_10, gc_single_00_00, gc_single_10_10), (), (((0, 0), (1, 0)),)).is_empty()
-#assert Tiling((2, 1), (gc_single_00_00,), (), (((0, 0),),)).is_empty()
+#assert Tiling((gc_empty,), (), ()).is_empty()
+assert Tiling((gc_single_00_00,), (), ()).is_empty()
+assert Tiling((gc_sc_crossed,), ((gc_sc_crossed, gc_sc_disjoint, gc_sc_nested),), (((0, 0),),)).is_empty()
+assert Tiling((gc_single_00_00,), (), (((0, 0),),)).is_empty()
+assert Tiling((gc_crossed,), ((gc_3_crossed,),), ()).is_empty() # uh oh... this test takes a long time...
+assert Tiling((gc_crossed_h1,), ((gc_3_crossed_h1,),), ()).is_empty() 
+assert Tiling((gc_nested_h1,), ((gc_3_nested_h1,),), ()).is_empty()
+assert Tiling((gc_single_00_10, gc_single_00_00, gc_single_10_10), (), (((0, 0), (1, 0)),)).is_empty()
+assert Tiling((gc_single_00_00,), (), (((0, 0),),)).is_empty()
+assert Tiling((gc_single_00_00, gc_single_11_11))
+assert Tiling((GriddedChord(Chord((0,)), ((0, 0),)), GriddedChord(Chord((0,)), ((1, 1),))),
+              ((GriddedChord(Chord((0,)), ((1, 0),)),), (GriddedChord(Chord((0,)), ((0, 1),)),))).is_empty()
 
-#assert not t_no_restrictions.is_empty()
-#assert not Tiling((2, 2), (), (), ()).is_empty()
-#assert not Tiling((2, 1), (gc_single_00_10,), (), (((0, 0), (1, 0)),)).is_empty()
-#assert not Tiling((2, 1), (gc_3_nested_h1,), ((gc_nested_h1,),), ()).is_empty()
-#assert Tiling((1, 1), (), ((gc_crossed, gc_nested), (gc_nested,)), ()).is_empty()
-#start1 = time.time()
-#assert not Tiling((2, 2), (gc_3_nested_h1,), ((gc_nested_h1,), (gc_crossed, gc_nested)), ()).is_empty_1()
-#end1 = time.time()
-#start2 = time.time()
-#assert not Tiling((2, 2), (gc_3_nested_h1,), ((gc_nested_h1,), (gc_crossed, gc_nested)), ()).is_empty_2()
-#end2 = time.time()
+assert not t_no_restrictions.is_empty()
+assert not Tiling((), (), (), derive_empty=False).is_empty()
+assert not Tiling((gc_single_00_10,), (), (((0, 0), (1, 0)),)).is_empty()
+assert not Tiling((gc_3_nested_h1,), ((gc_nested_h1,),), ()).is_empty()
+assert not Tiling((), ((gc_crossed, gc_nested), (gc_nested,)), ()).is_empty()
 
-#assert Tiling.from_dict(t_ex.to_jsonable()) == t_ex
-#print("is_empty_1: ", end1-start1)
-#print("is_empty_2: ", end2-start2)
+assert Tiling.from_dict(t_ex.to_jsonable()) == t_ex
 
-t = Tiling((GriddedChord(Chord((0,1)), ((0,1), (0,1))), GriddedChord(Chord((0,0)), ((0,1), (0,1))), GriddedChord(Chord((1,0)), ((0,1), (0,1))), GriddedChord(Chord((0,1)), ((0,0), (0,0))), GriddedChord(Chord((0,0)), ((0,0), (0,0))), GriddedChord(Chord((1,0)), ((0,0), (0,0)))),
-           ((GriddedChord(Chord((0,)), ((0,0),)),),(GriddedChord(Chord((0,)), ((0,1),)),)))
+print()
+print("printing t")
+t = Tiling((GriddedChord(Chord((0,1)), ((1,0), (1,0))), 
+            GriddedChord(Chord((0,0)), ((1,0), (1,0))), 
+            GriddedChord(Chord((1,0)), ((1,0), (1,0))), 
+            GriddedChord(Chord((0,1)), ((0,0), (0,0))), 
+            GriddedChord(Chord((0,0)), ((0,0), (0,0))), 
+            GriddedChord(Chord((1,0)), ((0,0), (0,0)))),
+           ((GriddedChord(Chord((0,)), ((0,0),)),), (GriddedChord(Chord((0,)), ((1, 0),)),)))
+
+print(t)
+print()
 
 small_tiling = Tiling((),
                       ((GriddedChord(Chord((0,1)), ((0,0), (1,1))),),))
@@ -112,15 +117,32 @@ non_crossing = Tiling(obstructions=(single_chord((1, 1), (3, 1)),
                                     GriddedChord(Chord((1,0)), ((2,0), (2,0)))),
                       requirements=([single_chord((0, 0), (2, 0))],))
 
-#print()
-#print(non_crossing.contains(GriddedChord(Chord((1, 0)), ((3, 1), (3, 1)))))
+#for chord in non_crossing.all_chords_on_tiling(4, False):
+    #print(chord)
 
-for chord in non_crossing.all_chords_on_tiling(4, False):
-    print(chord)
+assert non_crossing.contains(GriddedChord(Chord((0, 1, 1, 0)), ((0, 0), (1, 1), (1, 1), (2, 0)))) == True
+assert non_crossing.contains(GriddedChord(Chord((1, 0)), ((3, 1), (3, 1)))) == False
 
-print()
-print(non_crossing.contains(GriddedChord(Chord((0, 1, 1, 0)), ((0, 0), (1, 1), (1, 1), (2, 0)))))
-#print(t.point_cells)
+single_chord_3x1 = Tiling(obstructions = (single_chord((0, 0), (0, 0)),
+                                          single_chord((2, 0), (2, 0)), 
+                                          GriddedChord(Chord((0, 1)), ((0, 0), (0, 0))),
+                                          GriddedChord(Chord((1, 0)), ((0, 0), (0, 0))), 
+                                          GriddedChord(Chord((0, 1)), ((2, 0), (2, 0))), 
+                                          GriddedChord(Chord((1, 0)), ((2, 0), (2, 0))), 
+                                          GriddedChord(Chord((0, 1)), ((0, 0), (2, 0))), 
+                                          GriddedChord(Chord((1, 0)), ((0, 0), (2, 0))),
+                                          GriddedChord(Chord((0,)), ((1, 0),))),
+                          requirements=((GriddedChord(Chord((0, 0)), ((0, 0), (2, 0))),),))
+
+#print(single_chord_3x1._obstructions)
+#print(single_chord_3x1._requirements)
+
+empty_2x2 = Tiling(obstructions = (GriddedChord(Chord((0,)), ((0, 0),)),
+                                   GriddedChord(Chord((0,)), ((0, 1),)),
+                                   GriddedChord(Chord((0,)), ((1, 0),)),
+                                   GriddedChord(Chord((0,)), ((1, 1),)),))
+
+
 
 print("asserts passed")
 
