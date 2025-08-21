@@ -622,7 +622,7 @@ class Tiling(CombinatorialClass):
         new_req_list = (GriddedChord(patt, pos),)
         return self.add_list_requirement(new_req_list)
 
-    def add_obstructions(self, gcs: Iterable[GriddedChord], simplify: bool = False, expand: bool = False) -> "Tiling":
+    def add_obstructions(self, gcs: Iterable[GriddedChord], simplify: bool = True, expand: bool = True) -> "Tiling":
         """Returns a new tiling with the obstructions added."""
         new_obs = tuple(gcs)
         #print(sorted(self._obstructions + new_obs))

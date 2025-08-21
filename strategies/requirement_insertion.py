@@ -215,8 +215,18 @@ class RequirementInsertionFactory(RequirementInsertionWithRestrictionFactory):
             simplify=False,
             #sorted_input=True,
         )
+        """Generates lists to insert
+        
+        previously, this worked by finding natural number patterns up to length number of points.
+        However, once these patterns are expanded with the Expansion strategy, it basically gives
+        what would have been generated with chord diagrams
+        
+        A future TODO might be to figure out if it is better to add requirements based off of non 
+        chord patterns or if chord patterns only should be used (which is the current behaviour)
+        For example, non chord patterns would allow 01 = {0110, 0101, 0011} to be added as a reqlist, 
+        but right now it only adds sigleton chord diagram requirement sets to be added."""
         for length in range(1, self.maxreqlen + 1):
-            for gc in obs_tiling.all_chords_on_tiling(length, True):
+            for gc in obs_tiling.all_chords_on_tiling(2 * length):
                 if (self.allow_factorable_insertions or len(gc.factors()) == 1) and all(
                     p not in gc.patt for p in self.extra_basis
                 ):
