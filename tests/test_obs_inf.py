@@ -25,45 +25,64 @@ non_crossing = Tiling(obstructions=(single_chord((1, 1), (3, 1)),
                                     GriddedChord(Chord((1,0)), ((2,0), (2,0)))),
                       requirements=([single_chord((0, 0), (2, 0))],))
 
-tiling1 = Tiling((single_chord((0,0),(2,0)), 
+print(non_crossing._obstructions)
+
+'''tiling1 = Tiling((single_chord((0,0),(2,0)), 
              single_chord((1,0), (2,0)), 
              single_chord((2,0), (2,0)), 
              GriddedChord(Chord((0,1)), ((2,0), (2,0))), 
              GriddedChord(Chord((1,0)), ((0,1), (1,1))), 
              GriddedChord(Chord((1,0)), ((2,0), (2,0))),), 
              ((single_chord((0,0), (1,0)),), 
-              (single_chord((1,1), (2,1)),)))
-tiling2 = Tiling((GriddedChord(Chord((0,1,0,1)), ((1,1),) *4),), 
-                 ((single_chord((0,0), (2,0)),), (GriddedChord(Chord((0,1)), ((0,0), (1,1))),)))
-tilings = [non_crossing, tiling1, tiling2]
+              (single_chord((1,1), (2,1)),)))'''
+'''tiling2 = Tiling((GriddedChord(Chord((0,1,0,1)), ((1,1),) *4),), 
+                 ((single_chord((0,0), (2,0)),), (GriddedChord(Chord((0,1)), ((0,0), (1,1))),)))'''
+#tilings = [non_crossing, tiling1, tiling2]
 
 subobs_nc = SubobstructionInferral(non_crossing)
-subobs_t1 = SubobstructionInferral(tiling2)
-subobs_t2 = SubobstructionInferral(tiling2)
+#subobs_t1 = SubobstructionInferral(tiling2)
+#subobs_t2 = SubobstructionInferral(tiling2)
 
 all_obs_nc = AllObstructionInferral(non_crossing, 2)
-all_obs_t1 = AllObstructionInferral(tiling1, 4)
-all_obs_t2 = AllObstructionInferral(tiling2, 4)
+#all_obs_t1 = AllObstructionInferral(tiling1, 4)
+#all_obs_t2 = AllObstructionInferral(tiling2, 4)
 
 emptycell_nc = EmptyCellInferral(non_crossing)
-emptycell_t1 = EmptyCellInferral(tiling1)
-emptycell_t2 = EmptyCellInferral(tiling2)
+#emptycell_t1 = EmptyCellInferral(tiling1)
+#emptycell_t2 = EmptyCellInferral(tiling2)
 
 #for chord in non_crossing.all_chords_on_tiling(4, True):
    # print(chord)
 
 #print()
 
+print(set(all_obs_nc.new_obs()))
 assert set(all_obs_nc.new_obs()) == set([GriddedChord(Chord((0, 1)), ((0, 0), (2, 0))),
                                          GriddedChord(Chord((1, 0)), ((0, 0), (2, 0))),
-                                         GriddedChord(Chord((1, 0)), ((1, 1), (3, 1)))])
+                                         GriddedChord(Chord((1, 0)), ((1, 1), (3, 1))),
+                                         GriddedChord(Chord((0, 1)), ((0, 0), (0, 0))),
+                                         GriddedChord(Chord((1, 0)), ((0, 0), (0, 0))),
+                                         GriddedChord(Chord((0, 1)), ((2, 0), (2, 0))),
+                                         GriddedChord(Chord((1, 0)), ((2, 0), (2, 0)))])
 
-assert set(subobs_nc.new_obs()) == set([GriddedChord(Chord((1, 0, 1)), ((1, 1), (1, 1), (1, 1))),
-                                         GriddedChord(Chord((1, 0, 1)), ((3, 1), (3, 1), (3, 1)))])
-
+print(set(subobs_nc.new_obs()))
+assert set(subobs_nc.new_obs()) == set([GriddedChord(Chord((1, 0, 1)), ((1, 1), (1, 1), (1, 1))), 
+                                        GriddedChord(Chord((0, 1)), ((0, 0), (2, 0))), 
+                                        GriddedChord(Chord((1, 0)), ((2, 0), (2, 0))), 
+                                        GriddedChord(Chord((0, 0, 1)), ((0, 0), (2, 0), (2, 0))), 
+                                        GriddedChord(Chord((0, 1, 0)), ((0, 0), (0, 0), (2, 0))), 
+                                        GriddedChord(Chord((1, 0, 1)), ((3, 1), (3, 1), (3, 1))), 
+                                        GriddedChord(Chord((1, 0)), ((0, 0), (2, 0))), 
+                                        GriddedChord(Chord((0, 1, 0)), ((0, 0), (2, 0), (2, 0))), 
+                                        GriddedChord(Chord((0, 1)), ((2, 0), (2, 0))),
+                                        GriddedChord(Chord((0, 1, 1)), ((0, 0), (0, 0), (2, 0))), 
+                                        GriddedChord(Chord((1, 0, 1)), ((0, 0), (2, 0), (2, 0))), 
+                                        GriddedChord(Chord((1, 1, 0)), ((0, 0), (2, 0), (2, 0))), 
+                                        GriddedChord(Chord((0, 1)), ((0, 0), (0, 0)))])
 
 factory = ObstructionInferralFactory()
 
+print("space")
 for strat in factory(non_crossing):
     for item in strat.decomposition_function(non_crossing):
         print(item)

@@ -42,16 +42,19 @@ class ObstructionInferral(abc.ABC):
             self._new_obs = []
             return self._new_obs
 
-        max_len_in_chords_to_check = 2 * max(map(lambda chord: len(chord.patt), chords_to_check))
+        # finds max number of chords a single chord diagram has in the potential new obstruction patterns
+        max_len_in_chords_to_check = max(map(lambda chord: max(chord._patt) + 1 if chord else 0, chords_to_check)) 
+        print(max_len_in_chords_to_check)
+        # Calculates max length a smallest chord diagram containing a possible new obstruction could have
         max_length = (
             self._tiling.maximum_length_of_minimum_gridded_chord()
             + max_len_in_chords_to_check
         )
         print(max_len_in_chords_to_check, self._tiling.maximum_length_of_minimum_gridded_chord())
-        chords_on_tiling = self._tiling.all_chords_on_tiling(max_length) # A list of all gridded chord diagrams griddable on the tiling 
-                                                                               # of up to max_length
-        #print(chords_on_tiling)
-        #print("chords on tiling generated")
+        # A list of all gridded chord diagrams griddable on the tiling of up to max_length 
+        # (*2 since the method works in number of points not number of chords)
+        chords_on_tiling = self._tiling.all_chords_on_tiling(2 * max_length)
+
         chords_left = set(chords_to_check) # found by .potential_new_obs()
         #print("chords left generated")
         for gc in chords_on_tiling: # loop over every gridded chord that can be gridded on the tiling, up to max_length
@@ -109,7 +112,6 @@ class AllObstructionInferral(ObstructionInferral):
     def __init__(self, tiling: "Tiling", obstruction_length: Optional[int]) -> None:
         super().__init__(tiling)
         self._obs_len = obstruction_length
-        print(obstruction_length)
 
     @property
     def obstruction_length(self) -> Optional[int]:
@@ -134,7 +136,7 @@ class AllObstructionInferral(ObstructionInferral):
         no_req_tiling = self._tiling.__class__(self._tiling.obstructions)
         n = self._obs_len
         pot_obs = filter(self.not_required, no_req_tiling.all_chords_on_tiling(n, True)) 
-        return list(GriddedChord(gc._chord, gc.pos) for gc in pot_obs)
+        return list(gc for gc in pot_obs)
 
 
 class EmptyCellInferral(AllObstructionInferral):

@@ -379,7 +379,7 @@ class Tiling(CombinatorialClass):
 
     # proved bound has -1 at the end, but I'm not sure how to account for reqs that are not valid chord diagrams
     def maximum_length_of_minimum_gridded_chord(self) -> int:
-        """Returns the maximum length of the minimum gridded permutation that
+        """Returns the maximum length of the minimum gridded chord diagram that
         can be gridded on the tiling.
         """
         if not self.requirements:
@@ -622,7 +622,7 @@ class Tiling(CombinatorialClass):
         new_req_list = (GriddedChord(patt, pos),)
         return self.add_list_requirement(new_req_list)
 
-    def add_obstructions(self, gcs: Iterable[GriddedChord]) -> "Tiling":
+    def add_obstructions(self, gcs: Iterable[GriddedChord], simplify: bool = False, expand: bool = False) -> "Tiling":
         """Returns a new tiling with the obstructions added."""
         new_obs = tuple(gcs)
         #print(sorted(self._obstructions + new_obs))
@@ -631,7 +631,9 @@ class Tiling(CombinatorialClass):
             all_obs,
             self._requirements,
             self._linkages,
-            self._assumptions
+            self._assumptions,
+            simplify= simplify,
+            expand= expand
         )
     
     def add_assumptions(

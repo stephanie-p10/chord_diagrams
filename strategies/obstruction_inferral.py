@@ -19,7 +19,7 @@ class ObstructionInferralStrategy(DisjointUnionStrategy[Tiling, GriddedChord]):
         )
 
     def decomposition_function(self, comb_class: Tiling) -> Tuple[Tiling]:
-        return (comb_class.add_obstructions(self.gcs),)
+        return (comb_class.add_obstructions(self.gcs, False, False),)
 
     def formal_step(self) -> str:
         """Return a string describing the operation performed."""
