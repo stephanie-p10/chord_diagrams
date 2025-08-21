@@ -83,8 +83,7 @@ class Tiling(CombinatorialClass):
         # this should not affect the switch to only describe a tiling with chord diagrams, since the only time
         #   the new point obstructions are used is when dealing with parts of the tiling that are empty. Most 
         #   computations are done only on the active cells.
-        #print("empty cells", self._cached_properties["empty_cells"])
-        #self._add_point_obs(self._cached_properties["empty_cells"])
+        self._add_point_obs(self._cached_properties["empty_cells"])
 
         #print("computed adding point obs")
             
@@ -294,14 +293,10 @@ class Tiling(CombinatorialClass):
   
     def _expand(self) -> None:
         expansion_class = Expansion(self._obstructions, self._requirements, self.dimensions, self.active_cells)
-        #print("printing obs in expand", self._obstructions)
-        #print("printing reqs in expand", self._requirements)
         expansion_class.expand_obstructions()
         expansion_class.expand_requirements()
         self._obstructions = tuple(expansion_class._obstructions)
         self._requirements = tuple(expansion_class._requirements)
-        #print("printing obs in expand after algo", self._obstructions)
-        #print("printing reqs in expand after algo", self._requirements)
 
     def _simplify(self) -> None:
         simplify_algo = SimplifyObstructionsAndRequirements(self.obstructions, self.requirements, self._cached_properties["dimensions"])

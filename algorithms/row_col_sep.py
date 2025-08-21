@@ -347,9 +347,11 @@ class _RowColSeparationSingleApplication:
             for ob in self._tiling.obstructions
             if len(ob.patt) == 2 and not ob.is_single_cell()
         ) # all obstructions of length 2 that aren't in the same cell
+
         for ob in filtered_obs:
             c1, c2 = ob.pos
             spanning_chord = GriddedChord(Chord((0, 0)), (c1, c2))
+
             # This bool is to make sure that there isn't some requirement with a chord
             # over c1 and c2 that means they must be in the same row
             chord_spans_cells_in_req = any([any([req.contains(spanning_chord) for req in reqlist])
