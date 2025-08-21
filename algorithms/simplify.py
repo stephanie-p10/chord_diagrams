@@ -24,7 +24,7 @@ def binomial(x: int, y: int) -> int:
         return 0
 
 
-# sTODO: a lot of this class has redundant code compared to tilings
+# s TODO: a lot of this class has redundant code compared to tilings
 class SimplifyObstructionsAndRequirements:
     """
     This class contains method for reducing and removing redundant obstructions and requirements.
@@ -61,7 +61,7 @@ class SimplifyObstructionsAndRequirements:
 
     def remove_redundant_requirements(self) -> None:
         """Remove requirements that are implied by other requirements in the same list."""
-        #print(*self.obstructions)
+        
         self.requirements = tuple(
             self.remove_redundant_gridded_chords(
                 tuple(req for req in req_list if req.avoids(*self.obstructions))
@@ -73,15 +73,39 @@ class SimplifyObstructionsAndRequirements:
         """Remove requirements lists that are implied by other requirements lists."""
         indices = []
         for i, req_list_1 in enumerate(self.requirements):
-            if all(any(self.implied_by_requirement(req, req_list_2)
+            if self.requirement_implied_by_some_requirement(
+                req_list_1,
+                [
+                    req_list_2
                     for j, req_list_2 in enumerate(self.requirements)
-                    if j != i and j not in indices
-                )
-                for req in req_list_1
-            ): 
+                    if i != j and j not in indices
+                ],
+            ):
                 indices.append(i)
         self.requirements = tuple(
             req for i, req in enumerate(self.requirements) if i not in indices
+        )
+
+    def requirement_implied_by_some_requirement(
+        self,
+        requirement: tuple["GriddedChord", ...],
+        requirements: Iterable[tuple["GriddedChord", ...]],
+    ) -> bool:
+        """Check if one of the requirements implies the containment of requirement."""
+        return any(
+            self.requirement_implied_by_requirement(requirement, req)
+            for req in requirements
+        )
+    
+    @staticmethod
+    def requirement_implied_by_requirement(
+        requirement: tuple["GriddedChord", ...],
+        other_requirement: tuple["GriddedChord", ...],
+    ) -> bool:
+        """Check if the containment of other implies containment of requirement."""
+        return all(
+            any(other_gc.contains(gc) for gc in requirement)
+            for other_gc in other_requirement
         )
 
     def simplify(self) -> None:
@@ -89,18 +113,24 @@ class SimplifyObstructionsAndRequirements:
         curr_obs = None
         curr_reqs = None
         while curr_obs != self.obstructions or curr_reqs != self.requirements:
+            #print(self.obstructions, self.requirements)
             curr_obs = self.obstructions
             curr_reqs = self.requirements
             self.simplify_once()
+            #print("after simplify once", self.obstructions)
             self.sort_requirements()
             self.sort_obstructions()
+            #print("after sort", self.obstructions)
 
     def simplify_once(self) -> None:
         """Do one pass of all the different simplify methods."""
         self.remove_redundant_obstructions()
+        #print("after remove redundant", self.obstructions)
         self.remove_redundant_requirements()
         self.remove_redundant_lists_requirements()
-        self.remove_factors_from_obstructions()
+        # maybe add this back in, not sure what it is doing, but it skrews with obstructions in tilings tests
+        #self.remove_factors_from_obstructions() 
+        #print("after remove factors", self.obstructions)
 
     def sort_requirements(self) -> None:
         """Orders the requirements and removes duplicates."""
@@ -139,6 +169,7 @@ class SimplifyObstructionsAndRequirements:
         Returns the point rows of the tiling. -> when only one value is in the row
 
         #TODO: be passed from the tiling in the init to avoid duplicated code?
+        # s TODO this is wrong, point cells need to be calculated differently with expand
         """
         point_rows = set()
         counter_dict: dict[int, int] = defaultdict(int)

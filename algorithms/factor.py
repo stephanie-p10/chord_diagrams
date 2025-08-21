@@ -176,6 +176,7 @@ class Factor:
                 ass.__class__(gp for gp in ass.gps if gp.pos[0] in component)
                 for ass in self._tiling.assumptions
             )
+            #print(obstructions, requirements)
             factors.append(
                 (
                     obstructions,

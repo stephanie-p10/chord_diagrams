@@ -60,22 +60,44 @@ class Tiling(CombinatorialClass):
         if "dimensions" not in self._cached_properties:
             self._compute_dimensions()
 
+        #print("computed dimensions")
+
         if simplify:
             self._simplify()
+
+        #print("computed simplify 1")
         
         # currently defaults cells with no requirements or obsturctions to be empty
         # note: should this be defaulted to allowing other chords?
         if "empty_cells" not in self._cached_properties:
             self._prepare_properties(derive_empty)
 
+        #print("computed prepare properties")
+
         if expand:
             self._expand()
 
+        #print("computed expand")
+
+        # for simplification of computation, point obstructions to mark empty cells are added after expand.
+        # this should not affect the switch to only describe a tiling with chord diagrams, since the only time
+        #   the new point obstructions are used is when dealing with parts of the tiling that are empty. Most 
+        #   computations are done only on the active cells.
+        #print("empty cells", self._cached_properties["empty_cells"])
+        #self._add_point_obs(self._cached_properties["empty_cells"])
+
+        #print("computed adding point obs")
+            
         if simplify:
             self._simplify()
 
+        #print("computed simplify 2")
+
         if remove_empty_rows_and_cols:
             self._remove_empty_rows_and_cols()
+
+        #print("computed remove empty rows and cols")
+        #print()
 
     @property
     def obstructions(self):
@@ -215,7 +237,10 @@ class Tiling(CombinatorialClass):
         """
         Compute active_cells and empty_cells, and store them in cached_properties
         """
-        cells = []
+        potential_active_cells = []
+        max_x = self.dimensions[0]
+        max_y = self.dimensions[1]
+        all_cells = list(product(range(max_x), range(max_y)))
 
         # If we are derviving the tiling empty, a cell can only be active if it is found in an ob or req
         if derive_empty:
@@ -226,12 +251,10 @@ class Tiling(CombinatorialClass):
             cell_set.update(
                 *(union_reduce(set(comp.pos) for comp in req) for req in self._requirements)
             )
-            cells = list(cell_set)
+            potential_active_cells = list(cell_set)
         # If we were not assuming everything non used cell is empty, any cell could be an active cell
         else:
-            max_x = self.dimensions[0]
-            max_y = self.dimensions[1]
-            cells = list(product(range(max_x), range(max_y)))
+            potential_active_cells = all_cells
 
         # A cell is empty if there are no chord diagrams that can be gridded on the tiling with a point in the cell
         # If there is a chord diagram with a point in the cell, there will be one with at most size max_size_to_check
@@ -244,71 +267,31 @@ class Tiling(CombinatorialClass):
         # Checks what cells are used in any gridded chord diagram up to max_size_to_check
         cells_used = set()
         for chord in all_chords:
-            for gc in GriddedChord.all_grids(chord, cells):
+            for gc in GriddedChord.all_grids(chord, potential_active_cells):
                 if self.contains(gc):
                     cells_used.update(gc.pos)
 
         # calculates empty cells as complement of active cells
         empty_cells = tuple(
             cell
-            for cell in cells
+            for cell in all_cells
             if cell not in cells_used
         )
 
         self._cached_properties["active_cells"] = frozenset(cells_used)
         self._cached_properties["empty_cells"] = frozenset(empty_cells)
 
-    # also changed how acitve_cells and empty_cells are computed, no longer add point obs based on empty cells
-    def _prepare_properties_copy(self, derive_empty: bool = True) -> None:
-        """
-        Compute active_cells, _empty_cells, _dimensions, and store them
-        """
-        #TODO empty_cells is calculated wrong, since we can have all pairs of chords obstruct that nothing can be in a cell.
-        active_cells = union_reduce(
-            set(ob.pos) for ob in self._obstructions if not ob.is_point()
-        )
-        active_cells.update(
-            *(union_reduce(set(comp.pos) for comp in req) for req in self._requirements)
-        )
+    def _add_point_obs(self, cells: Tuple[Cell]):
+        #print("add_point_obs")
+        new_obs = list(self._obstructions)
+        #print("new_obs", new_obs)
+        #print("cells", cells)
+        for cell in cells:
+            new_obs.append(GriddedChord.single_cell(Chord((0,)), cell))
+            #print(cell)
 
-        max_row = 0
-        max_col = 0
-        for cell in active_cells:
-            max_col = max(max_col, cell[0])
-            max_row = max(max_row, cell[1])
-        dimensions = (max_col + 1, max_row + 1)
-
-        empty_cells = tuple(
-            cell
-            for cell in product(range(dimensions[0]), range(dimensions[1]))
-            if cell not in active_cells
-        )
-
-        if not derive_empty:
-            active_cells = product(range(dimensions[0]), range(dimensions[1]))
-            empty_cells = ()
-        
-        # If the first obstruction is the empty perm, we shouldn't do any of this.
-        if len(self._obstructions) > 0 and len(self._obstructions[0]) > 0:
-            # We can assume that self._obstructions is sorted at this point, so to
-            #   extract the point obstructions, we just pass though them until we've
-            #   found the last one, then we slice the list there.
-            self._obstructions = sorted(self._obstructions) # not assuming, fix later s TODO
-            index = 0
-            for ob in self._obstructions:
-                if len(ob.patt) > 1:
-                    break
-                index += 1  # Now the last point obstruction is at index [index-1]
-            non_point_obstructions = tuple(self._obstructions[index:])
-
-            new_point_obstructions = tuple(
-                GriddedChord(Chord((0,)), (cell,)) for cell in empty_cells
-            )
-            self._obstructions = new_point_obstructions + non_point_obstructions
-
-        self._cached_properties["active_cells"] = frozenset(active_cells)
-        self._cached_properties["empty_cells"] = frozenset(empty_cells)
-
+        self._obstructions = tuple(new_obs)
+  
     def _expand(self) -> None:
         expansion_class = Expansion(self._obstructions, self._requirements, self.dimensions, self.active_cells)
         #print("printing obs in expand", self._obstructions)

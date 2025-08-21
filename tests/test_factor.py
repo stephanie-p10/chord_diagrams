@@ -29,23 +29,27 @@ non_crossing = Tiling(obstructions=sorted((GriddedChord(Chord((0,)), ((0, 1),)),
                       requirements=((GriddedChord(Chord((0, 0)), ((0, 0), (2, 0))),),))
 
 
-#print(non_crossing.is_empty())
+#for ob in non_crossing.obstructions:
+    #print(ob)
+#print(non_crossing.active_cells)
 
 factor_nc_algo = Factor(non_crossing)
 factors = factor_nc_algo.factors()
 
 nc_factors_list = [Tiling(obstructions=(GriddedChord(Chord((0,1,0,1)), ((0,0), (0,0), (0,0), (0,0))),)),
-                                         Tiling(obstructions=(GriddedChord(Chord((0,1,0,1)), ((0,0), (0,0), (0,0), (0,0))),)),
-                                         Tiling(obstructions=(GriddedChord(Chord((0, 0)), ((0, 0), (0, 0))),
-                                                              GriddedChord(Chord((0, 0)), ((1, 0), (1, 0))),
-                                                              GriddedChord(Chord((0, 1)), ((0, 0), (0, 0))),
-                                                              GriddedChord(Chord((0, 1)), ((0, 0), (1, 0))),
-                                                              GriddedChord(Chord((0, 1)), ((1, 0), (1, 0))),
-                                                              GriddedChord(Chord((1, 0)), ((0, 0), (0, 0))),
-                                                              GriddedChord(Chord((1, 0)), ((0, 0), (1, 0))),
-                                                              GriddedChord(Chord((1, 0)), ((1, 0), (1, 0)))),
-                                                              requirements=((GriddedChord(Chord((0,0)), ((0, 0), (1, 0))),),))]
+                    Tiling(obstructions=(GriddedChord(Chord((0,1,0,1)), ((0,0), (0,0), (0,0), (0,0))),)),
+                    Tiling(obstructions=(GriddedChord(Chord((0, 0)), ((0, 0), (0, 0))),
+                                         GriddedChord(Chord((0, 0)), ((1, 0), (1, 0))),
+                                         GriddedChord(Chord((0, 1)), ((0, 0), (0, 0))),
+                                         GriddedChord(Chord((0, 1)), ((0, 0), (1, 0))),
+                                         GriddedChord(Chord((0, 1)), ((1, 0), (1, 0))),
+                                         GriddedChord(Chord((1, 0)), ((0, 0), (0, 0))),
+                                         GriddedChord(Chord((1, 0)), ((0, 0), (1, 0))),
+                                         GriddedChord(Chord((1, 0)), ((1, 0), (1, 0)))),
+                                         requirements=((GriddedChord(Chord((0,0)), ((0, 0), (1, 0))),),))]
 
+for factor_list in [factor for factor in factor_nc_algo.factors()]:
+    print(factor_list)
 assert [factor for factor in factor_nc_algo.factors()] == nc_factors_list
 
 
