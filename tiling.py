@@ -87,6 +87,7 @@ class Tiling(CombinatorialClass):
 
         #print("computed adding point obs")
             
+        # this will take out all obs that have ends in empty cells
         if simplify:
             self._simplify()
 
@@ -167,27 +168,24 @@ class Tiling(CombinatorialClass):
             self._cached_properties["positive_cells"] = positive_cells
             return positive_cells
         
-    #s TODO this is wrong! currently this works for allowing non chord patterns
+    # sTODO tests. I changed this so it works only for chords that are described in full chord diagrams
     @property
     def point_cells(self) -> CellFrozenSet:
+        """DOES NOT WORK!
+        This method requires a lot of calculation and is not used besides in checking a redundant requirement placement.
+        Needs to be finished"""
         try:
             return self._cached_properties["point_cells"]
         except KeyError:
-            # finds all cells obstructing length one and two chords fully contained within them
-            local_length_lt2_obcells = Counter(
-                ob.pos[0]
-                for ob in self._obstructions
-                if ob.is_localized() and (ob._patt == (0, 0) or ob._patt == (0, 1) or ob._patt == (1,0))
-            )
-            # finds cells that must only have a single point
-            point_cells = frozenset(
-                cell for cell in self.positive_cells if local_length_lt2_obcells[cell] == 3
-            )
-            self._cached_properties["point_cells"] = point_cells
+            point_cells = []
+            # could be checked by checking if all length two chords with two points in a cell are obstructed, and
+            # that cell has to have one point, then that cell is a point cell
             return point_cells
         
     @property
+    # sTODO
     def chord_cells(self) -> CellFrozenSet:
+        """ need to fix for working with ony chord patterns"""
         try:
             return self._cached_properties["chord_cells"]
         except KeyError:

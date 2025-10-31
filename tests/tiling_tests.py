@@ -163,4 +163,16 @@ print("asserts passed")
 
 
 
+tiling_pt_cell = Tiling((GriddedChord(Chord((0, 0)), ((1, 0), (1, 0))), 
+                         GriddedChord(Chord((0, 1)), ((1, 0), (1, 0))),
+                         GriddedChord(Chord((1, 0)), ((1, 0), (1, 0))),
+                         GriddedChord(Chord((0, 0)), ((0, 1), (1, 1))),
+                         GriddedChord(Chord((0, 0)), ((1, 1), (1, 1))),), 
+                         ((GriddedChord(Chord((0,)), ((0, 0),)),),))
+
+print(tiling_pt_cell)
+print(tiling_pt_cell.point_cells)
+
+
+
 

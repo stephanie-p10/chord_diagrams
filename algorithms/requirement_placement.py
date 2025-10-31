@@ -304,12 +304,13 @@ class RequirementPlacement:
     ):
         if not own_row and not own_col:
             raise ValueError("Must place on own row or on own column.")
+        #if own_col and not own_row:
+            #raise NotImplementedError
+        
         assert all(d in DIRS for d in dirs), "Got an invalid direction"
         self._tiling = tiling
         self.own_row = own_row
         self.own_col = own_col
-        self._point_row_cells = self._tiling_point_col_cells()
-        self._point_col_cells = self._tiling_point_row_cells()
         if self.own_row and self.own_col:
             self.directions = frozenset(DIRS)
         elif self.own_row:
@@ -319,19 +320,13 @@ class RequirementPlacement:
         self.directions = frozenset(dirs).intersection(self.directions)
         assert self.directions, "No direction to place"
 
-    # this works contingent on obstructions being reduced
-    # sTODO: make method to reduce reqs and obs upon initialization
-    # tested!
-    def _tiling_point_col_cells(self) -> FrozenSet[Cell]:
+    ''' def _tiling_point_col_cells(self) -> FrozenSet[Cell]:
         """
         The point cells of the tilings that are the only active cell in their
         column.
         """
         return frozenset(cell for cell in self._tiling.point_cells if self._tiling.only_cell_in_col(cell)) # filters point_cells by if they are the only cells in their col
     
-    # this works contingent on obstructions being reduced
-    # sTODO: make method to reduce reqs and obs upon initialization
-    # tested!
     def _tiling_point_row_cells(self) -> FrozenSet[Cell]:
         """
         The point cells (and single chord cells) of the tiling that are the only active cell in their
@@ -350,10 +345,11 @@ class RequirementPlacement:
         all_isolated = isolated_chord_cells + isolated_point_cells
         return frozenset(all_isolated)
 
-    # tested!
     def already_placed(self, gc: GriddedChord, idx: int) -> bool:
         """
         Determine if this gridded chord diagram has already been placed.
+        Probably not that useful. Perhaps just place redundantly and then remove empty rows and columns
+        Note that this currently doesn't work because calculation of point cells is incorrect.
         """
         cell = gc.pos[idx]
         if self.own_col and self.own_row:
@@ -362,9 +358,10 @@ class RequirementPlacement:
             return cell in self._point_row_cells
         if self.own_col:  # Only placing in own column
             return cell in self._point_col_cells
-        raise Exception("Not placing at all!!")
+        raise Exception("Not placing at all!!")'''
     
     def _point_translation(self, gc: GriddedChord, idx: int, point_placed: Cell) -> tuple[int]:
+        """Translates the cell in gc at idx assuming a point is placed at point_placed """
         x, y = gc.pos[idx]
         x = x + 2 if self.own_col and idx >= point_placed[0] else x
         y = y + 2 if (self.own_row and gc.patt[idx] >= point_placed[1]) else y
@@ -395,20 +392,20 @@ class RequirementPlacement:
         Return the stretched gridded chord diagram obtained when the point at
         point_index in gc is placed.
         """
-        chord_placed = gc.patt[point_index]
+        chord_placed = gc.patt[point_index] # gets the chord number of the chord being placed
 
         new_pos = [
             self._point_translation(gc, i, (point_index, gc.patt[point_index]))
             if gc.patt[i] != chord_placed # place the point normally if it is not in the chord being placed
-            else self._placed_cell(gc.pos[i], i != point_index, i > point_index)
+            else self._point_placed_cell(gc.pos[i], i != point_index, i > point_index)
             for i in range(len(gc.pos))
         ]
         return gc.__class__(gc._chord, new_pos)
 
     # sCN: added boolean to tell if the placed cell is the intended one or the obligatory other endpoint
-    def _placed_cell(self, cell: Cell, is_other_end: bool = False, is_end_sink: bool = False) -> Cell:
+    def _point_placed_cell(self, cell: Cell, is_other_end: bool = False, is_end_sink: bool = False) -> Cell:
         """
-        Return the cell in which the point will be added in the placed tiling.
+        Return where cell gets shifted to if a point is placed in cell.
 
         If placed on its own row, then the y coordinate is shifted by 1.
         If placed on its own column, then the x coordinate is shifted by 1.
@@ -437,11 +434,12 @@ class RequirementPlacement:
         if dir == DIR_EAST:
             return (len(gc.patt) - 1, gc.patt[-1])
 
-    # tested!
+    # tested! -> should this be focused on all the ways a gc can be stretched if a CHORD is placed instead of a point?
     def get_multiplexes_of_chord(self, gc: GriddedChord, cell: Cell):
         """Retruns all the ways gc could be stretched if a point is placed in cell"""
         min_idx, max_idx, min_val, max_val = gc.get_bounding_box(cell)
 
+        # if not placing on own_col or own_row, we don't want to loop through multiplexes around thoses indices.
         if not self.own_col:
             max_idx = min_idx
         if not self.own_row:
@@ -473,8 +471,8 @@ class RequirementPlacement:
     def added_obs(self, cell_placed: Cell, cell_end: Cell, is_end_sink: bool = False) -> Iterable[GriddedChord]:
         """Returns the obstructions that need to be added to ensure that the placed
         point is isolated in its own cell, row and column."""
-        cell_x, cell_y = self._placed_cell(cell_placed)
-        cell_end_x, _ = self._placed_cell(cell_end, True, is_end_sink)
+        cell_x, cell_y = self._point_placed_cell(cell_placed)
+        cell_end_x, _ = self._point_placed_cell(cell_end, True, is_end_sink)
         tiling_length, tiling_height = self._tiling.dimensions
         new_obs = []
         
@@ -522,7 +520,7 @@ class RequirementPlacement:
     def point_dir_obs(self, cell_placed: Cell, dir: int) -> Iterable[GriddedChord]:
         """Retruns the point obstructions to make sure there are no active cells 
         farther in the direction dir than the cell placed"""
-        cell_location = self._placed_cell(cell_placed)
+        cell_location = self._point_placed_cell(cell_placed)
         
         obs = []
 
@@ -555,8 +553,8 @@ class RequirementPlacement:
     # tested!
     def added_reqs(self, req_placed: GriddedChord, idx_placed: int, idx_end: int, is_end_sink: bool) -> Iterable[Iterable[GriddedChord]]:
         """Returns the reqs that need to be added to place at idx_placed"""
-        reqs = [[GriddedChord(Chord((0,)), (self._placed_cell(req_placed.pos[idx_placed]),))],
-                [GriddedChord(Chord((0,)), (self._placed_cell(req_placed.pos[idx_end], True, is_end_sink),))],
+        reqs = [[GriddedChord(Chord((0,)), (self._point_placed_cell(req_placed.pos[idx_placed]),))],
+                [GriddedChord(Chord((0,)), (self._point_placed_cell(req_placed.pos[idx_end], True, is_end_sink),))],
                 [self._gridded_chord_translation_with_point(req_placed, idx_placed)]]
         return reqs
     
@@ -622,10 +620,10 @@ class RequirementPlacement:
         reqs += self.added_reqs(req_placed, placed_idx, other_idx, place_source)
         reqs += self.stretched_reqs(placed_cell, req_placed)
 
-        links = []
-        links += self.stretch_links(placed_cell)
+        #links = []
+        #links += self.stretch_links(placed_cell)
 
-        return Tiling(obs, reqs, links, self._tiling.assumptions)
+        return Tiling(obs, reqs, tuple(), self._tiling.assumptions)
     
     def place_chord(self, req_placed: GriddedChord, dir: int) -> Tiling:
         source_placed_tiling = self.place_point(req_placed, dir, True)
