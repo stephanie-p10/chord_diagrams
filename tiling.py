@@ -56,23 +56,19 @@ class Tiling(CombinatorialClass):
         self._requirements = tuple(requirements)
         self._assumptions = tuple(assumptions)
         self._cached_properties = {}
+        self._derive_empty = derive_empty
 
         if "dimensions" not in self._cached_properties:
             self._compute_dimensions()
 
-        #print("computed dimensions")
-
         if simplify:
             self._simplify()
 
-        #print("computed simplify 1")
-        
         # currently defaults cells with no requirements or obsturctions to be empty
         # note: should this be defaulted to allowing other chords?
-        if "empty_cells" not in self._cached_properties:
+        if "empty_cells" not in self._cached_properties and derive_empty:
+            print("used empty cells")
             self._prepare_properties(derive_empty)
-
-        #print("computed prepare properties")
 
         if expand:
             self._expand()
@@ -83,7 +79,8 @@ class Tiling(CombinatorialClass):
         # this should not affect the switch to only describe a tiling with chord diagrams, since the only time
         #   the new point obstructions are used is when dealing with parts of the tiling that are empty. Most 
         #   computations are done only on the active cells.
-        self._add_point_obs(self._cached_properties["empty_cells"])
+        if derive_empty:
+            self._add_point_obs(self._cached_properties["empty_cells"])
 
         #print("computed adding point obs")
             
@@ -91,13 +88,10 @@ class Tiling(CombinatorialClass):
         if simplify:
             self._simplify()
 
-        #print("computed simplify 2")
 
         if remove_empty_rows_and_cols:
             self._remove_empty_rows_and_cols()
 
-        #print("computed remove empty rows and cols")
-        #print()
 
     @property
     def obstructions(self):
@@ -228,12 +222,11 @@ class Tiling(CombinatorialClass):
 
         return 
 
-    
-    # also changed how acitve_cells and empty_cells are computed, no longer add point obs based on empty cells
-    def _prepare_properties(self, derive_empty: bool = True) -> None:
+    def _prepare_properties(self, derive_empty = True) -> None:
         """
         Compute active_cells and empty_cells, and store them in cached_properties
         """
+        ''' OLD VERY SLOW CODE (checks all edge cases)
         potential_active_cells = []
         max_x = self.dimensions[0]
         max_y = self.dimensions[1]
@@ -273,10 +266,39 @@ class Tiling(CombinatorialClass):
             cell
             for cell in all_cells
             if cell not in cells_used
+        )'''
+
+        # Fast method of calculating active cells, assumes the user did not do anything "silly"
+        # adds all cells that an obstuction larger than a single point uses
+        active_cells = union_reduce(
+            set(ob.pos) for ob in self.obstructions if len(ob.patt) > 1
+        )
+        # adds all cells that are used in a requirement to the active cells.
+        active_cells.update(
+            *(union_reduce(set(comp.pos) for comp in req) for req in self.requirements)
         )
 
-        self._cached_properties["active_cells"] = frozenset(cells_used)
-        self._cached_properties["empty_cells"] = frozenset(empty_cells)
+        max_row = 0
+        max_col = 0
+        for cell in active_cells:
+            max_col = max(max_col, cell[0])
+            max_row = max(max_row, cell[1])
+        dimensions = (max_col + 1, max_row + 1)
+
+        empty_cells = tuple(
+            cell
+            for cell in product(range(dimensions[0]), range(dimensions[1]))
+            if cell not in active_cells
+        )
+
+        if self._derive_empty:
+            self._cached_properties["active_cells"] = frozenset(active_cells)
+            self._cached_properties["empty_cells"] = frozenset(empty_cells)
+            self._cached_properties["dimensions"] = dimensions
+        else:
+            self._cached_properties["active_cells"] = list(product(range(max_col + 1), range(max_row + 1)))
+            self._cached_properties["empty_cells"] = frozenset()
+            self._cached_properties["dimensions"] = dimensions
 
     def _add_point_obs(self, cells: Tuple[Cell]):
         #print("add_point_obs")
@@ -861,3 +883,7 @@ class Tiling(CombinatorialClass):
             linkages=tuple(linkages),
             assumptions=tuple(assumptions),
         )
+    
+gc_single_00_00 = GriddedChord(Chord((0, 0)), ((0, 0), (0, 0)))
+t_no_restrictions = Tiling((), (), (), (), derive_empty=False)
+assert t_no_restrictions.contains(gc_single_00_00)

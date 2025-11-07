@@ -36,6 +36,7 @@ gc_sc_disjoint = GriddedChord.single_cell(Chord((0, 0, 1, 1)), (0, 0))
 
 # Tilings:
 t_no_restrictions = Tiling((), (), (), (), derive_empty=False)
+print(t_no_restrictions)
 t_av_single = Tiling((gc_single_00_00,), (), ())
 t_cn_single = Tiling((), ((gc_single_00_00,),))
 t_lk_single = Tiling( (), (), (((0, 0),),), derive_empty=False)

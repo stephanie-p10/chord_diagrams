@@ -20,7 +20,7 @@ req_containing_ob.simplify()
 assert req_containing_ob.obstructions == (GriddedChord(Chord((0, 0)), ((0,0), (0,0))),)
 assert req_containing_ob.requirements == ((),)
 
-"""all_from_21 = SimplifyObstructionsAndRequirements((GriddedChord(Chord((0,)), ((1, 0),)),
+all_from_21 = SimplifyObstructionsAndRequirements((GriddedChord(Chord((0,)), ((1, 0),)),
                                                    GriddedChord(Chord((0, 0)), ((0, 0), (0, 0))),
                                                    GriddedChord(Chord((0, 0)), ((2, 0), (2, 0))),
 
@@ -42,7 +42,7 @@ assert req_containing_ob.requirements == ((),)
                                                     ((GriddedChord(Chord((0, 0)), ((0, 0), (2, 0))),),),
                                                     (3, 1))
 
-all_from_21.simplify()"""
+all_from_21.simplify()
 
 req_containing_req = SimplifyObstructionsAndRequirements((),
                                                     ((GriddedChord(Chord((0, 1, 0, 2, 1, 2)), ((0, 0), )*6),
