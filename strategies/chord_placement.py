@@ -46,16 +46,20 @@ class RequirementPlacementStrategy(DisjointUnionStrategy[Tiling, GriddedChord]):
     def _child_idx(self, idx: int):
         """Return the index of the child given the index of gcs placed into."""
         return self._placed_cells.index(self.gcs[idx].pos[self.indices[idx]])
+        # in the list of placed cells, what is the index of the cell placed in the gc at idx in gcs
 
     def placement_class(self, tiling: Tiling) -> RequirementPlacement:
         return RequirementPlacement(tiling, own_col=self.own_col, own_row=self.own_row)
 
     def decomposition_function(self, comb_class: Tiling) -> Tuple[Tiling, ...]:
         placement_class = self.placement_class(comb_class)
-        placed_tilings = placement_class.place_chord(self.gcs, self.direction)
-        if self.include_empty:
-            return (comb_class.add_obstructions(self.gcs),) + placed_tilings
-        return placed_tilings
+        if self.gcs in comb_class.requirements:
+            placed_tilings = placement_class.place_chords(self.gcs, self.direction)
+            if self.include_empty:
+                return (comb_class.add_obstructions(self.gcs),) + placed_tilings
+            return placed_tilings
+        else:
+            raise StrategyDoesNotApply
 
     '''def extra_parameters(
         self, comb_class: Tiling, children: Optional[Tuple[Tiling, ...]] = None
@@ -242,3 +246,50 @@ class RequirementPlacementStrategy(DisjointUnionStrategy[Tiling, GriddedChord]):
     def from_dict(cls, d: dict) -> "RequirementPlacementStrategy":
         gcs = tuple(GriddedChord.from_dict(gc) for gc in d.pop("gcs"))
         return cls(gcs=gcs, **d)
+    
+   
+class RequirementPlacementFactory(StrategyFactory[Tiling]):
+    def __init__(self, max_size_to_place: int = 1) -> None:
+        self.max_size_to_place = max_size_to_place
+
+    def __call__(self, comb_class: Tiling) -> Iterator[RequirementPlacementStrategy]:
+        reqs = comb_class.requirements
+        for req_list in reqs:
+            if len(req_list) == 1:
+                yield self._build_strategy(req_list, )
+
+    def _build_strategy(self, size_one_req_list, directionmost_point):
+        return RequirementPlacementStrategy(size_one_req_list, )
+    
+    def __str__(self) -> str:
+        s = "factor"
+        if self.unions:
+            s = "unions of " + s
+        if self.tracked:
+            s = "tracked " + s
+        return s
+
+    def __repr__(self) -> str:
+        interleaving = None
+        args = ", ".join(
+            [
+                f"unions={self.unions}",
+                f"ignore_parent={self.ignore_parent}",
+                f"workable={self.workable}",
+            ]
+        )
+        return f"{self.__class__.__name__}({args})"
+
+    def to_jsonable(self) -> dict:
+        d: dict = super().to_jsonable()
+        interleaving = None
+
+        d["unions"] = self.unions
+        d["ignore_parent"] = self.ignore_parent
+        d["workable"] = self.workable
+        return d
+
+    @classmethod
+    def from_dict(cls, d: dict) -> "RequirementPlacementFactory":
+        return cls(**d)
+

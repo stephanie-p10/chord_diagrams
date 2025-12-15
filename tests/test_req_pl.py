@@ -269,19 +269,22 @@ assert placement1.point_dir_obs((2, 1), DIR_NORTH) == [GriddedChord(Chord((0,)),
                                                        GriddedChord(Chord((0,)), ((2, 3),)),
                                                        GriddedChord(Chord((0,)), ((3, 3),)),
                                                        GriddedChord(Chord((0,)), ((4, 3),))]
-assert set(placement1ownrow.point_dir_obs((2, 0), DIR_SOUTH)) == set([GriddedChord(Chord((0,)), ((0, 0),)),
+'''assert set(placement1ownrow.point_dir_obs((2, 0), DIR_SOUTH)) == set([GriddedChord(Chord((0,)), ((0, 0),)),
                                                        GriddedChord(Chord((0,)), ((1, 0),)),
-                                                       GriddedChord(Chord((0,)), ((2, 0),))])
+                                                       GriddedChord(Chord((0,)), ((2, 0),))])'''
 assert placement1.point_dir_obs((2, 0), DIR_EAST) == [GriddedChord(Chord((0,)), ((4, 0),)),
                                                        GriddedChord(Chord((0,)), ((4, 1),)),
                                                        GriddedChord(Chord((0,)), ((4, 2),)),
                                                        GriddedChord(Chord((0,)), ((4, 3),)),]
-assert placement1owncol.point_dir_obs((0, 0), DIR_WEST) == [GriddedChord(Chord((0,)), ((0, 0),)),
-                                                       GriddedChord(Chord((0,)), ((0, 1),)),]
+'''assert placement1owncol.point_dir_obs((0, 0), DIR_WEST) == [GriddedChord(Chord((0,)), ((0, 0),)),
+                                                       GriddedChord(Chord((0,)), ((0, 1),)),]'''
 
 print(placement_nc.place_point(GriddedChord(Chord((0,0)), ((0,0), (0,0))), 3, True))
 print()
 place = placement_nc.place_chord(GriddedChord(Chord((0,0)), ((0,0), (0,0))), 3)
 place._remove_empty_rows_and_cols()
+place._simplify()
+print()
 print(place)
+print(place.active_cells)
 

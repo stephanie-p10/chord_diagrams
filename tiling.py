@@ -289,7 +289,7 @@ class Tiling(CombinatorialClass):
             cell
             for cell in product(range(dimensions[0]), range(dimensions[1]))
             if cell not in active_cells
-        )
+        )    
 
         if self._derive_empty:
             self._cached_properties["active_cells"] = frozenset(active_cells)
@@ -479,9 +479,16 @@ class Tiling(CombinatorialClass):
     # sToDo this is currently incorrect, but ok for non crossing. the atom should be a set containing the smallest thing that can be made.
     def is_atom(self):
         """Return True if the Tiling is a single gridded chord."""
+        if self.is_empty():
+            return True
+
         single_size_1 = False
         size_1_in_self = []
-        cells = self._cached_properties["active cells"]
+        try:
+            cells = self._cached_properties["active_cells"]
+        except(KeyError):
+            self._prepare_properties()
+            cells = self._cached_properties["active_cells"]
         for gc in GriddedChord.all_grids(Chord((1,1)), cells):
             if self.contains(gc):
                 size_1_in_self.append(gc)
@@ -519,7 +526,11 @@ class Tiling(CombinatorialClass):
             all_chords += list(Chord.of_length(num_chords))
 
         # product of length and width to get valid cells can probaby be much improved.
-        cells = self._cached_properties["active cells"]
+        try:
+            cells = self._cached_properties["active_cells"]
+        except KeyError:
+            self._prepare_properties()
+            cells = self._cached_properties["active_cells"]
         for chord in all_chords:
             for gc in GriddedChord.all_grids(chord, cells):
                 if self.contains(gc):

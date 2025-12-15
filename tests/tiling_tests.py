@@ -145,7 +145,7 @@ empty_2x2 = Tiling(obstructions = (GriddedChord(Chord((0,)), ((0, 0),)),
 print(empty_2x2)
 
 print("reached all_simplify")
-'''all_simplify = Tiling(obstructions= (GriddedChord(Chord((0, 0)), ((0, 0), (0, 0))),
+all_simplify = Tiling(obstructions= (GriddedChord(Chord((0, 0)), ((0, 0), (0, 0))),
                                      GriddedChord(Chord((0, 0)), ((0, 0), (1, 0))),
                                      GriddedChord(Chord((0, 0)), ((0, 0), (2, 0))),
                                      GriddedChord(Chord((0, 0)), ((0, 0), (3, 0))),
@@ -157,11 +157,11 @@ print("reached all_simplify")
                                    (GriddedChord(Chord((0, 1)), ((1, 1), (1, 1))),), # is implied by req 3
                                    (GriddedChord(Chord((0, 1, 0, 1)), ((1, 1),) * 4),),
                                    (GriddedChord(Chord((0, 0)), ((1, 0), (2, 0))), GriddedChord(Chord((0, 1, 1, 0)), ((1, 0), (1, 0), (2, 0), (2, 0)))),
-                                   ),)'''
+                                   ),)
 print("finished all simplify")
 
 print("asserts passed")
-
+print(all_simplify)
 
 
 tiling_pt_cell = Tiling((GriddedChord(Chord((0, 0)), ((1, 0), (1, 0))), 
@@ -171,8 +171,8 @@ tiling_pt_cell = Tiling((GriddedChord(Chord((0, 0)), ((1, 0), (1, 0))),
                          GriddedChord(Chord((0, 0)), ((1, 1), (1, 1))),), 
                          ((GriddedChord(Chord((0,)), ((0, 0),)),),))
 
-print(tiling_pt_cell)
-print(tiling_pt_cell.point_cells)
+#print(tiling_pt_cell)
+#print(tiling_pt_cell.point_cells)
 
 
 
