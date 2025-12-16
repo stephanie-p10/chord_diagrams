@@ -67,7 +67,7 @@ class Tiling(CombinatorialClass):
         # currently defaults cells with no requirements or obsturctions to be empty
         # note: should this be defaulted to allowing other chords?
         if "empty_cells" not in self._cached_properties and derive_empty:
-            print("used empty cells")
+            #print("used empty cells")
             self._prepare_properties(derive_empty)
 
         if expand:
@@ -476,10 +476,26 @@ class Tiling(CombinatorialClass):
             ) from e
         return f"k_{idx}"
 
+    def objects_of_size(self, size):
+        print("called objects of size from us")
+        chords = Chord.of_length(size)
+
+        grids = []
+        for chord in chords:
+            for grid in GriddedChord.all_grids(chord):
+                if self.contains(grid):
+                    grids.append(grid)
+
+        return grids
+
     # sToDo this is currently incorrect, but ok for non crossing. the atom should be a set containing the smallest thing that can be made.
     def is_atom(self):
         """Return True if the Tiling is a single gridded chord."""
-        if self.is_empty():
+        
+        # if any req list is empty or has all empty grids, only the empty grid can be gridded. 
+        if any(all(req.is_empty() for req in req_list) and 
+               len(req_list) != 0 for req_list in self.requirements) and len(self.requirements) >= 1:
+            #print("contains empty requirements list")
             return True
 
         single_size_1 = False
@@ -489,9 +505,13 @@ class Tiling(CombinatorialClass):
         except(KeyError):
             self._prepare_properties()
             cells = self._cached_properties["active_cells"]
+
         for gc in GriddedChord.all_grids(Chord((1,1)), cells):
             if self.contains(gc):
                 size_1_in_self.append(gc)
+
+        if len(size_1_in_self) == 0 and self.contains(GriddedChord(Chord(()), ())):
+            return True
 
         single_size_1 = (len(size_1_in_self) == 1)
         
@@ -590,9 +610,8 @@ class Tiling(CombinatorialClass):
             #print("contains empty obstruction")
             return True
         
-        # if any req list is empty or has all empty grids, only the empty grid can be gridded. 
-        if any(all(req.is_empty() for req in req_list) for req_list in self.requirements) and len(self.requirements) >= 1:
-            #print("contains empty requirements list")
+        # if we have a req_list of length 0, we are requiring that we have nothing, so we have the empty set
+        if any(len(req_list) == 0 for req_list in self.requirements) and len(self.requirements) >= 1:
             return True
         
         sum_max_reqs = 0
@@ -602,14 +621,17 @@ class Tiling(CombinatorialClass):
             req_lengths = [len(req) for req in req_list]
             sum_max_reqs += max(req_lengths)
 
-        if sum_max_reqs == 0: # then there are no requirements, but we still need a chord of size one
-            sum_max_reqs += 1
+        #if sum_max_reqs == 0: # then there are no requirements, but we still need a chord of size one
+            #sum_max_reqs += 1
         
         # proved maximum size of smallest chord that can be gridded:
         max_len = sum_max_reqs * 2 - 1
+
+        if max_len == -1:
+            max_len = 0
        
         all_chords = []
-        for num_chords in range(1, max_len + 1):
+        for num_chords in range(0, max_len + 1):
             all_chords += list(Chord.of_length(num_chords))
 
         # product of length and width to get valid cells can probaby be much improved.
