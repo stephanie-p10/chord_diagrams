@@ -522,7 +522,7 @@ class Tiling(CombinatorialClass):
                 if self.contains(gc):
                     avoids_all_2s = False
                     break
-        return single_size_1 and avoids_all_2s
+        return single_size_1 and avoids_all_2s and not self.contains(GriddedChord(Chord(()), ()))
 
     # currently this is almost the same as is_empty, should probably also be optimized.
     def minimum_size_of_object(self):
@@ -535,14 +535,14 @@ class Tiling(CombinatorialClass):
             req_lengths = [len(req) for req in req_list]
             sum_max_reqs += max(req_lengths)
 
-        if sum_max_reqs == 0: # then there are no requirements, but we still need a chord of size one
-            sum_max_reqs += 1
-        
         # proved maximum size of smallest chord that can be gridded:
         max_len = sum_max_reqs * 2 - 1
 
+        if sum_max_reqs == -1: # then there are no requirements, but we still need a chord of size one
+            sum_max_reqs = 0
+
         all_chords = []
-        for num_chords in range(1, max_len + 1):
+        for num_chords in range(0, max_len + 1):
             all_chords += list(Chord.of_length(num_chords))
 
         # product of length and width to get valid cells can probaby be much improved.
@@ -551,12 +551,13 @@ class Tiling(CombinatorialClass):
         except KeyError:
             self._prepare_properties()
             cells = self._cached_properties["active_cells"]
+        
         for chord in all_chords:
             for gc in GriddedChord.all_grids(chord, cells):
                 if self.contains(gc):
                     return len(gc)
         
-        return 0
+        return 0 # this maybe should be -1?
     
     # sToDo this is inefficient and in permutations there is a class that does this efficiently
     # gridded_perms_of_length -> all_chords_on_tiling
