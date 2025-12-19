@@ -32,7 +32,7 @@ class Chord(Tuple):
         self._patt_length = len(iterable)
 
         # Creates dictionary of chord number and vertices it connects
-        # (0, 1, 2, 1, 3, 3, 2, 0) becomes {0: (0, 7), 1: (1, 3), 2: (2, 6), (3: (4, 5)}
+        # (0, 1, 2, 1, 3, 3, 2, 0) becomes {0: (0, 7), 1: (1, 3), 2: (2, 6), 3: (4, 5)}
         self._chord_dict = {}
         for i,c in enumerate(iterable):
             if c not in self._chord_dict:

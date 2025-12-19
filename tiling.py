@@ -44,6 +44,8 @@ class Tiling(CombinatorialClass):
         obstructions: Iterable[GriddedChord] = tuple(),
         requirements: Iterable[Iterable[GriddedChord]] = tuple(), 
         linkages: Iterable[Iterable[Cell]] = tuple(),
+        #fixed_rows: Iterable[int] = tuple(),
+        #fixed_cols: Iterable[int] = tuple(),
         assumptions: Iterable[TrackingAssumption] = tuple(),
         simplify: bool = True,
         remove_empty_rows_and_cols: bool = True,
@@ -57,6 +59,8 @@ class Tiling(CombinatorialClass):
         self._assumptions = tuple(assumptions)
         self._cached_properties = {}
         self._derive_empty = derive_empty
+        #self._fixed_rows = fixed_rows
+        #self._fixed_cols = fixed_cols
 
         if "dimensions" not in self._cached_properties:
             self._compute_dimensions()
@@ -87,7 +91,6 @@ class Tiling(CombinatorialClass):
         # this will take out all obs that have ends in empty cells
         if simplify:
             self._simplify()
-
 
         if remove_empty_rows_and_cols:
             self._remove_empty_rows_and_cols()
@@ -165,32 +168,80 @@ class Tiling(CombinatorialClass):
     # sTODO tests. I changed this so it works only for chords that are described in full chord diagrams
     @property
     def point_cells(self) -> CellFrozenSet:
-        """DOES NOT WORK!
-        This method requires a lot of calculation and is not used besides in checking a redundant requirement placement.
-        Needs to be finished"""
+        """ Finds cells that cannot have more than one point in them
+        """
         try:
             return self._cached_properties["point_cells"]
         except KeyError:
+            potential_cells = list(self.active_cells)
+
+            # generates all chords on the tiling of length two
+            size_two_chords = self.chords_of_length(2)
+
+            # if a cell has more than two points in it, it must contain the pattern 00, 01, or 10
+            # this means that the cells that can have one point are the cells that do not contain 00, 01 or 10
+            # in other words, they do not contain 00, or a size two chord pattern with at least two points in that cell
+            bad_cells = []
+
+            # finding which cells have 00
+            for cell in potential_cells:
+                if self.contains(GriddedChord(Chord((0, 0)), (cell, cell))):
+                    bad_cells.append(cell)
+
+            # finding the cells that contain two points of a size two chord
+            for gc in size_two_chords:
+                pos_list_counter = Counter(gc.pos)
+                for cell in pos_list_counter.keys():
+                    if pos_list_counter[cell] > 1:
+                        bad_cells.append(cell)
+
+            required_cells = []
+            for reqlist in self.requirements:
+                cells_in_all_reqs = intersection_reduce(req.pos for req in reqlist)
+                required_cells += cells_in_all_reqs
+
+            required_cells_set = set(required_cells)
+
+            # filtering out all the cells that contain more than one point
             point_cells = []
-            # could be checked by checking if all length two chords with two points in a cell are obstructed, and
-            # that cell has to have one point, then that cell is a point cell
+            for cell in potential_cells:
+                if cell not in bad_cells and cell in required_cells_set:
+                    point_cells.append(cell)
+
+            self._cached_properties["point_cells"] = point_cells
             return point_cells
         
     @property
-    # sTODO
+    # sTODO TESTS!!
     def chord_cells(self) -> CellFrozenSet:
-        """ need to fix for working with ony chord patterns"""
+        """Not tested, but should retrun cells that have exactly one chord in them"""
         try:
             return self._cached_properties["chord_cells"]
         except KeyError:
-            local_len_2_obcells = Counter(
-                ob.pos[0]
-                for ob in self._obstructions
-                if ob.is_localized() and (ob._patt == (0,1) or ob._patt == (1,0))
-            )
-            chord_cells = frozenset(cell for cell in self.positive_cells if local_len_2_obcells[cell] == 2)
-            self._cached_properties["chord_cells"] = chord_cells
-            return chord_cells
+            # chord cells are cells that contain exactly one chord (both ends)
+            # this means they contain 00, and avoid 01, 10
+            possible_00_chords = [GriddedChord(Chord((0, 0)), (cell, cell)) for cell in self.active_cells]
+            cells_with_00 = []
+            
+            # check which cells must contain a 00 chord diagram pattern
+            for reqlist in self.requirements:
+                if len(reqlist) > 1:
+                    for single_chord in possible_00_chords:
+                        if all(req.contains(single_chord) for req in reqlist):
+                            cell = single_chord.pos[0]
+                            cells_with_00.append(cell)
+
+            exp_class = Expansion(self.obstructions, self.requirements, self._cached_properties["dimensions"])
+            good_cells = cells_with_00
+            # of the cells that contain 00, checks which ones do not contain a 01 and 10 pattern
+            for cell in cells_with_00:
+                # this is a terrible variable name
+                _01_10_chords_in_cell = exp_class.expand_gridded_chords([GriddedChord(Chord((0, 1)), (cell, cell)),
+                                                                         GriddedChord(Chord((1, 0)), (cell, cell))],
+                                                                         self.obstructions)
+                if len(_01_10_chords_in_cell) != 0:
+                    good_cells.remove(cell)
+            return good_cells
         
     def _compute_dimensions(self) -> None:
         max_x = 0
@@ -559,25 +610,33 @@ class Tiling(CombinatorialClass):
         
         return 0 # this maybe should be -1?
     
+    # s TODO fix all_chords_on_tiling to use this
+    def chords_of_length(self, length: int, use_non_chord_patts: bool = False) -> list[GriddedChord]:
+        """Returns all chord diagrams on the tiling of length length"""
+        all_chords = list(Chord.of_length(length))
+        cells = self.active_cells
+        chords_on_tiling = set()
+        for chord in all_chords:
+            chords_on_tiling.update(filter(self.contains, GriddedChord.all_grids(chord, cells)))
+
+        return list(chords_on_tiling)
+
+    
     # sToDo this is inefficient and in permutations there is a class that does this efficiently
     # gridded_perms_of_length -> all_chords_on_tiling
+    # s TODO check where this is used, see if the empty chord should be included?
     def all_chords_on_tiling(self, size: int = 0, use_non_chord_patts: bool = False) -> list[GriddedChord]:
-        """Returns all patterns with up to size points that can be gridded on the tiling"""
+        """Returns all patterns from one to up to size points that can be gridded on the tiling
+        (only uses active cells)"""
         all_chords = []
         for num_chords in range(1, size//2 + 1):
             all_chords += list(Chord.of_length(num_chords))
         
         chords_on_tiling = set() # this is a set so the non chord diagram pattern code works nicely
         cells = self.active_cells
-        #print(all_chords)
             
         for chord in all_chords:
-            #print(list(GriddedChord.all_grids(chord, cells)))
-            #print(list(filter(self.contains, list(GriddedChord.all_grids(chord, cells)))))
-            #print([self.contains(gc) for gc in list(GriddedChord.all_grids(chord, cells))])
             chords_on_tiling.update(filter(self.contains, GriddedChord.all_grids(chord, cells)))
-        
-        #print(chords_on_tiling)
 
         if use_non_chord_patts:
             bigger_chords = []
@@ -586,16 +645,9 @@ class Tiling(CombinatorialClass):
                 
             for chord_size in range(1, size + 1):
                 for chord in bigger_chords:
-                    #print(list(combinations(chord, chord_size)))
                     for subchord in list(combinations(chord, chord_size)):
                         subchord = Chord.to_standard(subchord, True)
                         chords_on_tiling.update(filter(self.contains, GriddedChord.all_grids(subchord, cells)))
-                        #if chord_size == 2:
-                            #print(list(GriddedChord.all_grids(subchord, cells)))
-                            #print(list(filter(self.contains, GriddedChord.all_grids(subchord, cells))))
-                    #if chord_size == 2:
-                        #print()
-                #print(chord_size)
                     
         return list(chords_on_tiling)
 
@@ -892,7 +944,12 @@ class Tiling(CombinatorialClass):
         else:
             link_str = link_str[:-2-links_indent_len]
 
-        return(dimensions + obs_str + reqs_str + link_str)
+        active_cells_str = "\nActive cells: "
+        for cell in self.active_cells:
+            active_cells_str += str(cell)
+            active_cells_str += ", "
+
+        return(dimensions + obs_str + reqs_str + link_str + active_cells_str)
     
     def to_jsonable(self):
         output: dict = super().to_jsonable()
