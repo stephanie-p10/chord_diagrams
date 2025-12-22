@@ -1129,11 +1129,11 @@ class Tiling(CombinatorialClass):
                 
                 pts[endpoint_idx] = cell_coord(cell, ux, uy)
             
-            # draw circles for all endpoints
+            # create named nodes for all endpoints
             for i, (x, y) in pts.items():
-                tex_lines.append(f"  \\fill[{col}] ({x},{y}) circle (0.06);")
+                tex_lines.append(f"  \\node[circle, fill={col}, inner sep=0.03cm] (obs{id(ob)}_pt{i}) at ({x},{y}) {{}};")
 
-            # draw polyline connecting all endpoints
+            # draw polyline connecting all endpoints using node references
             visited = set()
             polyline_points = []
             for idx, chord_id in enumerate(ob._patt):
@@ -1143,7 +1143,7 @@ class Tiling(CombinatorialClass):
                     polyline_points.append(i1)
                     polyline_points.append(i2)
             if len(polyline_points) >= 2:
-                path = " -- ".join(f"({pts[i][0]},{pts[i][1]})" for i in polyline_points)
+                path = " -- ".join(f"(obs{id(ob)}_pt{i})" for i in polyline_points)
                 tex_lines.append(f"  \\draw[{col}, line width=1.2pt] {path};")
 
         # draw requirements similarly but in blue dashed style
@@ -1194,11 +1194,11 @@ class Tiling(CombinatorialClass):
                 
                 pts[endpoint_idx] = cell_coord(cell, ux, uy)
             
-            # draw circles for all endpoints
+            # create named nodes for all endpoints
             for i, (x, y) in pts.items():
-                tex_lines.append(f"  \\fill[{col}] ({x},{y}) circle (0.05);")
+                tex_lines.append(f"  \\node[circle, fill={col}, inner sep=0.025cm] (req{id(rq)}_pt{i}) at ({x},{y}) {{}};")
 
-            # draw polyline connecting all endpoints
+            # draw polyline connecting all endpoints using node references
             visited = set()
             polyline_points = []
             for idx_pat, chord_id in enumerate(rq._patt):
@@ -1208,8 +1208,8 @@ class Tiling(CombinatorialClass):
                     polyline_points.append(i1)
                     polyline_points.append(i2)
             if len(polyline_points) >= 2:
-                path = " -- ".join(f"({pts[i][0]},{pts[i][1]})" for i in polyline_points)
-                tex_lines.append(f"  \\draw[{col}, dashed] {path};")
+                path = " -- ".join(f"(req{id(rq)}_pt{i})" for i in polyline_points)
+                tex_lines.append(f"  \\draw[{col}, dashed, line width=1.2pt] {path};")
 
         tex_lines.append("\\end{tikzpicture}")
         tex_lines.append("\\end{document}")

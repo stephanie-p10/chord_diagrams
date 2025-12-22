@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.22 (TeX Live 2021) (preloaded format=pdflatex 2021.5.13)  21 DEC 2025 20:49
+This is pdfTeX, Version 3.141592653-2.6-1.40.22 (TeX Live 2021) (preloaded format=pdflatex 2021.5.13)  21 DEC 2025 21:31
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -423,15 +423,15 @@ e
 
 ] (./non_crossing.aux) ) 
 Here is how much of TeX's memory you used:
- 11991 strings out of 478994
- 248136 string characters out of 5858184
- 508506 words of memory out of 5000000
- 29285 multiletter control sequences out of 15000+600000
+ 12048 strings out of 478994
+ 249630 string characters out of 5858184
+ 509506 words of memory out of 5000000
+ 29342 multiletter control sequences out of 15000+600000
  403430 words of font info for 27 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 113i,5n,116p,409b,457s stack positions out of 5000i,500n,10000p,200000b,80000s
+ 113i,7n,116p,409b,621s stack positions out of 5000i,500n,10000p,200000b,80000s
 
-Output written on non_crossing.pdf (1 page, 1448 bytes).
+Output written on non_crossing.pdf (1 page, 1544 bytes).
 PDF statistics:
  11 PDF objects out of 1000 (max. 8388607)
  7 compressed objects within 1 object stream

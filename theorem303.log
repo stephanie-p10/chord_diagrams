@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.22 (TeX Live 2021) (preloaded format=pdflatex 2021.5.13)  21 DEC 2025 20:49
+This is pdfTeX, Version 3.141592653-2.6-1.40.22 (TeX Live 2021) (preloaded format=pdflatex 2021.5.13)  21 DEC 2025 21:31
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -423,15 +423,15 @@ e
 
 ] (./theorem303.aux) ) 
 Here is how much of TeX's memory you used:
- 11991 strings out of 478994
- 248116 string characters out of 5858184
- 509502 words of memory out of 5000000
- 29285 multiletter control sequences out of 15000+600000
+ 12146 strings out of 478994
+ 252326 string characters out of 5858184
+ 518110 words of memory out of 5000000
+ 29440 multiletter control sequences out of 15000+600000
  403430 words of font info for 27 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 113i,5n,116p,407b,457s stack positions out of 5000i,500n,10000p,200000b,80000s
+ 113i,7n,116p,407b,621s stack positions out of 5000i,500n,10000p,200000b,80000s
 
-Output written on theorem303.pdf (1 page, 2376 bytes).
+Output written on theorem303.pdf (1 page, 2724 bytes).
 PDF statistics:
  11 PDF objects out of 1000 (max. 8388607)
  7 compressed objects within 1 object stream
