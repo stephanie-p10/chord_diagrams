@@ -1,0 +1,17 @@
+\documentclass{standalone}
+\usepackage{tikz}
+\begin{document}
+\begin{tikzpicture}[scale=1]
+  \draw ( 0, 0) -- (0, 2);
+  \draw ( 1, 0) -- (1, 2);
+  \draw ( 2, 0) -- (2, 2);
+  \draw (0, 0) -- (2, 0);
+  \draw (0, 1) -- (2, 1);
+  \draw (0, 2) -- (2, 2);
+  \draw[red, thick] (0.3,0.5) arc (180:0:0.2);
+  \draw[red, thick] (0.3,0.5) arc (180:0:0.2);
+  \node[red] at (0.3,0.7) {{A}};
+  \draw[blue, dashed] (1.35,1.5) arc (180:0:0.15);
+  \node[blue] at (1.7,1.7) {{a}};
+\end{tikzpicture}
+\end{document}

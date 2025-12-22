@@ -1,0 +1,26 @@
+\documentclass{standalone}
+\usepackage{tikz}
+\begin{document}
+\begin{tikzpicture}[scale=1.15]
+  % draw rounded cell boxes
+  \draw[rounded corners=3pt] (0,0) rectangle (1,1);
+  \fill[red] (0.2,0.05) circle (0.06);
+  \fill[red] (0.4,0.05) circle (0.06);
+  \fill[red] (0.6,0.2) circle (0.06);
+  \fill[red] (0.8,0.2) circle (0.06);
+  \draw[red, line width=1.2pt] (0.2,0.05) -- (0.4,0.05) -- (0.6,0.2) -- (0.8,0.2);
+  \fill[red] (0.2,0.4) circle (0.06);
+  \fill[red] (0.4,0.6000000000000001) circle (0.06);
+  \fill[red] (0.6,0.4) circle (0.06);
+  \fill[red] (0.8,0.6000000000000001) circle (0.06);
+  \draw[red, line width=1.2pt] (0.2,0.4) -- (0.6,0.4) -- (0.4,0.6000000000000001) -- (0.8,0.6000000000000001);
+  \fill[red] (0.2,0.8) circle (0.06);
+  \fill[red] (0.4,0.95) circle (0.06);
+  \fill[red] (0.6,0.95) circle (0.06);
+  \fill[red] (0.8,0.8) circle (0.06);
+  \draw[red, line width=1.2pt] (0.2,0.8) -- (0.8,0.8) -- (0.4,0.95) -- (0.6,0.95);
+  \fill[blue] (0.2,0.5) circle (0.05);
+  \fill[blue] (0.8,0.5) circle (0.05);
+  \draw[blue, dashed] (0.2,0.5) -- (0.8,0.5);
+\end{tikzpicture}
+\end{document}
