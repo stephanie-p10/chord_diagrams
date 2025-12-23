@@ -163,7 +163,7 @@ class Tiling(CombinatorialClass):
     # sTODO tests. I changed this so it works only for chords that are described in full chord diagrams
     @property
     def point_cells(self) -> CellFrozenSet:
-        """ Finds cells that cannot have more than one point in them
+        """ Finds cells that must have exactly one cell in them
         """
         try:
             return self._cached_properties["point_cells"]
@@ -237,6 +237,39 @@ class Tiling(CombinatorialClass):
                 if len(_01_10_chords_in_cell) != 0:
                     good_cells.remove(cell)
             return good_cells
+        
+    @property
+    def point_col_cells(self):
+        """Returns point cells that are isolated in their column"""
+        try:
+            return self._cached_properties["point_col_cells"]
+        except KeyError:
+            cells = frozenset(cell for cell in self.point_cells if self.only_cell_in_col(cell)) 
+            self._cached_properties["point_col_cells"] = cells
+            return cells
+        
+    @property
+    def chord_row_cells(self):
+        """Returns cells that contain a chord that is isolated in its own row"""
+        try:
+            return self._cached_properties["chord_row_cells"]
+        except KeyError:
+            # finds cells that contain exactly one chord and are the only active cell in their row
+            row_isolated_chord_cells = [cell for cell in self.chord_cells if self.only_cell_in_row(cell)]
+
+            # finds cells that contain exatly one point in rows that have exactly one chord
+            active_cells_in_row_counter = Counter(cell[1] for cell in self.active_cells)
+            point_cells_in_row_counter = Counter(cell[1] for cell in self.point_cells)
+            # finds cells that are in a row with exactly point cells, and no additional active cells
+            row_isolated_point_cells = [cell 
+                                        for cell in self.point_cells 
+                                        if point_cells_in_row_counter[cell[1]] == 2 and 
+                                        active_cells_in_row_counter[cell[1]] == 2]
+            
+            all_row_isolated_cells = row_isolated_chord_cells + row_isolated_point_cells
+            self._cached_properties["chord_row_cells"] = all_row_isolated_cells
+            return row_isolated_chord_cells
+            
         
     def _compute_dimensions(self) -> None:
         max_x = 0
@@ -1274,14 +1307,14 @@ atom = Tiling(obstructions=(GriddedChord(Chord((0, 0, 1, 1)), ((0, 0), (0, 0), (
                             GriddedChord(Chord((0, 1, 0, 1)), ((0, 0), (0, 0), (0, 0), (0, 0)))),
               requirements=((GriddedChord(Chord((0, 0)), ((0,0), (0,0))),),))
 
-atom.pretty_print_latex("atom.tex")
+#atom.pretty_print_latex("atom.tex")
 
 non_crossing = Tiling(obstructions=(GriddedChord(Chord((0, 1, 0, 1)), ((0, 0), (0, 0), (0, 0), (0, 0))),))
 
-non_crossing.pretty_print_latex("non_crossing.tex")
+#non_crossing.pretty_print_latex("non_crossing.tex")
 
 theorem303 = Tiling(obstructions=(GriddedChord(Chord((0, 1, 2, 0, 1, 2)), ((0, 0), (0,0), (0,0), (0,0), (0,0), (0,0))),
                                   GriddedChord(Chord((0, 1, 2, 0, 2, 1)), ((0, 0), (0,0), (0,0), (0,0), (0,0), (0,0))),
                                   GriddedChord(Chord((0, 1, 2, 1, 0, 2)), ((0, 0), (0,0), (0,0), (0,0), (0,0), (0,0))),))
 
-theorem303.pretty_print_latex("theorem303.tex")
+#theorem303.pretty_print_latex("theorem303.tex")
