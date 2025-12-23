@@ -53,13 +53,11 @@ size_four_atom = Tiling(obstructions=obs,
 
 non_nesting = Tiling(obstructions=(GriddedChord(Chord((0, 1, 1, 0)), ((0, 0),)*4),))
 
-searcher = CombinatorialSpecificationSearcher(size_four_atom, pack)
+searcher = CombinatorialSpecificationSearcher(non_crossing, pack)
 
-print()
-print(size_four_atom.is_atom())
-
-#spec = searcher.auto_search()
-#spec.get_genf()
+spec = searcher.auto_search()
+gf = spec.get_genf()
+print(gf)
 #spec.show()
 
 

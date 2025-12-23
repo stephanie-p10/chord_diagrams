@@ -66,7 +66,8 @@ class RequirementPlacementStrategy(DisjointUnionStrategy[Tiling, GriddedChord]):
 
     def decomposition_function(self, comb_class: Tiling) -> Tuple[Tiling, ...]:
         placement_class = self.placement_class(comb_class)
-        if self.gcs in comb_class.requirements:
+        # if the gcs are a valid requirement that can be placed and they have not already been placed
+        if self.gcs in comb_class.requirements and not placement_class.chords_already_placed(self.gcs, self.direction):
             placed_tilings = placement_class.place_chords(self.gcs, self.direction)
             if self.include_empty:
                 return (comb_class.add_obstructions(self.gcs),) + placed_tilings

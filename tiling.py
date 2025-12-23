@@ -268,7 +268,7 @@ class Tiling(CombinatorialClass):
             
             all_row_isolated_cells = row_isolated_chord_cells + row_isolated_point_cells
             self._cached_properties["chord_row_cells"] = all_row_isolated_cells
-            return row_isolated_chord_cells
+            return all_row_isolated_cells
             
         
     def _compute_dimensions(self) -> None:
