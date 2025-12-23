@@ -1,0 +1,26 @@
+\documentclass{standalone}
+\usepackage{tikz}
+\begin{document}
+\begin{tikzpicture}[scale=1.15]
+  % draw rounded cell boxes
+  \draw[rounded corners=3pt] (0,0) rectangle (1,1);
+  \node[circle, fill=red, inner sep=0.03cm] (obs4388826736_pt0) at (0.2,0.05) {};
+  \node[circle, fill=red, inner sep=0.03cm] (obs4388826736_pt1) at (0.4,0.05) {};
+  \node[circle, fill=red, inner sep=0.03cm] (obs4388826736_pt2) at (0.6,0.2) {};
+  \node[circle, fill=red, inner sep=0.03cm] (obs4388826736_pt3) at (0.8,0.2) {};
+  \draw[red, line width=1.2pt] (obs4388826736_pt0) -- (obs4388826736_pt1) -- (obs4388826736_pt2) -- (obs4388826736_pt3);
+  \node[circle, fill=red, inner sep=0.03cm] (obs4388826784_pt0) at (0.2,0.4) {};
+  \node[circle, fill=red, inner sep=0.03cm] (obs4388826784_pt1) at (0.4,0.6000000000000001) {};
+  \node[circle, fill=red, inner sep=0.03cm] (obs4388826784_pt2) at (0.6,0.4) {};
+  \node[circle, fill=red, inner sep=0.03cm] (obs4388826784_pt3) at (0.8,0.6000000000000001) {};
+  \draw[red, line width=1.2pt] (obs4388826784_pt0) -- (obs4388826784_pt2) -- (obs4388826784_pt1) -- (obs4388826784_pt3);
+  \node[circle, fill=red, inner sep=0.03cm] (obs4388826880_pt0) at (0.2,0.8) {};
+  \node[circle, fill=red, inner sep=0.03cm] (obs4388826880_pt1) at (0.4,0.95) {};
+  \node[circle, fill=red, inner sep=0.03cm] (obs4388826880_pt2) at (0.6,0.95) {};
+  \node[circle, fill=red, inner sep=0.03cm] (obs4388826880_pt3) at (0.8,0.8) {};
+  \draw[red, line width=1.2pt] (obs4388826880_pt0) -- (obs4388826880_pt3) -- (obs4388826880_pt1) -- (obs4388826880_pt2);
+  \node[circle, fill=blue, inner sep=0.025cm] (req4347245104_pt0) at (0.2,0.5) {};
+  \node[circle, fill=blue, inner sep=0.025cm] (req4347245104_pt1) at (0.8,0.5) {};
+  \draw[blue, dashed, line width=1.2pt] (req4347245104_pt0) -- (req4347245104_pt1);
+\end{tikzpicture}
+\end{document}

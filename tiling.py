@@ -904,6 +904,8 @@ class Tiling(CombinatorialClass):
             result = result[:-1]
 
         return "".join(result)'''
+
+
         dimensions = "Dimensions: (" + str(self._cached_properties["dimensions"][0]) + ", " + str(self._cached_properties["dimensions"][1]) + ")\n"
 
         obs_str = "Obstructions: "
@@ -947,6 +949,286 @@ class Tiling(CombinatorialClass):
 
         return(dimensions + obs_str + reqs_str + link_str + active_cells_str)
     
+    def pretty_print(self) -> None:
+        """Pretty print the tiling with distinct labels for obstructions and
+        requirements. Uses colored terminal output for quick view and also
+        provides a LaTeX/TikZ exporter via `pretty_print_latex`.
+        """
+        # ANSI color codes
+        RED = '\033[91m'
+        BLUE = '\033[94m'
+        YELLOW = '\033[93m'
+        RESET = '\033[0m'
+        BOLD = '\033[1m'
+
+        dim_x, dim_y = self._cached_properties['dimensions']
+
+        # Assign unique labels to obstructions (A, B, C, ...) and requirements (a, b, c...)
+        obs_labels: Dict[GriddedChord, str] = {}
+        req_labels: Dict[GriddedChord, str] = {}
+        for i, ob in enumerate(self._obstructions):
+            obs_labels[ob] = chr(ord('A') + (i % 26)) + (str(i//26) if i//26 else '')
+        all_reqs = [r for req_list in self._requirements for r in req_list]
+        for i, rq in enumerate(all_reqs):
+            req_labels[rq] = chr(ord('a') + (i % 26)) + (str(i//26) if i//26 else '')
+
+        # Build quick lookup: for each cell pick the label of the first obstruction
+        cell_marker: Dict[Cell, Tuple[str, str]] = {}  # cell -> (label, color)
+        for ob, lab in obs_labels.items():
+            for cell in ob._cells:
+                cell_marker[cell] = (lab, RED)
+        for rq, lab in req_labels.items():
+            for cell in rq._cells:
+                # only place requirement marker if no obstruction label present
+                if cell not in cell_marker:
+                    cell_marker[cell] = (lab, BLUE)
+
+        # Header
+        print(f"{BOLD}Dimensions: ({dim_x}, {dim_y}){RESET}\n")
+
+        # Draw grid (top to bottom)
+        for y in range(dim_y - 1, -1, -1):
+            # horizontal border
+            print("+", end="")
+            for x in range(dim_x):
+                print("-+", end="")
+            print()
+            # contents
+            print("|", end="")
+            for x in range(dim_x):
+                cell = (x, y)
+                if cell in cell_marker:
+                    lab, color = cell_marker[cell]
+                    # short label (max 3 chars) to keep grid tidy
+                    short = lab[:3]
+                    if color == RED:
+                        print(f"{RED}{short}{RESET}|", end="")
+                    else:
+                        print(f"{BLUE}{short}{RESET}|", end="")
+                else:
+                    print("  |", end="")
+            print()
+        # bottom border
+        print("+", end="")
+        for x in range(dim_x):
+            print("-+", end="")
+        print("\n")
+
+        # Legend for obstructions
+        if obs_labels:
+            print(f"{BOLD}{YELLOW}Obstruction legend (red):{RESET}")
+            for ob, lab in obs_labels.items():
+                print(f"  {RED}{lab}{RESET}: {str(ob)}")
+        else:
+            print(f"{BOLD}Obstructions:{RESET} (none)")
+        print()
+
+        # Legend for requirements
+        if req_labels:
+            print(f"{BOLD}{YELLOW}Requirement legend (blue):{RESET}")
+            for rq, lab in req_labels.items():
+                print(f"  {BLUE}{lab}{RESET}: {str(rq)}")
+        else:
+            print(f"{BOLD}Requirements:{RESET} (none)")
+        print()
+
+        # show linkages and assumptions succinctly
+        if self._linkages:
+            print(f"{BOLD}Linkages:{RESET}")
+            for linkage in self._linkages:
+                cells = ", ".join(str(coord) for coord in linkage)
+                print(f"  {{{cells}}}")
+            print()
+        if self._assumptions:
+            print(f"{BOLD}Assumptions:{RESET}")
+            for i, assumption in enumerate(self._assumptions):
+                print(f"  {i+1}. {str(assumption)}")
+            print()
+
+    def pretty_print_latex(self, filename: str = "tiling_visual.tex", compile_pdf: bool = True) -> str:
+        """Export a TikZ picture of the tiling to `filename`.
+        If `compile_pdf` is True, attempt to run `pdflatex` (from PATH) to
+        produce a PDF next to the .tex file. Returns path to .tex file.
+        """
+        dim_x, dim_y = self._cached_properties['dimensions']
+
+        # label assignment consistent with pretty_print
+        obs_labels = {ob: chr(ord('A') + i % 26) + (str(i//26) if i//26 else '') for i, ob in enumerate(self._obstructions)}
+        all_reqs = [r for req_list in self._requirements for r in req_list]
+        req_labels = {rq: chr(ord('a') + i % 26) + (str(i//26) if i//26 else '') for i, rq in enumerate(all_reqs)}
+
+        # Calculate scale factor based on number of obstructions and requirements
+        total_constraints = len(self._obstructions) + len(all_reqs)
+        scale_factor = 1.0 + max(0, (total_constraints - 3) * 0.15)
+
+        tex_lines = []
+        tex_lines.append("\\documentclass{standalone}")
+        tex_lines.append("\\usepackage{tikz}")
+        tex_lines.append("\\begin{document}")
+        tex_lines.append(f"\\begin{{tikzpicture}}[scale={scale_factor}]")
+
+        # draw rounded cell boxes
+        tex_lines.append("  % draw rounded cell boxes")
+        for x in range(dim_x):
+            for y in range(dim_y):
+                tex_lines.append(f"  \\draw[rounded corners=3pt] ({x},{y}) rectangle ({x+1},{y+1});")
+
+        # helper: cell-local coordinate
+        def cell_coord(cell, ux, uy):
+            return (cell[0] + ux, cell[1] + uy)
+
+        # draw obstructions: place endpoints inside each cell and draw connections
+        for idx, ob in enumerate(self._obstructions):
+            col = "red"
+            lab = obs_labels[ob]
+            
+            # Determine vertical levels for each unique chord ID (bottom to top: 0 below 1 below 2, etc)
+            unique_chords = sorted(set(ob._chord_dict.keys()))
+            chord_to_level = {}
+            
+            # Distribute obstruction base levels across the vertical space
+            num_obs = len(self._obstructions)
+            if num_obs == 1:
+                obs_base_uy = 0.5
+            else:
+                # Spread obstructions evenly from 0.1 to 0.9
+                obs_base_uy = 0.1 + 0.8 * (idx / max(1, num_obs - 1))
+            
+            if len(unique_chords) == 1:
+                # Single chord: use the obstruction's base level
+                chord_to_level[unique_chords[0]] = obs_base_uy
+            else:
+                # Multiple chords: distribute around the obstruction's base level
+                num_chords = len(unique_chords)
+                for i, chord_id in enumerate(unique_chords):
+                    # Spread chords evenly: chord 0 at lowest, chord N-1 at highest
+                    uy = obs_base_uy - 0.1 + (i / max(1, num_chords - 1)) * 0.2 if num_chords > 1 else obs_base_uy
+                    chord_to_level[chord_id] = max(0.05, min(0.95, uy))
+            
+            # Place endpoints left-to-right in the order they appear in the pattern
+            # Each endpoint's horizontal position is based on its position in the overall pattern
+            pts: Dict[int, Tuple[float, float]] = {}
+            num_endpoints = len(ob._pos)
+            
+            for endpoint_idx in range(num_endpoints):
+                cell = ob._pos[endpoint_idx]
+                
+                # Find which chord uses this endpoint to determine vertical level
+                uy = 0.5  # default
+                for chord_id, (i1, i2) in ob._chord_dict.items():
+                    if endpoint_idx == i1 or endpoint_idx == i2:
+                        uy = chord_to_level[chord_id]
+                        break
+                
+                # Horizontal position: left-to-right based on endpoint index
+                ux = 0.2 + 0.6 * (endpoint_idx / max(1, num_endpoints - 1)) if num_endpoints > 1 else 0.5
+                
+                pts[endpoint_idx] = cell_coord(cell, ux, uy)
+            
+            # create named nodes for all endpoints
+            for i, (x, y) in pts.items():
+                tex_lines.append(f"  \\node[circle, fill={col}, inner sep=0.03cm] (obs{id(ob)}_pt{i}) at ({x},{y}) {{}};")
+
+            # draw polyline connecting all endpoints using node references
+            visited = set()
+            polyline_points = []
+            for idx, chord_id in enumerate(ob._patt):
+                if chord_id not in visited:
+                    visited.add(chord_id)
+                    i1, i2 = ob._chord_dict[chord_id]
+                    polyline_points.append(i1)
+                    polyline_points.append(i2)
+            if len(polyline_points) >= 2:
+                path = " -- ".join(f"(obs{id(ob)}_pt{i})" for i in polyline_points)
+                tex_lines.append(f"  \\draw[{col}, line width=1.2pt] {path};")
+
+        # draw requirements similarly but in blue dashed style
+        for idx, rq in enumerate(all_reqs):
+            col = "blue"
+            lab = req_labels[rq]
+            
+            # Determine vertical levels for each unique chord ID (bottom to top: 0 below 1 below 2, etc)
+            unique_chords = sorted(set(rq._chord_dict.keys()))
+            chord_to_level = {}
+            
+            # Distribute requirement base levels across the vertical space
+            num_reqs = len(all_reqs)
+            if num_reqs == 1:
+                req_base_uy = 0.5
+            else:
+                # Spread requirements evenly from 0.1 to 0.9
+                req_base_uy = 0.1 + 0.8 * (idx / max(1, num_reqs - 1))
+            
+            if len(unique_chords) == 1:
+                # Single chord: use the requirement's base level
+                chord_to_level[unique_chords[0]] = req_base_uy
+            else:
+                # Multiple chords: distribute around the requirement's base level
+                num_chords = len(unique_chords)
+                for i, chord_id in enumerate(unique_chords):
+                    # Spread chords evenly: chord 0 at lowest, chord N-1 at highest
+                    uy = req_base_uy - 0.1 + (i / max(1, num_chords - 1)) * 0.2 if num_chords > 1 else req_base_uy
+                    chord_to_level[chord_id] = max(0.05, min(0.95, uy))
+            
+            # Place endpoints left-to-right in the order they appear in the pattern
+            # Each endpoint's horizontal position is based on its position in the overall pattern
+            pts: Dict[int, Tuple[float, float]] = {}
+            num_endpoints = len(rq._pos)
+            
+            for endpoint_idx in range(num_endpoints):
+                cell = rq._pos[endpoint_idx]
+                
+                # Find which chord uses this endpoint to determine vertical level
+                uy = 0.5  # default
+                for chord_id, (i1, i2) in rq._chord_dict.items():
+                    if endpoint_idx == i1 or endpoint_idx == i2:
+                        uy = chord_to_level[chord_id]
+                        break
+                
+                # Horizontal position: left-to-right based on endpoint index
+                ux = 0.2 + 0.6 * (endpoint_idx / max(1, num_endpoints - 1)) if num_endpoints > 1 else 0.5
+                
+                pts[endpoint_idx] = cell_coord(cell, ux, uy)
+            
+            # create named nodes for all endpoints
+            for i, (x, y) in pts.items():
+                tex_lines.append(f"  \\node[circle, fill={col}, inner sep=0.025cm] (req{id(rq)}_pt{i}) at ({x},{y}) {{}};")
+
+            # draw polyline connecting all endpoints using node references
+            visited = set()
+            polyline_points = []
+            for idx_pat, chord_id in enumerate(rq._patt):
+                if chord_id not in visited:
+                    visited.add(chord_id)
+                    i1, i2 = rq._chord_dict[chord_id]
+                    polyline_points.append(i1)
+                    polyline_points.append(i2)
+            if len(polyline_points) >= 2:
+                path = " -- ".join(f"(req{id(rq)}_pt{i})" for i in polyline_points)
+                tex_lines.append(f"  \\draw[{col}, dashed, line width=1.2pt] {path};")
+
+        tex_lines.append("\\end{tikzpicture}")
+        tex_lines.append("\\end{document}")
+
+        with open(filename, "w") as f:
+            f.write("\n".join(tex_lines))
+
+        # attempt to compile
+        if compile_pdf:
+            import shutil, subprocess, os
+            pdflatex = shutil.which("pdflatex")
+            if pdflatex:
+                try:
+                    subprocess.run([pdflatex, "-interaction=nonstopmode", filename], cwd=os.path.dirname(os.path.abspath(filename)) or ".", check=True, stdout=subprocess.DEVNULL)
+                    # open the PDF on macOS
+                    pdf_file = filename.replace(".tex", ".pdf")
+                    if os.path.exists(pdf_file):
+                        subprocess.run(["open", pdf_file], check=False)
+                except Exception:
+                    pass
+
+        return filename
+    
     def to_jsonable(self):
         output: dict = super().to_jsonable()
         output["obstructions"] = [gc.to_jsonable() for gc in self.obstructions]
@@ -976,3 +1258,30 @@ t_no_restrictions = Tiling((), (), (), (), derive_empty=False)
 
 
 assert t_no_restrictions.contains(gc_single_00_00)
+
+
+tiling2 = Tiling(
+        obstructions=[
+            GriddedChord(Chord((0, 1, 0, 1)), ((1, 1), ) * 4),
+            GriddedChord(Chord((0, 0)), ((0, 0), (0, 0))),
+            GriddedChord(Chord((0, 0)), ((0, 0), (1, 0)))
+        ],
+        requirements=[
+        ],
+    )
+atom = Tiling(obstructions=(GriddedChord(Chord((0, 0, 1, 1)), ((0, 0), (0, 0), (0, 0), (0, 0))),
+                            GriddedChord(Chord((0, 1, 1, 0)), ((0, 0), (0, 0), (0, 0), (0, 0))),
+                            GriddedChord(Chord((0, 1, 0, 1)), ((0, 0), (0, 0), (0, 0), (0, 0)))),
+              requirements=((GriddedChord(Chord((0, 0)), ((0,0), (0,0))),),))
+
+atom.pretty_print_latex("atom.tex")
+
+non_crossing = Tiling(obstructions=(GriddedChord(Chord((0, 1, 0, 1)), ((0, 0), (0, 0), (0, 0), (0, 0))),))
+
+non_crossing.pretty_print_latex("non_crossing.tex")
+
+theorem303 = Tiling(obstructions=(GriddedChord(Chord((0, 1, 2, 0, 1, 2)), ((0, 0), (0,0), (0,0), (0,0), (0,0), (0,0))),
+                                  GriddedChord(Chord((0, 1, 2, 0, 2, 1)), ((0, 0), (0,0), (0,0), (0,0), (0,0), (0,0))),
+                                  GriddedChord(Chord((0, 1, 2, 1, 0, 2)), ((0, 0), (0,0), (0,0), (0,0), (0,0), (0,0))),))
+
+theorem303.pretty_print_latex("theorem303.tex")
