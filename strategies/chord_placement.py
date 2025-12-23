@@ -21,16 +21,29 @@ class RequirementPlacementStrategy(DisjointUnionStrategy[Tiling, GriddedChord]):
     def __init__(
         self,
         gcs: Iterable[GriddedChord],
-        indices: Iterable[int],
         direction: int,
+        indices: Iterable[int] = None,
         own_col: bool = True,
         own_row: bool = True,
         ignore_parent: bool = False,
         include_empty: bool = False,
     ):
         self.gcs = tuple(gcs) # I think this is going to be a single chord for chord pl strategy
-        self.indices = tuple(indices)
         self.direction = direction
+
+        calculated_indices = []
+        if indices == None:
+            for gc in self.gcs:
+                if self.direction == DIR_NORTH or self.direction == DIR_EAST:
+                    idx = gc.chord_dict[len(gc) - 1][0]
+                else:
+                    idx = 0
+
+                calculated_indices.append(idx)
+        else:
+            calculated_indices = indices
+
+        self.indices = tuple(calculated_indices)
         self.own_row, self.own_col = own_row, own_col
         self.include_empty = include_empty
         self._placed_cells = tuple(
@@ -248,34 +261,41 @@ class RequirementPlacementStrategy(DisjointUnionStrategy[Tiling, GriddedChord]):
         return cls(gcs=gcs, **d)
     
    
+# Should this be renamed? It currently is "requirement placement" but perhaps it should be "chord placement"
 class RequirementPlacementFactory(StrategyFactory[Tiling]):
-    def __init__(self, max_size_to_place: int = 1) -> None:
-        self.max_size_to_place = max_size_to_place
+    def __init__(self, max_reqlist_size: int = 1, 
+                 max_chord_size: int = 1, 
+                 max_width: int = 6, 
+                 max_len: int = 6, 
+                 dirs: Iterable[int] = (DIR_SOUTH, DIR_NORTH)) -> None:
+        self.max_reqlist_size = max_reqlist_size
+        self.max_chord_size = max_chord_size
+        self.max_width = max_width
+        self.max_len = max_len
+        self.dirs = dirs
 
     def __call__(self, comb_class: Tiling) -> Iterator[RequirementPlacementStrategy]:
         reqs = comb_class.requirements
         for req_list in reqs:
-            if len(req_list) == 1:
-                yield self._build_strategy(req_list, )
+            if len(req_list) <= self.max_reqlist_size and (
+                all(len(req) <= self.max_chord_size for req in req_list)):
+                for dir in self.dirs:
+                    yield self._build_strategy(req_list, dir)
 
-    def _build_strategy(self, size_one_req_list, directionmost_point):
-        return RequirementPlacementStrategy(size_one_req_list, )
+    def _build_strategy(self, req_list_to_place, dir):
+        return RequirementPlacementStrategy(req_list_to_place, dir)
     
     def __str__(self) -> str:
-        s = "factor"
-        if self.unions:
-            s = "unions of " + s
-        if self.tracked:
-            s = "tracked " + s
+        # sTODO fix this string
+        s = f"Placing requirments lists up to size {self.max_reqlist_size}"
+        s += f"with chords up to size {self.max_chord_size}"
         return s
 
     def __repr__(self) -> str:
-        interleaving = None
         args = ", ".join(
             [
-                f"unions={self.unions}",
-                f"ignore_parent={self.ignore_parent}",
-                f"workable={self.workable}",
+                f"max_reqlist_size={self.max_reqlist_size}",
+                f"max_chord_size={self.max_chord_size}"
             ]
         )
         return f"{self.__class__.__name__}({args})"
@@ -284,9 +304,8 @@ class RequirementPlacementFactory(StrategyFactory[Tiling]):
         d: dict = super().to_jsonable()
         interleaving = None
 
-        d["unions"] = self.unions
-        d["ignore_parent"] = self.ignore_parent
-        d["workable"] = self.workable
+        d["max_reqlist_size"] = self.max_reqlist_size
+        d["max_chord_size"] = self.max_chord_size
         return d
 
     @classmethod

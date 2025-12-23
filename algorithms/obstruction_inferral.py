@@ -44,13 +44,13 @@ class ObstructionInferral(abc.ABC):
 
         # finds max number of chords a single chord diagram has in the potential new obstruction patterns
         max_len_in_chords_to_check = max(map(lambda chord: max(chord._patt) + 1 if chord else 0, chords_to_check)) 
-        print(max_len_in_chords_to_check)
+        #print(max_len_in_chords_to_check)
         # Calculates max length a smallest chord diagram containing a possible new obstruction could have
         max_length = (
             self._tiling.maximum_length_of_minimum_gridded_chord()
             + max_len_in_chords_to_check
         )
-        print(max_len_in_chords_to_check, self._tiling.maximum_length_of_minimum_gridded_chord())
+        #print(max_len_in_chords_to_check, self._tiling.maximum_length_of_minimum_gridded_chord())
         # A list of all gridded chord diagrams griddable on the tiling of up to max_length 
         # (*2 since the method works in number of points not number of chords)
         chords_on_tiling = self._tiling.all_chords_on_tiling(2 * max_length)
@@ -65,6 +65,8 @@ class ObstructionInferral(abc.ABC):
             chords_left.difference_update(to_remove) # updates perms_left so that none conflict with gp
             if not chords_left: # if there are no perms_left we want to stop
                 break
+
+        
         self._new_obs = sorted(chords_left) # the remaining chords after they all have been checked.
         return self._new_obs 
 

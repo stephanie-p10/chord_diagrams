@@ -686,11 +686,13 @@ non_crossing = Tiling(
             [GriddedChord(Chord((0,0)), ((0,0), (0,0)))],
         )
     )    
-"""placement_nc = RequirementPlacement(non_crossing)
-print(placement_nc.place_point(GriddedChord(Chord((0,0)), ((0,0), (0,0))), 0, True))
+placement_nc = RequirementPlacement(non_crossing)
+print(placement_nc.place_point(GriddedChord(Chord((0,0)), ((0,0), (0,0))), 3, True))
 print()
-place = placement_nc.place_chord(GriddedChord(Chord((0,0)), ((0,0), (0,0))), 0)
+place = placement_nc.place_chord(GriddedChord(Chord((0,0)), ((0,0), (0,0))), 3)
 place._simplify()
 place._remove_empty_rows_and_cols()
+print("point cells", place.point_cells)
 print(place)
-print(place.active_cells)"""
+print(place.active_cells)
+print(place.contains(GriddedChord(Chord((0, 0, 1, 1)), ((1, 1), (1, 1), (3, 1), (3, 1)))))

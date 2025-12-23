@@ -1488,7 +1488,3 @@ class GriddedChord(CombinatorialObject):
     def __iter__(self) -> Iterator[Tuple[int, Cell]]:
         return zip(self._patt, self._pos)
     
-
-print(list(Chord.of_length(1)))
-
-print(list(GriddedChord.all_grids(Chord(()), ((0,0), (0,1),))))

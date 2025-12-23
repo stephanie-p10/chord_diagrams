@@ -15,12 +15,12 @@ from strategies.obstruction_inferral import ObstructionInferralFactory
 from strategies.factor import FactorFactory
 from strategies.requirement_insertion import RequirementInsertionFactory
 from strategies.row_col_separation import RowColumnSeparationStrategy
-from strategies.chord_placement import RequirementPlacementStrategy
+from strategies.chord_placement import RequirementPlacementFactory
 
 pack = StrategyPack(
-    initial_strats=[FactorFactory(), RequirementInsertionFactory(maxreqlen=4)], # rules for initial strategies that are domain specific to be applied right away (like factor strategy)
-    inferral_strats=[RowColumnSeparationStrategy(), RequirementPlacementStrategy([GriddedChord(Chord((0, 0)), ((0, 0), (0, 0)))], [0], DIR_SOUTH), ObstructionInferralFactory()], # rules equivalence strategies (that get applied right away)
-    expansion_strats=[[]], # rules for domain specific strategies that are used less often
+    initial_strats=[FactorFactory(), RequirementInsertionFactory(maxreqlen=2)], # rules for initial strategies that are domain specific to be applied right away (like factor strategy)
+    inferral_strats=[RowColumnSeparationStrategy(), ObstructionInferralFactory()], # rules equivalence strategies (that get applied right away)
+    expansion_strats=[[RequirementPlacementFactory(max_reqlist_size=1, max_chord_size=2, dirs=(DIR_SOUTH,))]], # rules for domain specific strategies that are used less often
     ver_strats=[AtomStrategy()], # returns a rule when the count of a class is known.
     name=("Finding specification for pattern avoiding chord diagrams (ex. non crossing)"),
 )
@@ -45,18 +45,22 @@ theorem303 = Tiling(obstructions=(GriddedChord(Chord((0, 1, 2, 0, 1, 2)), ((0, 0
                                   GriddedChord(Chord((0, 1, 2, 0, 2, 1)), ((0, 0), (0,0), (0,0), (0,0), (0,0), (0,0))),
                                   GriddedChord(Chord((0, 1, 2, 1, 0, 2)), ((0, 0), (0,0), (0,0), (0,0), (0,0), (0,0))),))
 
-searcher = CombinatorialSpecificationSearcher(theorem303, pack)
+size_five_chords = Chord.of_length(5)
+obs = [GriddedChord(chord, ((0, 0),)*10) for chord in size_five_chords]
 
-spec = searcher.auto_search()
-spec.get_genf()
-spec.show()
+size_four_atom = Tiling(obstructions=obs,
+                       requirements=((GriddedChord(Chord((0, 1, 2, 3, 0, 1, 2, 3)), ((0, 0),)*8),),))
 
+non_nesting = Tiling(obstructions=(GriddedChord(Chord((0, 1, 1, 0)), ((0, 0),)*4),))
 
-#print(empty.is_atom())
-#print(atom.is_atom())
-#print(contradiction.is_atom())
-#print(non_crossing.is_atom())
+searcher = CombinatorialSpecificationSearcher(size_four_atom, pack)
 
+print()
+print(size_four_atom.is_atom())
+
+#spec = searcher.auto_search()
+#spec.get_genf()
+#spec.show()
 
 
 #print()
