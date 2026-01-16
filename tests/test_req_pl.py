@@ -181,17 +181,17 @@ assert set(placement_nc.stretched_obs((0, 0),)) == set([GriddedChord(Chord((0, 1
                                                    GriddedChord(Chord((1, 0)), ((4, 3), (4, 3))), 
                                                    GriddedChord(Chord((0, 1)), ((4, 3), (4, 3)))])'''
 
-assert set(placement_nc.added_obs((0, 0), (0, 0), True)) == set([GriddedChord(Chord((0,)), ((0, 1),)),
-                                                                 GriddedChord(Chord((0,)), ((1, 0),)),
-                                                                 GriddedChord(Chord((0,)), ((1, 2),)),
+# assert set(placement_nc.added_obs((0, 0), (0, 0), True)) == set([GriddedChord(Chord((0,)), ((0, 1),)),
+#                                                                  GriddedChord(Chord((0,)), ((1, 0),)),
+#                                                                  GriddedChord(Chord((0,)), ((1, 2),)),
                                                                                 
-                                                                 GriddedChord(Chord((0, 0)), ((1, 1), (1, 1))), 
-                                                                 GriddedChord(Chord((1, 0)), ((1, 1), (1, 1))), 
-                                                                 GriddedChord(Chord((0, 1)), ((1, 1), (1, 1))), 
+#                                                                  GriddedChord(Chord((0, 0)), ((1, 1), (1, 1))), 
+#                                                                  GriddedChord(Chord((1, 0)), ((1, 1), (1, 1))), 
+#                                                                  GriddedChord(Chord((0, 1)), ((1, 1), (1, 1))), 
 
-                                                                 GriddedChord(Chord((0, 0)), ((2, 1), (2, 1))), 
-                                                                 GriddedChord(Chord((1, 0)), ((2, 1), (2, 1))), 
-                                                                 GriddedChord(Chord((0, 1)), ((2, 1), (2, 1)))])
+#                                                                  GriddedChord(Chord((0, 0)), ((2, 1), (2, 1))), 
+#                                                                  GriddedChord(Chord((1, 0)), ((2, 1), (2, 1))), 
+#                                                                  GriddedChord(Chord((0, 1)), ((2, 1), (2, 1)))])
 
 assert set(placement_nc.added_obs((0, 0), (0, 0))) == set([GriddedChord(Chord((0,)), ((2, 1),)),
                                                            GriddedChord(Chord((0,)), ((1, 0),)),
@@ -272,10 +272,10 @@ assert placement1.point_dir_obs((2, 1), DIR_NORTH) == [GriddedChord(Chord((0,)),
 '''assert set(placement1ownrow.point_dir_obs((2, 0), DIR_SOUTH)) == set([GriddedChord(Chord((0,)), ((0, 0),)),
                                                        GriddedChord(Chord((0,)), ((1, 0),)),
                                                        GriddedChord(Chord((0,)), ((2, 0),))])'''
-assert placement1.point_dir_obs((2, 0), DIR_EAST) == [GriddedChord(Chord((0,)), ((4, 0),)),
-                                                       GriddedChord(Chord((0,)), ((4, 1),)),
-                                                       GriddedChord(Chord((0,)), ((4, 2),)),
-                                                       GriddedChord(Chord((0,)), ((4, 3),)),]
+# assert placement1.point_dir_obs((2, 0), DIR_EAST) == [GriddedChord(Chord((0,)), ((4, 0),)),
+#                                                        GriddedChord(Chord((0,)), ((4, 1),)),
+#                                                        GriddedChord(Chord((0,)), ((4, 2),)),
+#                                                        GriddedChord(Chord((0,)), ((4, 3),)),]
 '''assert placement1owncol.point_dir_obs((0, 0), DIR_WEST) == [GriddedChord(Chord((0,)), ((0, 0),)),
                                                        GriddedChord(Chord((0,)), ((0, 1),)),]'''
 

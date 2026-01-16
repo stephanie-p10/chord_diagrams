@@ -1,9 +1,9 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.22 (TeX Live 2021) (preloaded format=pdflatex 2021.5.13)  19 DEC 2025 11:07
+This is pdfTeX, Version 3.141592653-2.6-1.40.22 (TeX Live 2021) (preloaded format=pdflatex 2021.5.13)  9 JAN 2026 10:21
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
-**test_auto_open.tex
-(./test_auto_open.tex
+**place_point.tex
+(./place_point.tex
 LaTeX2e <2020-10-01> patch level 4
 L3 programming layer <2021-02-18>
 (/usr/local/texlive/2021/texmf-dist/tex/latex/standalone/standalone.cls
@@ -379,8 +379,8 @@ File: l3backend-pdftex.def 2021-03-18 L3 backend support: PDF output (pdfTeX)
 \l__color_backend_stack_int=\count277
 \l__pdf_internal_box=\box59
 )
-No file test_auto_open.aux.
-\openout1 = `test_auto_open.aux'.
+No file place_point.aux.
+\openout1 = `place_point.aux'.
 
 LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 3.
 LaTeX Font Info:    ... okay on input line 3.
@@ -420,17 +420,17 @@ e
 ))
 [1
 
-] (./test_auto_open.aux) ) 
+] (./place_point.aux) ) 
 Here is how much of TeX's memory you used:
- 11989 strings out of 478994
- 248118 string characters out of 5858184
- 508519 words of memory out of 5000000
- 29285 multiletter control sequences out of 15000+600000
+ 12284 strings out of 478994
+ 256184 string characters out of 5858184
+ 544181 words of memory out of 5000000
+ 29580 multiletter control sequences out of 15000+600000
  403430 words of font info for 27 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 113i,5n,116p,411b,463s stack positions out of 5000i,500n,10000p,200000b,80000s
+ 113i,7n,116p,408b,625s stack positions out of 5000i,500n,10000p,200000b,80000s
 
-Output written on test_auto_open.pdf (1 page, 1493 bytes).
+Output written on place_point.pdf (1 page, 5091 bytes).
 PDF statistics:
  11 PDF objects out of 1000 (max. 8388607)
  7 compressed objects within 1 object stream

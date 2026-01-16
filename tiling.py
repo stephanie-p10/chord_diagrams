@@ -207,10 +207,71 @@ class Tiling(CombinatorialClass):
             self._cached_properties["point_cells"] = point_cells
             return point_cells
         
+    # (removed empty placeholder)
+
+    @property
+    # TODO: Test :)
+    def required_chords(self) -> list[GriddedChord]:
+        """Returns a list of chords that must be contained in any valid gridded chord diagram of the Tiling.
+        
+        A chord is required if it's contained in all requirements of at least one requirement list.
+        Since at least one requirement from each list must be satisfied, any chord appearing 
+        in all requirements of a list must appear in any valid gridding.
+        """
+        try:
+            return self._cached_properties["required_chords"]
+        except KeyError:
+            required_set = set()
+            
+            for req_list in self.requirements:
+                if len(req_list) > 0:
+
+                    # Determine maximum chord size to check based on requirement patterns
+                    max_chord_size = 2 * max((max(req.patt) + 1 for req in req_list if len(req.patt) > 0), default=1)
+                
+                    # Generate candidate chords and check which ones appear in all requirements
+                    for length in range(1, max_chord_size):
+                        for chord in Chord.of_length(length):
+                            # A chord is required if its pattern is contained in ALL requirements' patterns of this list
+                            if all(req.patt != () and chord.get_pattern() in req.patt for req in req_list):
+                                required_set.add(chord)
+            
+            required_chords_list = list(required_set)
+            self._cached_properties["required_chords"] = required_chords_list
+            return required_chords_list
+        
+    def contained_requirements(self, requirement: GriddedChord) -> list[GriddedChord]:
+        """Find all sub-requirements of the given requirement. This maintains the 
+           gridding of the requirement.
+        """
+        # number of chords (labels 0..n-1)
+        n = len(requirement._chord)
+        if n == 0:
+            return []
+
+        result: list[GriddedChord] = []
+        seen: set = set()
+        labels = range(n)
+
+        for r in range(1, n + 1):
+            for subset in combinations(labels, r):
+                subset_set = set(subset)
+                # build pattern and corresponding positions preserving original order
+                patt = [val for val in requirement._patt if val in subset_set]
+                positions = [pos for idx, pos in enumerate(requirement._pos) if requirement._patt[idx] in subset_set]
+                new_chord = Chord.to_standard(patt)
+                key = (tuple(new_chord.get_pattern()), tuple(positions))
+                if key in seen:
+                    continue
+                seen.add(key)
+                result.append(GriddedChord(new_chord, positions))
+
+        return result
+
     @property
     # sTODO TESTS!!
     def chord_cells(self) -> CellFrozenSet:
-        """Not tested, but should retrun cells that have exactly one chord in them"""
+        """Not tested, but should return cells that have exactly one chord in them"""
         try:
             return self._cached_properties["chord_cells"]
         except KeyError:
@@ -1117,15 +1178,15 @@ t_no_restrictions = Tiling((), (), (), (), derive_empty=False)
 assert t_no_restrictions.contains(gc_single_00_00)
 
 
-tiling2 = Tiling(
-        obstructions=[
-            GriddedChord(Chord((0, 1, 0, 1)), ((1, 1), ) * 4),
-            GriddedChord(Chord((0, 0)), ((0, 0), (0, 0))),
-            GriddedChord(Chord((0, 0)), ((0, 0), (1, 0)))
-        ],
-        requirements=[
-        ],
-    )
+# tiling2 = Tiling(
+#         obstructions=[
+#             GriddedChord(Chord((0, 1, 0, 1)), ((1, 1), ) * 4),
+#             GriddedChord(Chord((0, 0)), ((0, 0), (0, 0))),
+#             GriddedChord(Chord((0, 0)), ((0, 0), (1, 0)))
+#         ],
+#         requirements=[
+#         ],
+#     )
 atom = Tiling(obstructions=(GriddedChord(Chord((0, 0, 1, 1)), ((0, 0), (0, 0), (0, 0), (0, 0))),
                             GriddedChord(Chord((0, 1, 1, 0)), ((0, 0), (0, 0), (0, 0), (0, 0))),
                             GriddedChord(Chord((0, 1, 0, 1)), ((0, 0), (0, 0), (0, 0), (0, 0)))),
@@ -1133,12 +1194,30 @@ atom = Tiling(obstructions=(GriddedChord(Chord((0, 0, 1, 1)), ((0, 0), (0, 0), (
 
 #atom.pretty_print_latex("atom.tex")
 
-non_crossing = Tiling(obstructions=(GriddedChord(Chord((0, 1, 0, 1)), ((0, 0), (0, 0), (0, 0), (0, 0))),))
+# non_crossing = Tiling(obstructions=(GriddedChord(Chord((0, 1, 0, 1)), ((0, 0), (0, 0), (0, 0), (0, 0))),))
 
 #non_crossing.pretty_print_latex("non_crossing.tex")
 
-theorem303 = Tiling(obstructions=(GriddedChord(Chord((0, 1, 2, 0, 1, 2)), ((0, 0), (0,0), (0,0), (0,0), (0,0), (0,0))),
-                                  GriddedChord(Chord((0, 1, 2, 0, 2, 1)), ((0, 0), (0,0), (0,0), (0,0), (0,0), (0,0))),
-                                  GriddedChord(Chord((0, 1, 2, 1, 0, 2)), ((0, 0), (0,0), (0,0), (0,0), (0,0), (0,0))),))
+# theorem303 = Tiling(obstructions=(GriddedChord(Chord((0, 1, 2, 0, 1, 2)), ((0, 0), (0,0), (0,0), (0,0), (0,0), (0,0))),
+#                                   GriddedChord(Chord((0, 1, 2, 0, 2, 1)), ((0, 0), (0,0), (0,0), (0,0), (0,0), (0,0))),
+#                                   GriddedChord(Chord((0, 1, 2, 1, 0, 2)), ((0, 0), (0,0), (0,0), (0,0), (0,0), (0,0))),))
 
-#theorem303.pretty_print_latex("theorem303.tex")
+# theorem303.pretty_print_latex("theorem303.tex")
+
+place_point = Tiling(obstructions=(GriddedChord(Chord((0, 0)), ((0, 0), (0, 0))),
+                                   GriddedChord(Chord((0, 0)), ((2, 0), (2, 0))),
+                                   GriddedChord(Chord((0, 1, 0, 1)), ((0, 0), (0, 0), (2, 0), (2, 0))),
+                                   GriddedChord(Chord((0, 1, 0, 1)), ((0, 0), (1, 1), (2, 0), (3, 1))),
+                                   GriddedChord(Chord((0, 1, 0, 1)), ((1, 1), (1, 1), (1, 1), (1, 1))),
+                                   GriddedChord(Chord((0, 1, 0, 1)), ((1, 1), (1, 1), (1, 1), (3, 1))),
+                                   GriddedChord(Chord((0, 1, 0, 1)), ((1, 1), (1, 1), (3, 1), (3, 1))),
+                                   GriddedChord(Chord((0, 1, 0, 1)), ((1, 1), (3, 1), (3, 1), (3, 1))),
+                                   GriddedChord(Chord((0, 1, 0, 1)), ((3, 1), (3, 1), (3, 1), (3, 1))),
+                                   GriddedChord(Chord((0, 1, 1, 0)), ((0, 0), (0, 0), (2, 0), (2, 0)))),
+                    requirements=((GriddedChord(Chord((0, 0)), ((0,0), (2,0))),),))
+
+print(place_point)
+
+place_point.pretty_print_latex("place_point.tex")
+
+#print(atom.chord_cells)
