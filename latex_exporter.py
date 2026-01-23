@@ -10,16 +10,35 @@ def export_tiling_to_latex(tiling, filename: str = "tiling_visual.tex", compile_
     produce a PDF next to the .tex file. Returns path to .tex file.
     """
     dim_x, dim_y = tiling._cached_properties['dimensions']
+    
+    # Get chord_row_cells and determine which rows should show black chords
+    chord_row_cells = tiling.chord_row_cells
+    chord_rows = set(cell[1] for cell in chord_row_cells)
+    
+    # Group chord_row_cells by row to draw black chords
+    chord_cells_by_row = {}
+    for cell in chord_row_cells:
+        row = cell[1]
+        if row not in chord_cells_by_row:
+            chord_cells_by_row[row] = []
+        chord_cells_by_row[row].append(cell)
+    
+    # Filter out obstructions and requirements that are fully in chord_rows
+    # (keep those that are only partially in chord_rows)
+    filtered_obs = [ob for ob in tiling._obstructions 
+                    if not all(cell[1] in chord_rows for cell in ob._pos)]
+    filtered_reqs = [r for req_list in tiling._requirements 
+                     for r in req_list 
+                     if not all(cell[1] in chord_rows for cell in r._pos)]
 
     # label assignment consistent with pretty_print
     obs_labels = {ob: chr(ord('A') + i % 26) + (str(i//26) if i//26 else '') 
-                  for i, ob in enumerate(tiling._obstructions)}
-    all_reqs = [r for req_list in tiling._requirements for r in req_list]
+                  for i, ob in enumerate(filtered_obs)}
     req_labels = {rq: chr(ord('a') + i % 26) + (str(i//26) if i//26 else '') 
-                  for i, rq in enumerate(all_reqs)}
+                  for i, rq in enumerate(filtered_reqs)}
 
     # Calculate scale factor based on number of obstructions and requirements
-    total_constraints = len(tiling._obstructions) + len(all_reqs)
+    total_constraints = len(filtered_obs) + len(filtered_reqs)
     scale_factor = 1.0 + max(0, (total_constraints - 3) * 0.15)
 
     tex_lines = []
@@ -39,7 +58,7 @@ def export_tiling_to_latex(tiling, filename: str = "tiling_visual.tex", compile_
         return (cell[0] + ux, cell[1] + uy)
 
     # draw obstructions: place endpoints inside each cell and draw connections
-    for idx, ob in enumerate(tiling._obstructions):
+    for idx, ob in enumerate(filtered_obs):
         col = "red"
         lab = obs_labels[ob]
         
@@ -48,7 +67,7 @@ def export_tiling_to_latex(tiling, filename: str = "tiling_visual.tex", compile_
         chord_to_level = {}
         
         # Distribute obstruction base levels across the vertical space
-        num_obs = len(tiling._obstructions)
+        num_obs = len(filtered_obs)
         if num_obs == 1:
             obs_base_uy = 0.5
         else:
@@ -104,7 +123,7 @@ def export_tiling_to_latex(tiling, filename: str = "tiling_visual.tex", compile_
             tex_lines.append(f"  \\draw[{col}, line width=1.2pt] {path};")
 
     # draw requirements similarly but in blue dashed style
-    for idx, rq in enumerate(all_reqs):
+    for idx, rq in enumerate(filtered_reqs):
         col = "blue"
         lab = req_labels[rq]
         
@@ -113,7 +132,7 @@ def export_tiling_to_latex(tiling, filename: str = "tiling_visual.tex", compile_
         chord_to_level = {}
         
         # Distribute requirement base levels across the vertical space
-        num_reqs = len(all_reqs)
+        num_reqs = len(filtered_reqs)
         if num_reqs == 1:
             req_base_uy = 0.5
         else:
@@ -168,6 +187,36 @@ def export_tiling_to_latex(tiling, filename: str = "tiling_visual.tex", compile_
             path = " -- ".join(f"(req{id(rq)}_pt{i})" for i in polyline_points)
             tex_lines.append(f"  \\draw[{col}, dashed, line width=1.2pt] {path};")
 
+    # draw black chords for chord_row_cells
+    tex_lines.append("  % draw black chords for chord_row_cells")
+    for row, cells in chord_cells_by_row.items():
+        if len(cells) >= 2:
+            # Sort cells by column for consistent left-to-right ordering
+            sorted_cells = sorted(cells, key=lambda c: c[0])
+            # Draw a black chord connecting the leftmost and rightmost cells in this row
+            left_cell = sorted_cells[0]
+            right_cell = sorted_cells[-1]
+            
+            # Place endpoints at the middle height of the row
+            left_x, left_y = left_cell[0] + 0.5, left_cell[1] + 0.5
+            right_x, right_y = right_cell[0] + 0.5, right_cell[1] + 0.5
+            
+            # Create nodes for endpoints
+            tex_lines.append(f"  \\node[circle, fill=black, inner sep=0.04cm] (chord_row{row}_left) at ({left_x},{left_y}) {{}};")
+            tex_lines.append(f"  \\node[circle, fill=black, inner sep=0.04cm] (chord_row{row}_right) at ({right_x},{right_y}) {{}};")
+            
+            # Draw the chord
+            tex_lines.append(f"  \\draw[black, line width=1.5pt] (chord_row{row}_left) -- (chord_row{row}_right);")
+        elif len(cells) == 1:
+            # Single cell: draw a chord within the cell
+            cell = cells[0]
+            left_x, cell_y = cell[0] + 0.3, cell[1] + 0.5
+            right_x = cell[0] + 0.7
+            
+            tex_lines.append(f"  \\node[circle, fill=black, inner sep=0.04cm] (chord_row{row}_left) at ({left_x},{cell_y}) {{}};")
+            tex_lines.append(f"  \\node[circle, fill=black, inner sep=0.04cm] (chord_row{row}_right) at ({right_x},{cell_y}) {{}};")
+            tex_lines.append(f"  \\draw[black, line width=1.5pt] (chord_row{row}_left) -- (chord_row{row}_right);")
+
     tex_lines.append("\\end{tikzpicture}")
     tex_lines.append("\\end{document}")
 
@@ -191,3 +240,5 @@ def export_tiling_to_latex(tiling, filename: str = "tiling_visual.tex", compile_
                 pass
 
     return filename
+
+
