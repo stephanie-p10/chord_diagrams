@@ -84,6 +84,7 @@ class RequirementInsertionStrategy(DisjointUnionStrategy[Tiling, GriddedChord]):
         args = ", ".join([f"gcs={self.gcs}", f"ignore_parent={self.ignore_parent}"])
         return f"{self.__class__.__name__}({args})"
 
+    # s TODO make this nice, like place chord
     def __str__(self) -> str:
         return "requirement insertion"
 

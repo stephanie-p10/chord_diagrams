@@ -316,7 +316,8 @@ class _RowColSeparationSingleApplication:
         OUTPUT:
             A tuple (smaller_cell, bigger_cell)
         """
-        assert len(ob) == 2, "Obstruction must be of length 2"
+        print("testing: ", ob, len(ob))
+        assert len(ob.pos) == 2, "Obstruction must be of length 2"
         c1, c2 = ob.pos
         assert c1[0] == c2[0], "Obstruction not a col obstruction"
         assert not c1[1] == c2[1], "Obstruction is single cell"
@@ -348,7 +349,9 @@ class _RowColSeparationSingleApplication:
             if len(ob.patt) == 2 and not ob.is_single_cell()
         ) # all obstructions of length 2 that aren't in the same cell
 
+        #print("filtered obs: ")
         for ob in filtered_obs:
+            #print("ob: ", ob)
             c1, c2 = ob.pos
             spanning_chord = GriddedChord(Chord((0, 0)), (c1, c2))
 
@@ -358,12 +361,15 @@ class _RowColSeparationSingleApplication:
                                              for reqlist 
                                              in self._tiling.requirements])
             if c1[1] == c2[1] and not chord_spans_cells_in_req: 
+                print("in row cell order")
                 ineq = self._row_cell_order(ob)
                 self._add_ineq(ineq, row_m)
             elif c1[0] == c2[0]:
+                print("in col cell order")
                 ineq = self._col_cell_order(ob)
                 self._add_ineq(ineq, col_m)
         self._ineq_matrices = row_m, col_m
+        #print("finished")
         return self._ineq_matrices
 
     def row_ineq_graph(self):

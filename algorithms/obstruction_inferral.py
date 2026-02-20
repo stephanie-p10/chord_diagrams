@@ -138,7 +138,10 @@ class AllObstructionInferral(ObstructionInferral):
         no_req_tiling = self._tiling.__class__(self._tiling.obstructions)
         n = self._obs_len
         pot_obs = filter(self.not_required, no_req_tiling.all_chords_on_tiling(n, True)) 
-        return list(gc for gc in pot_obs)
+        pot_obs_list = list(gc for gc in pot_obs)
+        pot_obs_reduced = filter(lambda gc: all(cell not in self._tiling.point_cells for cell in gc.pos),
+                                 pot_obs_list)
+        return list(gc for gc in pot_obs_reduced)
 
 
 class EmptyCellInferral(AllObstructionInferral):

@@ -21,6 +21,8 @@ from algorithms.map import RowColMap
 from algorithms.simplify import SimplifyObstructionsAndRequirements
 from algorithms.expansion import Expansion
 
+import time
+
 __all__ = ["Tiling"]
 
 Cell = Tuple[int, int]
@@ -44,13 +46,13 @@ class Tiling(CombinatorialClass):
         obstructions: Iterable[GriddedChord] = tuple(),
         requirements: Iterable[Iterable[GriddedChord]] = tuple(), 
         linkages: Iterable[Iterable[Cell]] = tuple(),
-        #fixed_rows: Iterable[int] = tuple(),
-        #fixed_cols: Iterable[int] = tuple(),
         assumptions: Iterable[TrackingAssumption] = tuple(),
         simplify: bool = True,
         remove_empty_rows_and_cols: bool = True,
         derive_empty: bool = True,
         expand: bool = True):
+
+        start_time = time.time()
 
         super().__init__()
         self._linkages = tuple(linkages)
@@ -59,18 +61,13 @@ class Tiling(CombinatorialClass):
         self._assumptions = tuple(assumptions)
         self._cached_properties = {}
         self._derive_empty = derive_empty
-        #self._fixed_rows = fixed_rows
-        #self._fixed_cols = fixed_cols
 
         if "dimensions" not in self._cached_properties:
             self._compute_dimensions()
 
-        if simplify:
-            self._simplify()
-
         # currently defaults cells with no requirements or obsturctions to be empty
-        # note: should this be defaulted to allowing other chords?
-        if "empty_cells" not in self._cached_properties and derive_empty:
+        # note: should this be defaulted to allowing other chords? - NO
+        if "empty_cells" not in self._cached_properties:
             self._prepare_properties(derive_empty)
 
         if expand:
@@ -80,8 +77,7 @@ class Tiling(CombinatorialClass):
         # this should not affect the switch to only describe a tiling with chord diagrams, since the only time
         #   the new point obstructions are used is when dealing with parts of the tiling that are empty. Most 
         #   computations are done only on the active cells.
-        if derive_empty:
-            self._add_point_obs(self._cached_properties["empty_cells"])
+        self._add_point_obs(self._cached_properties["empty_cells"])
             
         # this will take out all obs that have ends in empty cells
         if simplify:
@@ -90,7 +86,7 @@ class Tiling(CombinatorialClass):
         if remove_empty_rows_and_cols:
             self._remove_empty_rows_and_cols()
 
-
+ 
     @property
     def obstructions(self):
         return self._obstructions
@@ -171,7 +167,7 @@ class Tiling(CombinatorialClass):
             potential_cells = list(self.active_cells)
 
             # generates all chords on the tiling of length two
-            size_two_chords = self.chords_of_length(2)
+            chords_to_check = self.chords_of_length(self.maximum_length_of_minimum_gridded_chord() + 1)
 
             # if a cell has more than two points in it, it must contain the pattern 00, 01, or 10
             # this means that the cells that can have one point are the cells that do not contain 00, 01 or 10
@@ -184,13 +180,14 @@ class Tiling(CombinatorialClass):
                     bad_cells.append(cell)
 
             # finding the cells that contain two points of a size two chord
-            for gc in size_two_chords:
+            for gc in chords_to_check:
                 pos_list_counter = Counter(gc.pos)
                 for cell in pos_list_counter.keys():
                     if pos_list_counter[cell] > 1:
                         bad_cells.append(cell)
 
             required_cells = []
+            # for Tia: is this similar to the method being written to find what chords are required?
             for reqlist in self.requirements:
                 cells_in_all_reqs = intersection_reduce(req.pos for req in reqlist)
                 required_cells += cells_in_all_reqs
@@ -244,7 +241,7 @@ class Tiling(CombinatorialClass):
         try:
             return self._cached_properties["point_col_cells"]
         except KeyError:
-            cells = frozenset(cell for cell in self.point_cells if self.only_cell_in_col(cell)) 
+            cells = [cell for cell in self.point_cells if self.only_cell_in_col(cell)]
             self._cached_properties["point_col_cells"] = cells
             return cells
         
@@ -348,35 +345,48 @@ class Tiling(CombinatorialClass):
 
         # Fast method of calculating active cells, assumes the user did not do anything "silly"
         # adds all cells that an obstuction larger than a single point uses
-        active_cells = union_reduce(
+        cells_used = union_reduce(
             set(ob.pos) for ob in self.obstructions if len(ob.patt) > 1
         )
         # adds all cells that are used in a requirement to the active cells.
-        active_cells.update(
+        cells_used.update(
             *(union_reduce(set(comp.pos) for comp in req) for req in self.requirements)
         )
 
+        # calculates dimensions based on what the max cells used in an obstuction or requirement
         max_row = 0
         max_col = 0
-        for cell in active_cells:
+        for cell in cells_used:
             max_col = max(max_col, cell[0])
             max_row = max(max_row, cell[1])
         dimensions = (max_col + 1, max_row + 1)
 
-        empty_cells = tuple(
-            cell
-            for cell in product(range(dimensions[0]), range(dimensions[1]))
-            if cell not in active_cells
-        )    
+        # finds the cells that have point obstructions - these should be empty
+        point_ob_cells = []
+        for ob in self.obstructions:
+            if len(ob.patt) == 1:
+                point_ob_cells.append(ob.pos[0])
 
-        if self._derive_empty:
-            self._cached_properties["active_cells"] = frozenset(active_cells)
-            self._cached_properties["empty_cells"] = frozenset(empty_cells)
-            self._cached_properties["dimensions"] = dimensions
+        if derive_empty:
+            # if we are assuming cells with no information are empty, the active cells
+            # are the cells that get mentioned in an ob or req, minus any point cells
+            active_cells = cells_used.difference(point_ob_cells)
+            empty_cells = tuple(
+                cell
+                for cell in product(range(dimensions[0]), range(dimensions[1]))
+                if cell not in active_cells
+            ) 
         else:
-            self._cached_properties["active_cells"] = list(product(range(max_col + 1), range(max_row + 1)))
-            self._cached_properties["empty_cells"] = frozenset()
-            self._cached_properties["dimensions"] = dimensions
+            # if we are assuming all cells are active unless explicitly stated, the only empty
+            # cells are the cells that have point obstructions, and the active cells are the complement
+            empty_cells = tuple([])
+            active_cells = tuple(cell 
+                                 for cell in product(range(dimensions[0]), range(dimensions[1]))
+                                 if cell not in empty_cells) 
+
+        self._cached_properties["active_cells"] = frozenset(active_cells)
+        self._cached_properties["empty_cells"] = frozenset(empty_cells)
+        self._cached_properties["dimensions"] = dimensions
 
     def _add_point_obs(self, cells: Tuple[Cell]):
         new_obs = list(self._obstructions)
@@ -812,6 +822,10 @@ class Tiling(CombinatorialClass):
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, Tiling):
             return False
+        #print(self.obstructions == other.obstructions)
+        #print(self.requirements == other.requirements)
+        #print(self.linkages == other.linkages)
+        #print(self.assumptions == other.assumptions)
         return (
             self.obstructions == other.obstructions
             and self.requirements == other.requirements
@@ -1286,35 +1300,3 @@ class Tiling(CombinatorialClass):
             assumptions=tuple(assumptions),
         )
     
-gc_single_00_00 = GriddedChord(Chord((0, 0)), ((0, 0), (0, 0)))
-t_no_restrictions = Tiling((), (), (), (), derive_empty=False)
-
-
-assert t_no_restrictions.contains(gc_single_00_00)
-
-
-tiling2 = Tiling(
-        obstructions=[
-            GriddedChord(Chord((0, 1, 0, 1)), ((1, 1), ) * 4),
-            GriddedChord(Chord((0, 0)), ((0, 0), (0, 0))),
-            GriddedChord(Chord((0, 0)), ((0, 0), (1, 0)))
-        ],
-        requirements=[
-        ],
-    )
-atom = Tiling(obstructions=(GriddedChord(Chord((0, 0, 1, 1)), ((0, 0), (0, 0), (0, 0), (0, 0))),
-                            GriddedChord(Chord((0, 1, 1, 0)), ((0, 0), (0, 0), (0, 0), (0, 0))),
-                            GriddedChord(Chord((0, 1, 0, 1)), ((0, 0), (0, 0), (0, 0), (0, 0)))),
-              requirements=((GriddedChord(Chord((0, 0)), ((0,0), (0,0))),),))
-
-#atom.pretty_print_latex("atom.tex")
-
-non_crossing = Tiling(obstructions=(GriddedChord(Chord((0, 1, 0, 1)), ((0, 0), (0, 0), (0, 0), (0, 0))),))
-
-#non_crossing.pretty_print_latex("non_crossing.tex")
-
-theorem303 = Tiling(obstructions=(GriddedChord(Chord((0, 1, 2, 0, 1, 2)), ((0, 0), (0,0), (0,0), (0,0), (0,0), (0,0))),
-                                  GriddedChord(Chord((0, 1, 2, 0, 2, 1)), ((0, 0), (0,0), (0,0), (0,0), (0,0), (0,0))),
-                                  GriddedChord(Chord((0, 1, 2, 1, 0, 2)), ((0, 0), (0,0), (0,0), (0,0), (0,0), (0,0))),))
-
-#theorem303.pretty_print_latex("theorem303.tex")

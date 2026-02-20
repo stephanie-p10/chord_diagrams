@@ -195,6 +195,7 @@ class FactorFactory(StrategyFactory[Tiling]):
 
     def __call__(self, comb_class: Tiling) -> Iterator[FactorStrategy]:
         factor_algo = Factor(comb_class)
+        print("factor_algo: ", factor_algo)
         if factor_algo.factorable():
             min_comp = tuple(tuple(part) for part in factor_algo.get_components())
             if self.unions:
