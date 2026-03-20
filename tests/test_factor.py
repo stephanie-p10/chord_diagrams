@@ -52,7 +52,6 @@ for factor_list in [factor for factor in factor_nc_algo.factors()]:
     print(factor_list)
 assert [factor for factor in factor_nc_algo.factors()] == nc_factors_list
 
-
 factory = FactorFactory(True)
 for strat in factory(non_crossing):
     print("next strat:")
