@@ -1,0 +1,50 @@
+\documentclass{standalone}
+\usepackage{tikz}
+\begin{document}
+\begin{tikzpicture}[scale=3.05]
+  % draw rounded cell boxes
+  \draw[rounded corners=3pt] (0,0) rectangle (1,1);
+  \draw[rounded corners=3pt] (0,1) rectangle (1,2);
+  \draw[rounded corners=3pt] (1,0) rectangle (2,1);
+  \draw[rounded corners=3pt] (1,1) rectangle (2,2);
+  \draw[rounded corners=3pt] (2,0) rectangle (3,1);
+  \draw[rounded corners=3pt] (2,1) rectangle (3,2);
+  \draw[rounded corners=3pt] (3,0) rectangle (4,1);
+  \draw[rounded corners=3pt] (3,1) rectangle (4,2);
+  % draw black chords for chord_row_cells
+  \node[circle, fill=red, inner sep=0.03cm] (obs4363486992_pt0) at (1.075,1.1388) {};
+  \node[circle, fill=red, inner sep=0.03cm] (obs4363486992_pt1) at (3.775,1.1388) {};
+  \draw[red, line width=1.2pt] (obs4363486992_pt0) -- (obs4363486992_pt1);
+  \node[circle, fill=red, inner sep=0.03cm] (obs4363487280_pt0) at (1.1124999999999998,1.2606) {};
+  \node[circle, fill=red, inner sep=0.03cm] (obs4363487280_pt1) at (1.2525,1.3194) {};
+  \node[circle, fill=red, inner sep=0.03cm] (obs4363487280_pt2) at (1.3924999999999998,1.3781999999999999) {};
+  \node[circle, fill=red, inner sep=0.03cm] (obs4363487280_pt3) at (1.5324999999999998,1.2606) {};
+  \node[circle, fill=red, inner sep=0.03cm] (obs4363487280_pt4) at (1.6724999999999999,1.3194) {};
+  \node[circle, fill=red, inner sep=0.03cm] (obs4363487280_pt5) at (1.8125,1.3781999999999999) {};
+  \draw[red, line width=1.2pt] (obs4363487280_pt0) -- (obs4363487280_pt3) -- (obs4363487280_pt1) -- (obs4363487280_pt4) -- (obs4363487280_pt2) -- (obs4363487280_pt5);
+  \node[circle, fill=red, inner sep=0.03cm] (obs4363487328_pt0) at (3.15,1.4411999999999998) {};
+  \node[circle, fill=red, inner sep=0.03cm] (obs4363487328_pt1) at (3.29,1.4999999999999998) {};
+  \node[circle, fill=red, inner sep=0.03cm] (obs4363487328_pt2) at (3.4299999999999997,1.5587999999999997) {};
+  \node[circle, fill=red, inner sep=0.03cm] (obs4363487328_pt3) at (3.57,1.4411999999999998) {};
+  \node[circle, fill=red, inner sep=0.03cm] (obs4363487328_pt4) at (3.71,1.4999999999999998) {};
+  \node[circle, fill=red, inner sep=0.03cm] (obs4363487328_pt5) at (3.85,1.5587999999999997) {};
+  \draw[red, line width=1.2pt] (obs4363487328_pt0) -- (obs4363487328_pt3) -- (obs4363487328_pt1) -- (obs4363487328_pt4) -- (obs4363487328_pt2) -- (obs4363487328_pt5);
+  \node[circle, fill=red, inner sep=0.03cm] (obs4363488240_pt0) at (1.1875,1.6218) {};
+  \node[circle, fill=red, inner sep=0.03cm] (obs4363488240_pt1) at (1.3275000000000001,1.6805999999999999) {};
+  \node[circle, fill=red, inner sep=0.03cm] (obs4363488240_pt2) at (1.4675,1.7393999999999998) {};
+  \node[circle, fill=red, inner sep=0.03cm] (obs4363488240_pt3) at (1.6075,1.6218) {};
+  \node[circle, fill=red, inner sep=0.03cm] (obs4363488240_pt4) at (1.7475,1.7393999999999998) {};
+  \node[circle, fill=red, inner sep=0.03cm] (obs4363488240_pt5) at (1.8875000000000002,1.6805999999999999) {};
+  \draw[red, line width=1.2pt] (obs4363488240_pt0) -- (obs4363488240_pt3) -- (obs4363488240_pt1) -- (obs4363488240_pt5) -- (obs4363488240_pt2) -- (obs4363488240_pt4);
+  \node[circle, fill=red, inner sep=0.03cm] (obs4363488288_pt0) at (3.225,1.8024) {};
+  \node[circle, fill=red, inner sep=0.03cm] (obs4363488288_pt1) at (3.365,1.8612) {};
+  \node[circle, fill=red, inner sep=0.03cm] (obs4363488288_pt2) at (3.505,1.92) {};
+  \node[circle, fill=red, inner sep=0.03cm] (obs4363488288_pt3) at (3.645,1.8024) {};
+  \node[circle, fill=red, inner sep=0.03cm] (obs4363488288_pt4) at (3.785,1.92) {};
+  \node[circle, fill=red, inner sep=0.03cm] (obs4363488288_pt5) at (3.9250000000000003,1.8612) {};
+  \draw[red, line width=1.2pt] (obs4363488288_pt0) -- (obs4363488288_pt3) -- (obs4363488288_pt1) -- (obs4363488288_pt5) -- (obs4363488288_pt2) -- (obs4363488288_pt4);
+  \node[circle, fill=blue, inner sep=0.025cm] (req4363485600_pt0) at (0.15,0.5) {};
+  \node[circle, fill=blue, inner sep=0.025cm] (req4363485600_pt1) at (2.85,0.5) {};
+  \draw[blue, dashed, line width=1.2pt] (req4363485600_pt0) -- (req4363485600_pt1);
+\end{tikzpicture}
+\end{document}

@@ -173,10 +173,28 @@ for comp in Factor(non_crossing_ex1).get_components():
 
 #print("asserts passed")
 
+#print("t5_prime:")
+
+#print(t5_prime)
 
 
 
+# t1.pretty_print_latex("t1.tex")
 
+# t2.pretty_print_latex("t2.tex")
 
+t3.pretty_print_latex("t3.tex")
 
+# t3_prime.pretty_print_latex("t3_prime.tex")
 
+t4.pretty_print_latex("t4.tex")
+
+# t4_prime.pretty_print_latex("t4_prime.tex")
+
+t5.pretty_print_latex("t5.tex")
+
+# t5_prime.pretty_print_latex("t5_prime.tex")
+
+lukas_t5.pretty_print_latex("lukas_t5.tex")
+
+lukas_t5_prime.pretty_print_latex("lukas_t5_prime.tex")
