@@ -1,0 +1,23 @@
+\documentclass{standalone}
+\usepackage{tikz}
+\begin{document}
+\begin{tikzpicture}[scale=1.0]
+  % draw rounded cell boxes
+  \draw[rounded corners=3pt] (0,0) rectangle (1,1);
+  % draw black chords for chord_row_cells
+  \node[circle, fill=red, inner sep=0.03cm] (obs4413504736_pt0) at (0.2,0.08) {};
+  \node[circle, fill=red, inner sep=0.03cm] (obs4413504736_pt1) at (0.32,0.2229787234042554) {};
+  \node[circle, fill=red, inner sep=0.03cm] (obs4413504736_pt2) at (0.44,0.3659574468085107) {};
+  \node[circle, fill=red, inner sep=0.03cm] (obs4413504736_pt3) at (0.56,0.08) {};
+  \node[circle, fill=red, inner sep=0.03cm] (obs4413504736_pt4) at (0.6799999999999999,0.2229787234042554) {};
+  \node[circle, fill=red, inner sep=0.03cm] (obs4413504736_pt5) at (0.8,0.3659574468085107) {};
+  \draw[red, line width=1.2pt] (obs4413504736_pt0) -- (obs4413504736_pt3) -- (obs4413504736_pt1) -- (obs4413504736_pt4) -- (obs4413504736_pt2) -- (obs4413504736_pt5);
+  \node[circle, fill=red, inner sep=0.03cm] (obs4413504592_pt0) at (0.2,0.6340425531914895) {};
+  \node[circle, fill=red, inner sep=0.03cm] (obs4413504592_pt1) at (0.32,0.7770212765957449) {};
+  \node[circle, fill=red, inner sep=0.03cm] (obs4413504592_pt2) at (0.44,0.92) {};
+  \node[circle, fill=red, inner sep=0.03cm] (obs4413504592_pt3) at (0.56,0.6340425531914895) {};
+  \node[circle, fill=red, inner sep=0.03cm] (obs4413504592_pt4) at (0.6799999999999999,0.92) {};
+  \node[circle, fill=red, inner sep=0.03cm] (obs4413504592_pt5) at (0.8,0.7770212765957449) {};
+  \draw[red, line width=1.2pt] (obs4413504592_pt0) -- (obs4413504592_pt3) -- (obs4413504592_pt1) -- (obs4413504592_pt5) -- (obs4413504592_pt2) -- (obs4413504592_pt4);
+\end{tikzpicture}
+\end{document}
