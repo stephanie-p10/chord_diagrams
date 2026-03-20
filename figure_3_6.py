@@ -15,7 +15,7 @@ from strategies.obstruction_inferral import ObstructionInferralFactory
 from strategies.factor import FactorFactory, FactorStrategy, Factor
 from strategies.requirement_insertion import RequirementInsertionFactory, RequirementInsertionStrategy
 from strategies.row_col_separation import RowColumnSeparationStrategy
-from strategies.chord_placement import RequirementPlacementFactory, RequirementPlacementStrategy
+from strategies.chord_placement import RequirementPlacementFactory, RequirementPlacementStrategy, RequirementPlacement
 
 # first pattern in theorem 3.1.2 class
 c1 = Chord((0, 1, 2, 0, 1, 2))
@@ -125,16 +125,47 @@ t5_to_t5_prime = RequirementPlacementStrategy((GriddedChord(single_chord, ((1, 1
 
 t5_prime = t5_to_t5_prime.decomposition_function(t5)[0]
 
+
+
 lukas_t5 = t3_prime_to_t4_t5.decomposition_function(lukas_t3_prime)[1]
+lukas_t5._simplify()
+
+req_pl_algo = RequirementPlacement(lukas_t5)
+
+place_one_point = req_pl_algo.place_point(GriddedChord(Chord((0, 0)), ((1, 1), (3, 1))), 0, True)
+place_one_point._simplify()
+
+req_pl_point_two_algo = RequirementPlacement(place_one_point)
+#print(place_one_point)
+
+place_two_point = req_pl_point_two_algo.place_point(GriddedChord(Chord((0, 0)), ((2, 2), (5, 2))), 1, False)
+place_two_point._simplify()
+
+#print(place_two_point)
 
 lukas_t5_prime = t5_to_t5_prime.decomposition_function(lukas_t5)[0]
-print(lukas_t5_prime)
+#lukas_t5_prime._simplify()
+#print(lukas_t5_prime)
+
+
 
 #for child in t5_to_t5_prime.decomposition_function(t5):
 #    print(child)
 
+non_crossing_ex1 = Tiling((GriddedChord(Chord((0, 1, 0, 1)), ((1, 1), (1, 1), (1, 1), (1, 1))),
+                       GriddedChord(Chord((0, 1, 0, 1)), ((3, 1), (3, 1), (3, 1), (3, 1))), 
+                       GriddedChord(Chord((0, 0)), ((1, 1), (3, 1))), 
+                       GriddedChord(Chord((0, 0)), ((0, 0), (0, 0))), 
+                       GriddedChord(Chord((0, 0)), ((2, 0), (2, 0))), 
 
-for comp in Factor(lukas_t5_prime).get_components():
+                       GriddedChord(Chord((0, 1)), ((1, 1), (3, 1))), 
+                       GriddedChord(Chord((0, 1)), ((0, 0), (0, 0))), 
+                       GriddedChord(Chord((0, 1)), ((2, 0), (2, 0))), 
+                       GriddedChord(Chord((1, 0)), ((0, 0), (0, 0))), 
+                       GriddedChord(Chord((1, 0)), ((2, 0), (2, 0))), ),
+                       ((GriddedChord(Chord((0, 0)), ((0, 0), (3, 0))),),))
+
+for comp in Factor(non_crossing_ex1).get_components():
     print(comp)
 
 #assert set(req_ins_t1_to_t2_t3.decomposition_function(t1)) == set([t2, t3]) # strategy 1

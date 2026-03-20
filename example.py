@@ -59,8 +59,12 @@ size_four_atom = Tiling(obstructions=obs,
 
 non_nesting = Tiling(obstructions=(GriddedChord(Chord((0, 1, 1, 0)), ((0, 0),)*4),))
 
+face_ex = Tiling((GriddedChord(Chord((0, 1, 0, 1)), ((0, 0), (0, 0), (0, 0), (0, 0))),
+                  GriddedChord(Chord((0, 1, 0, 1)), ((1, 0), (1, 0), (1, 0), (1, 0))),
+                  GriddedChord(Chord((0, 0)), ((0, 0), (1, 0)))))
+
 start_time = time.time()
-searcher = CombinatorialSpecificationSearcher(fig3_6, pack)
+searcher = CombinatorialSpecificationSearcher(face_ex, pack)
 spec = searcher.auto_search()
 
 end_time = time.time()
@@ -69,6 +73,6 @@ gf = spec.get_genf()
 print(gf)
 print(end_time - start_time)
 
-#spec.show()
+spec.show()
 
 
