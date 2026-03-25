@@ -89,12 +89,14 @@ non_crossing_ex2 = Tiling((GriddedChord(Chord((0, 1, 0, 1)), ((0, 0), (1, 1), (2
                        ((GriddedChord(Chord((0, 0)), ((0, 0), (2, 0))),),))
 
 
-factory = SubobstructionInferralFactory()
+'''factory = SubobstructionInferralFactory()
 
 for strat in factory(non_crossing_ex2):
     add_subobs_tiling = strat.decomposition_function(non_crossing_ex2)[0]
     add_subobs_tiling._simplify()
-    print(add_subobs_tiling)
+    print(add_subobs_tiling)'''
+
+non_crossing_factor_Test = Tiling((GriddedChord(Chord((0, 1, 0, 1)), ((1, 1),)*4)))
 
 
 
