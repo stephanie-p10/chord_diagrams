@@ -289,7 +289,7 @@ class RequirementPlacementFactory(StrategyFactory[Tiling]):
     def __str__(self) -> str:
         # sTODO fix this string
         s = f"Placing requirments lists up to size {self.max_reqlist_size}"
-        s += f"with chords up to size {self.max_chord_size}"
+        s += f" with chords up to size {self.max_chord_size}"
         return s
 
     def __repr__(self) -> str:

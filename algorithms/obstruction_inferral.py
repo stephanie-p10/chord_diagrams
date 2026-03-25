@@ -100,7 +100,7 @@ class SubobstructionInferral(ObstructionInferral):
         """
         subobs: Set[GriddedChord] = set()
         for ob in self._tiling.obstructions:
-            subobs.update(ob.all_subchords(proper=True, return_all_subpatts=True))
+            subobs.update(ob.all_subchords(proper=True, return_all_subpatts=False))
         subobs.remove(GriddedChord.empty_chord())
         return subobs
 

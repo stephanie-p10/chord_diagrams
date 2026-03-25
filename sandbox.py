@@ -1,6 +1,7 @@
 from tiling import Tiling, Chord, GriddedChord
 from collections import Counter
 from strategies.factor import FactorFactory, FactorStrategy, Factor
+from strategies.row_col_separation import RowColumnSeparationStrategy
 import time
 
 from strategies.obstruction_inferral import SubobstructionInferralFactory
@@ -89,14 +90,46 @@ non_crossing_ex2 = Tiling((GriddedChord(Chord((0, 1, 0, 1)), ((0, 0), (1, 1), (2
                        ((GriddedChord(Chord((0, 0)), ((0, 0), (2, 0))),),))
 
 
-'''factory = SubobstructionInferralFactory()
+factory = SubobstructionInferralFactory()
 
-for strat in factory(non_crossing_ex2):
+'''for strat in factory(non_crossing_ex2):
     add_subobs_tiling = strat.decomposition_function(non_crossing_ex2)[0]
     add_subobs_tiling._simplify()
     print(add_subobs_tiling)'''
 
-non_crossing_factor_Test = Tiling((GriddedChord(Chord((0, 1, 0, 1)), ((1, 1),)*4)))
+non_crossing_factor_test = Tiling((GriddedChord(Chord((0, 1, 0, 1)), ((1, 1),)*4),
+                                   GriddedChord(Chord((0, 1, 0, 1)), ((3, 1),)*4),
+                                   GriddedChord(Chord((0, 0)), ((1, 1), (3, 1))),
+
+                                   GriddedChord(Chord((0, 0)), ((0, 0), (0, 0))), 
+                                   GriddedChord(Chord((0, 0)), ((2, 0), (2, 0))),
+                                   GriddedChord(Chord((1, 0)), ((0, 0), (0, 0))), 
+                                   GriddedChord(Chord((1, 0)), ((2, 0), (2, 0))),
+                                   GriddedChord(Chord((0, 1)), ((0, 0), (0, 0))), 
+                                   GriddedChord(Chord((0, 1)), ((2, 0), (2, 0))), ))
+
+'''factor_factory = FactorFactory()
+for strat in factor_factory(non_crossing_factor_test):
+    for comp in strat.decomposition_function(non_crossing_factor_test):
+        print(comp)'''
+
+row_col_sep_test = Tiling((GriddedChord(Chord((0, 0)), ((0, 0), (1, 0))),
+                           GriddedChord(Chord((0, 1, 0, 1)), ((1, 0),)*4),
+                           GriddedChord(Chord((0, 1, 0, 1)), ((0, 0),)*4),),)
 
 
+lukas_t3_prime = Tiling((GriddedChord(Chord((0, 1, 0, 1)), ((1, 1),)*4),
+                         GriddedChord(Chord((0, 1, 0, 1)), ((3, 1),)*4),
+                         GriddedChord(Chord((0, 0)), ((1, 1), (3, 1))),
 
+                         GriddedChord(Chord((0, 0)), ((0, 0), (0, 0))), 
+                         GriddedChord(Chord((0, 0)), ((2, 0), (2, 0))),
+                         GriddedChord(Chord((1, 0)), ((0, 0), (0, 0))), 
+                         GriddedChord(Chord((1, 0)), ((2, 0), (2, 0))),
+                         GriddedChord(Chord((0, 1)), ((0, 0), (0, 0))), 
+                         GriddedChord(Chord((0, 1)), ((2, 0), (2, 0))), ),
+                         ((GriddedChord(Chord((0, 0)), ((0, 0), (2, 0))),),))
+
+strat = RowColumnSeparationStrategy()
+for comp in strat.decomposition_function(lukas_t3_prime):
+    print(comp)

@@ -27,7 +27,6 @@ class RowColumnSeparationStrategy(DisjointUnionStrategy[Tiling, GriddedChord]):
     """
     An inferral strategy that tries to separate cells in rows and columns.
     """
-
     _cell_maps: Dict[Tiling, Tuple[CellMap, CellMap]] = {}
 
     def __init__(self):

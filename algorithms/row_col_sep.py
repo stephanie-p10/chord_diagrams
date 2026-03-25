@@ -361,11 +361,11 @@ class _RowColSeparationSingleApplication:
                                              for reqlist 
                                              in self._tiling.requirements])
             if c1[1] == c2[1] and not chord_spans_cells_in_req: 
-                print("in row cell order")
+                #print("in row cell order")
                 ineq = self._row_cell_order(ob)
                 self._add_ineq(ineq, row_m)
             elif c1[0] == c2[0]:
-                print("in col cell order")
+                #print("in col cell order")
                 ineq = self._col_cell_order(ob)
                 self._add_ineq(ineq, col_m)
         self._ineq_matrices = row_m, col_m

@@ -12,21 +12,22 @@ from chords import GriddedChord
 from tiling import Tiling
 
 class ObstructionInferralStrategy(DisjointUnionStrategy[Tiling, GriddedChord]):
-    def __init__(self, gcs: Iterable[GriddedChord]):
+    def __init__(self, gcs: Iterable[GriddedChord], reduce = True):
         self.gcs = tuple(sorted(gcs))
+        self.reduce = False
         super().__init__(
             ignore_parent=True, inferrable=True, possibly_empty=False, workable=True
         )
 
     def decomposition_function(self, comb_class: Tiling) -> Tuple[Tiling]:
-        return (comb_class.add_obstructions(self.gcs, False, False),)
+        return (comb_class.add_obstructions(self.gcs, self.reduce, True),)
 
     def formal_step(self) -> str:
         """Return a string describing the operation performed."""
         if all(gc.is_point() for gc in self.gcs):
             empty_cells_str = ", ".join(map(str, (gc.pos[0] for gc in self.gcs)))
             return f"the cells {{{empty_cells_str}}} are empty"
-        return f"added the obstructions {{{', '.join(map(str, self.gcs))}}}"
+        return f"added the obstructions {{{'\n'.join(map(str, self.gcs))}}}"
 
     def extra_parameters(
         self, comb_class: Tiling, children: Optional[Tuple[Tiling, ...]] = None
@@ -117,7 +118,7 @@ class ObstructionInferralFactory(StrategyFactory[Tiling]):
     def __call__(self, comb_class: Tiling) -> Iterator[ObstructionInferralStrategy]:
         gcs = self.new_obs(comb_class)
         if gcs:
-            yield ObstructionInferralStrategy(gcs)
+            yield ObstructionInferralStrategy(gcs, True)
 
     def to_jsonable(self) -> dict:
         d: dict = super().to_jsonable()
@@ -163,6 +164,11 @@ class SubobstructionInferralFactory(ObstructionInferralFactory):
         Returns the list of new obstructions that can be added to the tiling.
         """
         return SubobstructionInferral(tiling).new_obs()
+    
+    def __call__(self, comb_class: Tiling) -> Iterator[ObstructionInferralStrategy]:
+        gcs = self.new_obs(comb_class)
+        if gcs:
+            yield ObstructionInferralStrategy(gcs, True)
 
     def to_jsonable(self):
         d = super().to_jsonable()
