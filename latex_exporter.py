@@ -546,19 +546,66 @@ def export_tiling_to_latex(tiling, filename: str = "tiling_visual.tex", compile_
 
     # attempt to compile
     if compile_pdf:
-        import shutil, subprocess, os
+        import os
+        import shutil
+        import subprocess
+        import tempfile
+        from pathlib import Path
+
         pdflatex = shutil.which("pdflatex")
         if pdflatex:
+            tex_path = Path(filename).resolve()
+            tex_dir = tex_path.parent
+            jobname = tex_path.stem
             try:
-                subprocess.run([pdflatex, "-interaction=nonstopmode", filename], 
-                             cwd=os.path.dirname(os.path.abspath(filename)) or ".", 
-                             check=True, stdout=subprocess.DEVNULL)
-                # open the PDF on macOS
-                pdf_file = filename.replace(".tex", ".pdf")
-                if os.path.exists(pdf_file):
-                    subprocess.run(["open", pdf_file], check=False)
+                # Compile into a temp directory so .aux/.log/etc. are not created
+                # next to the requested .tex output.
+                with tempfile.TemporaryDirectory(prefix="tiling_latex_") as tmpdir:
+                    tmpdir_path = Path(tmpdir)
+                    subprocess.run(
+                        [
+                            pdflatex,
+                            "-interaction=nonstopmode",
+                            "-halt-on-error",
+                            f"-output-directory={str(tmpdir_path)}",
+                            str(tex_path),
+                        ],
+                        cwd=str(tex_dir) or ".",
+                        check=True,
+                        stdout=subprocess.DEVNULL,
+                        stderr=subprocess.DEVNULL,
+                    )
+
+                    built_pdf = tmpdir_path / f"{jobname}.pdf"
+                    if built_pdf.exists():
+                        out_pdf = tex_dir / f"{jobname}.pdf"
+                        shutil.copy2(built_pdf, out_pdf)
+
+                        # open the PDF on macOS
+                        if os.name == "posix":
+                            subprocess.run(["open", str(out_pdf)], check=False)
             except Exception:
+                # Exporting the .tex file is still valuable even if compilation fails.
                 pass
+            finally:
+                # Best-effort cleanup of common LaTeX sidecar files next to the .tex.
+                # This also cleans up artifacts from older runs where we compiled in-place.
+                sidecars = [
+                    f"{jobname}.aux",
+                    f"{jobname}.log",
+                    f"{jobname}.out",
+                    f"{jobname}.toc",
+                    f"{jobname}.fls",
+                    f"{jobname}.fdb_latexmk",
+                    f"{jobname}.synctex.gz",
+                ]
+                for name in sidecars:
+                    p = tex_dir / name
+                    try:
+                        if p.exists():
+                            p.unlink()
+                    except Exception:
+                        pass
 
     return filename
 
