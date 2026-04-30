@@ -23,10 +23,14 @@ def export_tiling_to_latex(tiling, filename: str = "tiling_visual.tex", compile_
             chord_cells_by_row[row] = []
         chord_cells_by_row[row].append(cell)
     
-    # Filter out obstructions and requirements that are fully in chord_rows
-    # (keep those that are only partially in chord_rows)
-    filtered_obs = [ob for ob in tiling._obstructions 
-                    if not all(cell[1] in chord_rows for cell in ob._pos)]
+    # Filter out:
+    # - obstructions that are fully in chord_rows (keep those only partially in chord_rows)
+    # - point obstructions (used internally to mark derived empty cells)
+    filtered_obs = [
+        ob
+        for ob in tiling._obstructions
+        if (not ob.is_point()) and (not all(cell[1] in chord_rows for cell in ob._pos))
+    ]
     filtered_reqs = [r for req_list in tiling._requirements 
                      for r in req_list 
                      if not all(cell[1] in chord_rows for cell in r._pos)]
@@ -516,7 +520,11 @@ def export_tiling_to_latex(tiling, filename: str = "tiling_visual.tex", compile_
                     f"(req{id(obj)}_pt{i}) at ({x},{y_draw}) {{}};"
                 )
 
-        # Draw edges as polylines
+        # Draw edges as polylines.
+        #
+        # Some "point-like" constraints can include sentinel endpoint indices
+        # (e.g. -1) inside `_chord_dict`. Those do not have corresponding TikZ
+        # nodes in `pts`, so we must filter them out or LaTeX compilation fails.
         if not edges:
             continue
 
@@ -524,12 +532,15 @@ def export_tiling_to_latex(tiling, filename: str = "tiling_visual.tex", compile_
         visited: Set[int] = set()
         polyline_points: List[int] = []
         for chord_id in obj._patt:
-            if chord_id not in visited:
-                visited.add(chord_id)
-                i1, i2 = obj._chord_dict[chord_id]
+            if chord_id in visited:
+                continue
+            visited.add(chord_id)
+            i1, i2 = obj._chord_dict[chord_id]
+            if i1 in pts and i2 in pts:
                 polyline_points.append(i1)
                 polyline_points.append(i2)
 
+        # If nothing drawable remains after filtering, keep just the nodes.
         if len(polyline_points) >= 2:
             if kind == "obstruction":
                 path = " -- ".join(f"(obs{id(obj)}_pt{i})" for i in polyline_points)
