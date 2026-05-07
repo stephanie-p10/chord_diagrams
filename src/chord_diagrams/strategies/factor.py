@@ -1,9 +1,5 @@
-import sys
-from pathlib import Path
-sys.path.append(str(Path(__file__).resolve().parent.parent))
-
-from chords import GriddedChord, Chord
-from tiling import Tiling
+from ..chords import GriddedChord, Chord
+from ..tiling import Tiling
 
 from collections import Counter
 from functools import reduce
@@ -193,7 +189,7 @@ class FactorFactory(StrategyFactory[Tiling]):
         self.workable = workable
         self.tracked = False
 
-    def __call__(self, comb_class: Tiling) -> Iterator[FactorStrategy]:
+    def __call__(self, comb_class: Tiling, **kwargs) -> Iterator[FactorStrategy]:
         factor_algo = Factor(comb_class)
         if factor_algo.factorable():
             min_comp = tuple(tuple(part) for part in factor_algo.get_components())

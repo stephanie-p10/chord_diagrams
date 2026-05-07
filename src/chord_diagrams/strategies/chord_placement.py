@@ -1,7 +1,3 @@
-import sys
-from pathlib import Path
-sys.path.append(str(Path(__file__).resolve().parent.parent))
-
 from typing import (Any, Callable, Dict, FrozenSet, Iterable, Iterator, List, Optional, Set, Tuple, cast)
 
 #import tilings.strategies as strat
@@ -9,10 +5,10 @@ from comb_spec_searcher import DisjointUnionStrategy, StrategyFactory
 from comb_spec_searcher.exception import StrategyDoesNotApply
 from comb_spec_searcher.strategies import Rule
 from comb_spec_searcher.strategies.strategy import VerificationStrategy
-from chords import Chord, GriddedChord
-from tiling import Tiling
-from algorithms.requirement_placement import RequirementPlacement
-from misc import DIR_EAST, DIR_NONE, DIR_NORTH, DIR_SOUTH, DIR_WEST, DIRS
+from ..chords import Chord, GriddedChord
+from ..tiling import Tiling
+from ..algorithms.requirement_placement import RequirementPlacement
+from ..misc import DIR_EAST, DIR_NONE, DIR_NORTH, DIR_SOUTH, DIR_WEST, DIRS
 
 Cell = Tuple[int, int]
 ListRequirement = Tuple[GriddedChord, ...]
@@ -275,7 +271,9 @@ class RequirementPlacementFactory(StrategyFactory[Tiling]):
         self.max_len = max_len
         self.dirs = dirs
 
-    def __call__(self, comb_class: Tiling) -> Iterator[RequirementPlacementStrategy]:
+    def __call__(
+        self, comb_class: Tiling, **kwargs
+    ) -> Iterator[RequirementPlacementStrategy]:
         reqs = comb_class.requirements
         for req_list in reqs:
             if len(req_list) <= self.max_reqlist_size and (

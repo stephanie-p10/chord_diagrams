@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from itertools import product
 from typing import Callable, Dict, Iterable, Iterator, List, Optional, Set, Tuple, cast
 

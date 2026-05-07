@@ -1,14 +1,9 @@
-import sys
-from pathlib import Path
-sys.path.append(str(Path(__file__).resolve().parent.parent))
-
 from typing import TYPE_CHECKING, Dict, Tuple
 
 from tilings.exception import InvalidOperationError
 
-#if TYPE_CHECKING:
-from assumptions import TrackingAssumption
-from chords import GriddedChord, Chord
+from ..assumptions import TrackingAssumption
+from ..chords import GriddedChord, Chord
 
 Cell = Tuple[int, int]
 

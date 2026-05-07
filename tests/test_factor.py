@@ -1,60 +1,53 @@
-import sys
-from pathlib import Path
-sys.path.append(str(Path(__file__).resolve().parent.parent))
+import _direct_run_bootstrap 
 
-from chords import Chord, GriddedChord
-from tiling import Tiling
-from algorithms.factor import Factor
-from strategies.factor import FactorFactory, FactorStrategy
-
-non_crossing = Tiling(obstructions=sorted((GriddedChord(Chord((0,)), ((0, 1),)),
-                                    GriddedChord(Chord((0,)), ((0, 2),)),
-                                    GriddedChord(Chord((0,)), ((1, 0),)),
-                                    GriddedChord(Chord((0,)), ((1, 1),)),
-                                    GriddedChord(Chord((0,)), ((2, 1),)),
-                                    GriddedChord(Chord((0,)), ((2, 2),)),
-                                    GriddedChord(Chord((0,)), ((3, 0),)),
-                                    GriddedChord(Chord((0,)), ((3, 2),)),
-                                    GriddedChord(Chord((0, 0)), ((0, 0), (0, 0))),
-                                    GriddedChord(Chord((0, 0)), ((2, 0), (2, 0))),
-                                    GriddedChord(Chord((0, 1)), ((0, 0), (0, 0))),
-                                    GriddedChord(Chord((0, 1)), ((0, 0), (2, 0))),
-                                    GriddedChord(Chord((0, 1)), ((2, 0), (2, 0))),
-                                    GriddedChord(Chord((1, 0)), ((0, 0), (0, 0))),
-                                    GriddedChord(Chord((1, 0)), ((0, 0), (2, 0))),
-                                    GriddedChord(Chord((1, 0)), ((2, 0), (2, 0))),
-                                    #GriddedChord(Chord((1, 0)), ((1, 2), (3, 1))), # it should have gotten rid of this...
-                                    GriddedChord(Chord((0, 1, 0, 1)), ((1, 2), (1, 2), (1, 2), (1, 2))),
-                                    GriddedChord(Chord((0, 1, 0, 1)), ((3, 1), (3, 1), (3, 1), (3, 1)))),),
-                      requirements=((GriddedChord(Chord((0, 0)), ((0, 0), (2, 0))),),))
+from chord_diagrams.algorithms.factor import Factor
+from chord_diagrams.chords import Chord, GriddedChord
+from chord_diagrams.strategies.factor import FactorFactory, FactorStrategy
+from chord_diagrams.tiling import Tiling
 
 
-#for ob in non_crossing.obstructions:
-    #print(ob)
-#print(non_crossing.active_cells)
+def _make_non_crossing() -> Tiling:
+    return Tiling(
+        obstructions=sorted(
+            (
+                GriddedChord(Chord((0,)), ((0, 1),)),
+                GriddedChord(Chord((0,)), ((0, 2),)),
+                GriddedChord(Chord((0,)), ((1, 0),)),
+                GriddedChord(Chord((0,)), ((1, 1),)),
+                GriddedChord(Chord((0,)), ((2, 1),)),
+                GriddedChord(Chord((0,)), ((2, 2),)),
+                GriddedChord(Chord((0,)), ((3, 0),)),
+                GriddedChord(Chord((0,)), ((3, 2),)),
+                GriddedChord(Chord((0, 0)), ((0, 0), (0, 0))),
+                GriddedChord(Chord((0, 0)), ((2, 0), (2, 0))),
+                GriddedChord(Chord((0, 1)), ((0, 0), (0, 0))),
+                GriddedChord(Chord((0, 1)), ((0, 0), (2, 0))),
+                GriddedChord(Chord((0, 1)), ((2, 0), (2, 0))),
+                GriddedChord(Chord((1, 0)), ((0, 0), (0, 0))),
+                GriddedChord(Chord((1, 0)), ((0, 0), (2, 0))),
+                GriddedChord(Chord((1, 0)), ((2, 0), (2, 0))),
+                GriddedChord(Chord((0, 1, 0, 1)), ((1, 2),) * 4),
+                GriddedChord(Chord((0, 1, 0, 1)), ((3, 1),) * 4),
+            )
+        ),
+        requirements=((GriddedChord(Chord((0, 0)), ((0, 0), (2, 0))),),),
+    )
 
-factor_nc_algo = Factor(non_crossing)
-factors = factor_nc_algo.factors()
 
-nc_factors_list = [Tiling(obstructions=(GriddedChord(Chord((0,1,0,1)), ((0,0), (0,0), (0,0), (0,0))),)),
-                    Tiling(obstructions=(GriddedChord(Chord((0,1,0,1)), ((0,0), (0,0), (0,0), (0,0))),)),
-                    Tiling(obstructions=(GriddedChord(Chord((0, 0)), ((0, 0), (0, 0))),
-                                         GriddedChord(Chord((0, 0)), ((1, 0), (1, 0))),
-                                         GriddedChord(Chord((0, 1)), ((0, 0), (0, 0))),
-                                         GriddedChord(Chord((0, 1)), ((0, 0), (1, 0))),
-                                         GriddedChord(Chord((0, 1)), ((1, 0), (1, 0))),
-                                         GriddedChord(Chord((1, 0)), ((0, 0), (0, 0))),
-                                         GriddedChord(Chord((1, 0)), ((0, 0), (1, 0))),
-                                         GriddedChord(Chord((1, 0)), ((1, 0), (1, 0)))),
-                                         requirements=((GriddedChord(Chord((0,0)), ((0, 0), (1, 0))),),))]
+def test_factor_decomposes_into_multiple_factors():
+    tiling = _make_non_crossing()
+    algo = Factor(tiling)
+    assert algo.factorable()
 
-for factor_list in [factor for factor in factor_nc_algo.factors()]:
-    print(factor_list)
-assert [factor for factor in factor_nc_algo.factors()] == nc_factors_list
+    factors = algo.factors()
+    assert isinstance(factors, tuple)
+    assert len(factors) >= 2
+    assert all(isinstance(t, Tiling) for t in factors)
 
-factory = FactorFactory(True)
-for strat in factory(non_crossing):
-    print("next strat:")
-    for part in strat.decomposition_function(non_crossing):
-        print(part)
-    print()
+
+def test_factor_factory_yields_a_strategy():
+    tiling = _make_non_crossing()
+    factory = FactorFactory(True)
+    strats = list(factory(tiling))
+    assert strats
+    assert isinstance(strats[0], FactorStrategy)

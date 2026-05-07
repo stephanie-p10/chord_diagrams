@@ -1,14 +1,11 @@
 """This module contains the algorithm that expands non chord patterns into chord patterns"""
-import sys
-from pathlib import Path
-sys.path.append(str(Path(__file__).resolve().parent.parent))
 
 
 from typing import TYPE_CHECKING, Iterable, Tuple, List
 
 from itertools import product, chain
 
-from chords import Chord, GriddedChord
+from ..chords import Chord, GriddedChord
 Cell = Tuple[int, int]
 
 class Expansion: 
@@ -81,7 +78,9 @@ class Expansion:
                 if not new_gc.contradictory() and new_gc.avoids(*obs):
                     expanded_chords.append(new_gc)
 
-        return list(set(expanded_chords))
+        # Deduplicate and keep deterministic ordering for tests.
+        uniq = {(gc.patt, gc.pos): gc for gc in expanded_chords}
+        return [uniq[k] for k in sorted(uniq.keys())]
         
     def expand_gridded_chord(self, gc: GriddedChord, obs) -> Iterable[GriddedChord]:
         """Returns a list of all the possible ways gc can be expanded into a valid chord."""
@@ -92,8 +91,9 @@ class Expansion:
             extened_chords_to_build = []
             for chord in chords_to_build:
                 extened_chords_to_build += self._expand_single_point(chord, obs)
-            chords_to_build = list(set(extened_chords_to_build))
-        
+            uniq = {(gc.patt, gc.pos): gc for gc in extened_chords_to_build}
+            chords_to_build = [uniq[k] for k in sorted(uniq.keys())]
+
         return chords_to_build
 
     def expand_gridded_chords(self, 

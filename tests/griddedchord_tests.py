@@ -1,13 +1,19 @@
-import sys
-from pathlib import Path
-sys.path.append(str(Path(__file__).resolve().parent.parent))
+import _direct_run_bootstrap 
+from typing import Tuple
 
-from chords import *
+from chord_diagrams.chords import Chord, GriddedChord
+from chord_diagrams.misc import DIR_EAST, DIR_NORTH, DIR_SOUTH, DIR_WEST
+
+Cell = Tuple[int, int]
+
 
 # sToDo: fix the order of these tests
 
 # GriddedChord tests
-gc1 = GriddedChord(Chord((0, 1, 2, 0, 3, 4, 2, 3, 1, 4)), ((0, 0), (0, 1), (1, 1), (1, 0), (2, 3), (2, 4), (2, 1), (3, 3), (3, 1), (4, 4)))
+gc1 = GriddedChord(
+    Chord((0, 1, 2, 0, 3, 4, 2, 3, 1, 4)),
+    ((0, 0), (0, 1), (1, 1), (1, 0), (2, 3), (2, 4), (2, 1), (3, 3), (3, 1), (4, 4)),
+)
 gc2 = GriddedChord(Chord((0, 1, 0, 2, 2, 1)), ((1, 1), (1, 1), (1, 1), (1, 1), (1, 1), (1, 1)))
 gc3 = GriddedChord(Chord((0, 1, 0, 1)), ((0,0), (1,1), (1, 0), (2, 1)))
 gc4 = GriddedChord(Chord((0, 1, 2, 0, 3, 4, 2, 3, 1, 4)), ((0, 0), (1, 1), (1, 1), (1, 0), (2, 3), (2, 4), (2, 1), (2, 3), (2, 1), (4, 4)))

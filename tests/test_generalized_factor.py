@@ -1,13 +1,13 @@
-import sys
-from pathlib import Path
+import _direct_run_bootstrap
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+from chord_diagrams.chords import Chord, GriddedChord
+from chord_diagrams.tiling import Tiling
 
-from chords import Chord, GriddedChord
-from tiling import Tiling
-
-from algorithms.generalized_factor import GeneralizedFactor
-from strategies.generalized_factor import GeneralizedFactorFactory, GeneralizedFactorStrategy
+from chord_diagrams.algorithms.generalized_factor import GeneralizedFactor
+from chord_diagrams.strategies.generalized_factor import (
+    GeneralizedFactorFactory,
+    GeneralizedFactorStrategy,
+)
 
 
 def _atom_cell_constraints(cell):

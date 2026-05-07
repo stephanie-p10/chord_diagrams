@@ -1,13 +1,9 @@
-import sys
-from pathlib import Path
-sys.path.append(str(Path(__file__).resolve().parent.parent))
-
 from collections import defaultdict
 from itertools import chain, combinations
 from typing import TYPE_CHECKING, Dict, Iterable, Iterator, List, Optional, Set, Tuple
 
 from permuta.misc import UnionFind
-from chords import GriddedChord, Chord
+from ..chords import GriddedChord, Chord
 from tilings.assumptions import ComponentAssumption, TrackingAssumption
 from tilings.misc import partitions_iterator
 

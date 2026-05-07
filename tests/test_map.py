@@ -1,9 +1,7 @@
-import sys
-from pathlib import Path
-sys.path.append(str(Path(__file__).resolve().parent.parent))
+import _direct_run_bootstrap 
 
-from chords import GriddedChord, Chord
-from algorithms.map import RowColMap
+from chord_diagrams.chords import GriddedChord, Chord
+from chord_diagrams.algorithms.map import RowColMap
 
 id = RowColMap.identity((3,3))
 double = RowColMap({0:0, 1:2, 2:4, 3:6}, {0:0, 1:2, 2:4}, False)

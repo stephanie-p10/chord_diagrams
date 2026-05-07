@@ -9,18 +9,18 @@ from comb_spec_searcher import CombinatorialClass, VerificationStrategy
 from comb_spec_searcher.exception import StrategyDoesNotApply
 from comb_spec_searcher.typing import Parameters
 
-from chords import GriddedChord, Chord
+from .chords import GriddedChord, Chord
 from tilings.misc import intersection_reduce, union_reduce
 from tilings.assumptions import (
     ComponentAssumption,
     SkewComponentAssumption,
     SumComponentAssumption,
 )
-from assumptions import TrackingAssumption
-from algorithms.map import RowColMap
-from algorithms.simplify import SimplifyObstructionsAndRequirements
-from algorithms.expansion import Expansion
-from latex_exporter import export_tiling_to_latex
+from .assumptions import TrackingAssumption
+from .algorithms.map import RowColMap
+from .algorithms.simplify import SimplifyObstructionsAndRequirements
+from .algorithms.expansion import Expansion
+from .latex_exporter import export_tiling_to_latex
 
 import time
 
@@ -56,9 +56,9 @@ class Tiling(CombinatorialClass):
         start_time = time.time()
 
         super().__init__()
-        self._linkages = tuple(linkages)
+        self._linkages = tuple(tuple(link) for link in linkages)
         self._obstructions = tuple(obstructions)
-        self._requirements = tuple(requirements)
+        self._requirements = tuple(tuple(req_list) for req_list in requirements)
         self._assumptions = tuple(assumptions)
         self._cached_properties = {}
         self._derive_empty = derive_empty
@@ -208,7 +208,7 @@ class Tiling(CombinatorialClass):
 
     @property
     # TODO: Test :)
-    def required_chords(self) -> list[GriddedChord]:
+    def required_chords(self) -> List[GriddedChord]:
         """Returns a list of chords that must be contained in any valid gridded chord diagram of the Tiling.
         
         A chord is required if it's contained in all requirements of at least one requirement list.
@@ -237,7 +237,7 @@ class Tiling(CombinatorialClass):
             self._cached_properties["required_chords"] = required_chords_list
             return required_chords_list
         
-    def contained_requirements(self, requirement: GriddedChord) -> list[GriddedChord]:
+    def contained_requirements(self, requirement: GriddedChord) -> List[GriddedChord]:
         """Find all sub-requirements of the given requirement. This maintains the 
            gridding of the requirement.
         """
@@ -246,7 +246,7 @@ class Tiling(CombinatorialClass):
         if n == 0:
             return []
 
-        result: list[GriddedChord] = []
+        result: List[GriddedChord] = []
         seen: set = set()
         labels = range(n)
 
@@ -721,7 +721,7 @@ class Tiling(CombinatorialClass):
             return min_size
     
     # s TODO fix all_chords_on_tiling to use this
-    def chords_of_length(self, length: int, use_non_chord_patts: bool = False) -> list[GriddedChord]:
+    def chords_of_length(self, length: int, use_non_chord_patts: bool = False) -> List[GriddedChord]:
         """Returns all chord diagrams on the tiling of length length"""
         all_chords = list(Chord.of_length(length))
         cells = list(self.active_cells)
@@ -735,7 +735,7 @@ class Tiling(CombinatorialClass):
     # sToDo this is inefficient and in permutations there is a class that does this efficiently
     # gridded_perms_of_length -> all_chords_on_tiling
     # s TODO check where this is used, see if the empty chord should be included?
-    def all_chords_on_tiling(self, size: int = 0, use_non_chord_patts: bool = False) -> list[GriddedChord]:
+    def all_chords_on_tiling(self, size: int = 0, use_non_chord_patts: bool = False) -> List[GriddedChord]:
         """Returns all patterns from one to up to size points that can be gridded on the tiling
         (only uses active cells)"""
         all_chords = []
@@ -868,10 +868,10 @@ class Tiling(CombinatorialClass):
         """Checks if the cell is the only active cell in the row"""
         return sum(1 for (x, y) in self.active_cells if y == cell[1]) == 1
     
-    def obs_in_cell(self, cell: Cell) -> tuple[int]:
+    def obs_in_cell(self, cell: Cell) -> Tuple[int, ...]:
         """Returns the indices obstructions in cell"""
 
-    def reqs_in_cell(self, cell: Cell) -> tuple[int]:
+    def reqs_in_cell(self, cell: Cell) -> Tuple[int, ...]:
         """Returns the indices of requirments lists where at least one requirment in the list has a point in cell"""
 
     def __hash__(self) -> int:
@@ -1185,11 +1185,10 @@ class Tiling(CombinatorialClass):
             assumptions=tuple(assumptions),
         )
     
-gc_single_00_00 = GriddedChord(Chord((0, 0)), ((0, 0), (0, 0)))
-t_no_restrictions = Tiling((), (), (), (), derive_empty=False)
-
-
-assert t_no_restrictions.contains(gc_single_00_00)
+if __name__ == "__main__":
+    gc_single_00_00 = GriddedChord(Chord((0, 0)), ((0, 0), (0, 0)))
+    t_no_restrictions = Tiling((), (), (), (), derive_empty=False)
+    assert t_no_restrictions.contains(gc_single_00_00)
 
 
 

@@ -1,4 +1,4 @@
-from chords import Chord, GriddedChord
+from .chords import Chord, GriddedChord
 
 __version__ = "4.0.0"
 

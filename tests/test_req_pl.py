@@ -1,15 +1,12 @@
-import sys
-from pathlib import Path
-sys.path.append(str(Path(__file__).resolve().parent.parent))
+import _direct_run_bootstrap 
 
 from itertools import chain
 
-import pytest
 
-from misc import DIR_EAST, DIR_NORTH, DIR_SOUTH, DIR_WEST
-from chords import GriddedChord, Chord
-from tiling import Tiling
-from algorithms.requirement_placement import RequirementPlacement
+from chord_diagrams.misc import DIR_EAST, DIR_NORTH, DIR_SOUTH, DIR_WEST
+from chord_diagrams.chords import GriddedChord, Chord
+from chord_diagrams.tiling import Tiling
+from chord_diagrams.algorithms.requirement_placement import RequirementPlacement
 
 non_crossing = Tiling(
         obstructions=(

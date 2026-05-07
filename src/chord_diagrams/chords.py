@@ -122,8 +122,8 @@ class Chord(Tuple):
     def __len__(self) -> int:
         return self._length
     
-    def get_pattern(self) -> list[int]:
-        """Returns the pattern of the chord as a list"""
+    def get_pattern(self) -> Tuple[int, ...]:
+        """Return the pattern of the chord."""
         return self._pattern
     
     # sCP
@@ -373,8 +373,9 @@ class Chord(Tuple):
 
     # sCN: changed name from chord -> chord_dict, added example
     @property
-    def chord_dict(self) -> dict[int: Cell]:
-        """Returns the chord dictionary
+    def chord_dict(self) -> Dict[int, Tuple[int, int]]:
+        """Return the chord dictionary.
+
         Example:
             >>> Chord((0, 1, 1, 0, 2, 2)).chord_dict
             {0: (0, 3), 1: (1, 2), 2: (4, 5)}"""
@@ -724,7 +725,7 @@ class GriddedChord(CombinatorialObject):
         """Returns set of cells the gridded chord occupies"""
         return self._cells
     
-    def find_factors(self, point_rows) -> list["GriddedChord"]:
+    def find_factors(self, point_rows) -> List["GriddedChord"]:
         """Returns a list of the factors of the gridded chord diagrams.
         If two different cells are in the same row or column then label them
         as together in component list using union sort.
@@ -755,7 +756,7 @@ class GriddedChord(CombinatorialObject):
         return [self.get_subchord_in_cells(cells) for cells in factors]
 
     @property
-    def chord_dict(self) -> dict[(int)]:
+    def chord_dict(self) -> Dict[int, Tuple[int, int]]:
         """Dictionary with keys of chord number and values of vertices with that chord
         
         >>> (0, 1, 2, 1, 3, 3, 2, 0) becomes {0: (0, 7), 1: (1, 3), 2: (2, 6), (3: (4, 5)}"""

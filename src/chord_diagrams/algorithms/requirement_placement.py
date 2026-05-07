@@ -1,16 +1,12 @@
-import sys
-from pathlib import Path
-sys.path.append(str(Path(__file__).resolve().parent.parent))
-
 from itertools import chain, filterfalse, product
 from typing import TYPE_CHECKING, Dict, FrozenSet, Iterable, List, Optional, Tuple
 from collections import Counter
 
-from misc import DIR_EAST, DIR_NONE, DIR_NORTH, DIR_SOUTH, DIR_WEST, DIRS
-from assumptions import TrackingAssumption
-from chords import Chord, GriddedChord
-from tiling import Tiling
-from algorithms.simplify import SimplifyObstructionsAndRequirements
+from ..misc import DIR_EAST, DIR_NONE, DIR_NORTH, DIR_SOUTH, DIR_WEST, DIRS
+from ..assumptions import TrackingAssumption
+from ..chords import Chord, GriddedChord
+from ..tiling import Tiling
+from .simplify import SimplifyObstructionsAndRequirements
 
 Cell = Tuple[int, int]
 Dir = int
@@ -348,7 +344,7 @@ class RequirementPlacement:
         all_placed = all(self.chord_already_placed(gc, dir) for gc in gcs)
         return all_placed
     
-    def _point_translation(self, gc: GriddedChord, idx: int, point_placed: Cell) -> tuple[int]:
+    def _point_translation(self, gc: GriddedChord, idx: int, point_placed: Cell) -> Cell:
         """Translates the cell in gc at idx assuming a point is placed at point_placed """
         x, y = gc.pos[idx]
         x = x + 2 if self.own_col and idx >= point_placed[0] else x
@@ -587,7 +583,7 @@ class RequirementPlacement:
         return reqs
     
     # printed and it works
-    def stretched_reqs(self, cell_placed: Cell, req_placed: GriddedChord) -> list[list[GriddedChord]]:
+    def stretched_reqs(self, cell_placed: Cell, req_placed: GriddedChord) -> List[List[GriddedChord]]:
         stretched_req_lists = []
         reqs = list(self._tiling.requirements)
         reqs.remove((req_placed,))
@@ -596,7 +592,7 @@ class RequirementPlacement:
 
         return stretched_req_lists
     
-    def stretch_links(self, cell_placed: Cell) -> list[list[Cell]]:
+    def stretch_links(self, cell_placed: Cell) -> List[List[Cell]]:
         new_links = []
         for link in self._tiling.linkages:
             assert link
@@ -672,26 +668,23 @@ class RequirementPlacement:
         chord_placed._remove_empty_rows_and_cols()
         return chord_placed
     
-    def place_chords(self, req_list_to_place: tuple[GriddedChord], dir: int):
+    def place_chords(self, req_list_to_place: Tuple[GriddedChord, ...], dir: int):
         res = []
         for req in req_list_to_place:
             res.append(self.place_chord(req, dir))
         return tuple(res)
 
-
-non_crossing = Tiling(
-        obstructions=(
-            GriddedChord(Chord((0,1,0,1)), ((0, 0),) * 4),
-        ),
-        requirements=(
-            [GriddedChord(Chord((0,0)), ((0,0), (0,0)))],
-        )
-    )    
-'''placement_nc = RequirementPlacement(non_crossing)
-print()
-place = placement_nc.place_chord(GriddedChord(Chord((0,0)), ((0,0), (0,0))), 3)
-place._simplify()
-place._remove_empty_rows_and_cols()
-already_placed = RequirementPlacement(place)
-print(already_placed)
-print(already_placed.chord_already_placed(GriddedChord(Chord((0,0)), ((0,0), (2,0))), 3))'''
+if __name__ == "__main__":
+    # Small interactive smoke example.
+    non_crossing = Tiling(
+        obstructions=(GriddedChord(Chord((0, 1, 0, 1)), ((0, 0),) * 4),),
+        requirements=([GriddedChord(Chord((0, 0)), ((0, 0), (0, 0)))],),
+        simplify=False,
+        expand=False,
+    )
+    placement_nc = RequirementPlacement(non_crossing)
+    placed = placement_nc.place_chord(
+        GriddedChord(Chord((0, 0)), ((0, 0), (0, 0))), DIR_SOUTH
+    )
+    placed._simplify()
+    placed._remove_empty_rows_and_cols()

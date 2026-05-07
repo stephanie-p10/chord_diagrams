@@ -1,7 +1,3 @@
-import sys
-from pathlib import Path
-sys.path.append(str(Path(__file__).resolve().parent.parent))
-
 import abc
 from itertools import chain, product
 from typing import Dict, Iterable, Iterator, List, Optional, Set, Tuple, cast
@@ -11,8 +7,8 @@ from comb_spec_searcher import DisjointUnionStrategy, StrategyFactory
 from comb_spec_searcher.exception import StrategyDoesNotApply
 from comb_spec_searcher.strategies import Rule
 from comb_spec_searcher.strategies.strategy import VerificationStrategy
-from chords import Chord, GriddedChord
-from tiling import Tiling
+from ..chords import Chord, GriddedChord
+from ..tiling import Tiling
 from tilings.algorithms import Factor, SubobstructionInferral
 
 Cell = Tuple[int, int]
@@ -121,7 +117,9 @@ class AbstractRequirementInsertionFactory(StrategyFactory[Tiling]):
         rules.
         """
 
-    def __call__(self, comb_class: Tiling) -> Iterator[RequirementInsertionStrategy]:
+    def __call__(
+        self, comb_class: Tiling, **kwargs
+    ) -> Iterator[RequirementInsertionStrategy]:
         """
         Iterator over all the requirement insertion rules.
         """
@@ -233,7 +231,9 @@ class RequirementInsertionFactory(RequirementInsertionWithRestrictionFactory):
                 ):
                     yield (GriddedChord(Chord(gc.patt), gc.pos),)
 
-    def __call__(self, comb_class: Tiling) -> Iterator[RequirementInsertionStrategy]:
+    def __call__(
+        self, comb_class: Tiling, **kwargs
+    ) -> Iterator[RequirementInsertionStrategy]:
         if self.limited_insertion and comb_class.requirements:
             return
         yield from super().__call__(comb_class)

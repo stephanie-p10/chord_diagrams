@@ -1,7 +1,3 @@
-import sys
-from pathlib import Path
-sys.path.append(str(Path(__file__).resolve().parent.parent))
-
 """
 This module contains the SimplifyObstructionsAndRequirements class, which is used to
 remove redundant obstructions and requirements and also reduce obstructions by removing factors
@@ -11,9 +7,9 @@ which must be contained.
 from collections import defaultdict
 from itertools import product
 from math import factorial
-from typing import TYPE_CHECKING, Iterable
+from typing import TYPE_CHECKING, Dict, Iterable, Set, Tuple
 
-from chords import Chord, GriddedChord
+from ..chords import Chord, GriddedChord
 
 
 def binomial(x: int, y: int) -> int:
@@ -32,9 +28,9 @@ class SimplifyObstructionsAndRequirements:
 
     def __init__(
         self,
-        obstructions: tuple["GriddedChord", ...],
-        requirements: tuple[tuple["GriddedChord", ...], ...],
-        dimensions: tuple[int, int],
+        obstructions: Tuple["GriddedChord", ...],
+        requirements: Tuple[Tuple["GriddedChord", ...], ...],
+        dimensions: Tuple[int, int],
     ):
         self.obstructions = obstructions
         self.requirements = requirements
@@ -43,7 +39,7 @@ class SimplifyObstructionsAndRequirements:
 
     def remove_redundant_gridded_chords(
         self, gridded_chords: Iterable["GriddedChord"]
-    ) -> tuple["GriddedChord", ...]:
+    ) -> Tuple["GriddedChord", ...]:
         """Remove gcs that are implied by other gcs."""
         redundant_gcs = set()
         new_gridded_chords = list(gridded_chords)
@@ -88,8 +84,8 @@ class SimplifyObstructionsAndRequirements:
 
     def requirement_implied_by_some_requirement(
         self,
-        requirement: tuple["GriddedChord", ...],
-        requirements: Iterable[tuple["GriddedChord", ...]],
+        requirement: Tuple["GriddedChord", ...],
+        requirements: Iterable[Tuple["GriddedChord", ...]],
     ) -> bool:
         """Check if one of the requirements implies the containment of requirement."""
         return any(
@@ -99,8 +95,8 @@ class SimplifyObstructionsAndRequirements:
     
     @staticmethod
     def requirement_implied_by_requirement(
-        requirement: tuple["GriddedChord", ...],
-        other_requirement: tuple["GriddedChord", ...],
+        requirement: Tuple["GriddedChord", ...],
+        other_requirement: Tuple["GriddedChord", ...],
     ) -> bool:
         """Check if the containment of other implies containment of requirement."""
         return all(
@@ -164,7 +160,7 @@ class SimplifyObstructionsAndRequirements:
         return ob.get_subchord_in_cells(cells)
 
     # sToDo: fix where this comes from: it is duplicated from tilings?
-    def point_rows(self) -> set[int]: 
+    def point_rows(self) -> Set[int]:
         """
         Returns the point rows of the tiling. -> when only one value is in the row
 
@@ -172,7 +168,7 @@ class SimplifyObstructionsAndRequirements:
         # s TODO this is wrong, point cells need to be calculated differently with expand
         """
         point_rows = set()
-        counter_dict: dict[int, int] = defaultdict(int)
+        counter_dict: Dict[int, int] = defaultdict(int)
         for ob in self.obstructions:
             if ob.patt in (Chord([0, 1]), Chord([1, 0])):
                 if ob.pos[0][1] == ob.pos[1][1]:
@@ -183,7 +179,7 @@ class SimplifyObstructionsAndRequirements:
                 point_rows.add(row)
         return point_rows
 
-    def cells_in_row(self, row: int) -> set[tuple[int, int]]: # this looks like it should be in the tilings repo
+    def cells_in_row(self, row: int) -> Set[Tuple[int, int]]:  # this looks like it should be in the tilings repo
         """Returns the set of active cells in the given row."""
         cells = set()
         for cell in self.active_cells():
@@ -191,7 +187,7 @@ class SimplifyObstructionsAndRequirements:
                 cells.add(cell)
         return cells
 
-    def active_cells(self) -> set[tuple[int, int]]: # should be in tilings repo
+    def active_cells(self) -> Set[Tuple[int, int]]:  # should be in tilings repo
         """Returns the set of active cells in the tiling.
         (Cells are active if they do not contain a point obstruction.)"""
         active_cells = set(

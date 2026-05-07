@@ -1,15 +1,11 @@
-import sys
-from pathlib import Path
-sys.path.append(str(Path(__file__).resolve().parent.parent))
-
 import abc
 from typing import TYPE_CHECKING, Iterable, List, Optional, Set, Tuple
 
-from chords import GriddedChord
+from ..chords import GriddedChord
 #from tilings.algorithms.gridded_perm_generation import GriddedPermsOnTiling
 
 if TYPE_CHECKING:
-    from tiling import Tiling
+    from ..tiling import Tiling
 
 Cell = Tuple[int, int]
 

@@ -1,7 +1,3 @@
-import sys
-from pathlib import Path
-sys.path.append(str(Path(__file__).resolve().parent.parent))
-
 """
 The row and columns separation algorithm.
 
@@ -15,11 +11,11 @@ import heapq
 from itertools import combinations, product
 from typing import TYPE_CHECKING, Dict, List, Tuple
 
-from chords import GriddedChord, Chord
-from tiling import Tiling
+from ..chords import GriddedChord, Chord
+from ..tiling import Tiling
 
 if TYPE_CHECKING:
-    from tiling import Tiling
+    from ..tiling import Tiling
 
 Cell = Tuple[int, int]
 
@@ -316,7 +312,6 @@ class _RowColSeparationSingleApplication:
         OUTPUT:
             A tuple (smaller_cell, bigger_cell)
         """
-        print("testing: ", ob, len(ob))
         assert len(ob.pos) == 2, "Obstruction must be of length 2"
         c1, c2 = ob.pos
         assert c1[0] == c2[0], "Obstruction not a col obstruction"

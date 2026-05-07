@@ -1,9 +1,5 @@
-import sys
-from pathlib import Path
-sys.path.append(str(Path(__file__).resolve().parent.parent))
-
-from chords import GriddedChord, Chord
-from tiling import Tiling
+from ..chords import GriddedChord, Chord
+from ..tiling import Tiling
 
 from collections import Counter
 from functools import reduce
@@ -68,7 +64,7 @@ __all__ = (
 #
 # from the paper, rather than the standard Π_i V_i(x).
 
-from strategies.shifted_cartesian_product import ShiftedCartesianProduct
+from .shifted_cartesian_product import ShiftedCartesianProduct
 
 TempGP = Tuple[
     Tuple[
@@ -232,10 +228,12 @@ class GeneralizedFactorFactory(StrategyFactory[Tiling]):
         self.workable = workable
         self.tracked = False
 
-    def __call__(self, comb_class: Tiling) -> Iterator[GeneralizedFactorStrategy]:
+    def __call__(
+        self, comb_class: Tiling, **kwargs
+    ) -> Iterator[GeneralizedFactorStrategy]:
         # Prefer generalized factorizations when they exist; fall back to the
         # plain disjoint factorization when not.
-        from algorithms.generalized_factor import GeneralizedFactor
+        from ..algorithms.generalized_factor import GeneralizedFactor
 
         gf = GeneralizedFactor(comb_class)
         for parts, shifts, shift_rel in gf.generalized_factorizations():

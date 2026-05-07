@@ -1,15 +1,11 @@
-import sys
-from pathlib import Path
-sys.path.append(str(Path(__file__).resolve().parent.parent))
-
 """
 The row and column separation strategy. The details of the algorithm can be
 found in the algorithms folder.
 """
 
-from chords import GriddedChord
-from tiling import Tiling
-from algorithms.row_col_sep import RowColSeparation
+from ..chords import GriddedChord
+from ..tiling import Tiling
+from ..algorithms.row_col_sep import RowColSeparation
 
 from typing import Dict, Iterator, Optional, Tuple
 from comb_spec_searcher import DisjointUnionStrategy

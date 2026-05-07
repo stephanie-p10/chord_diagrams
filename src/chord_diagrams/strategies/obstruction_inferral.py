@@ -1,15 +1,11 @@
-import sys
-from pathlib import Path
-sys.path.append(str(Path(__file__).resolve().parent.parent))
-
 from typing import Dict, Iterable, Iterator, List, Optional, Sequence, Tuple, cast
 
 from comb_spec_searcher import DisjointUnionStrategy, StrategyFactory
 from comb_spec_searcher.exception import StrategyDoesNotApply
 
-from algorithms.obstruction_inferral import *
-from chords import GriddedChord
-from tiling import Tiling
+from ..algorithms.obstruction_inferral import AllObstructionInferral
+from ..chords import GriddedChord
+from ..tiling import Tiling
 
 class ObstructionInferralStrategy(DisjointUnionStrategy[Tiling, GriddedChord]):
     def __init__(self, gcs: Iterable[GriddedChord], reduce = True):
@@ -27,7 +23,8 @@ class ObstructionInferralStrategy(DisjointUnionStrategy[Tiling, GriddedChord]):
         if all(gc.is_point() for gc in self.gcs):
             empty_cells_str = ", ".join(map(str, (gc.pos[0] for gc in self.gcs)))
             return f"the cells {{{empty_cells_str}}} are empty"
-        return f"added the obstructions {{{'\n'.join(map(str, self.gcs))}}}"
+        obs_str = "\n".join(map(str, self.gcs))
+        return "added the obstructions {" + obs_str + "}"
 
     def extra_parameters(
         self, comb_class: Tiling, children: Optional[Tuple[Tiling, ...]] = None
@@ -115,7 +112,7 @@ class ObstructionInferralFactory(StrategyFactory[Tiling]):
         """
         return AllObstructionInferral(tiling, self.maxlen).new_obs()
 
-    def __call__(self, comb_class: Tiling) -> Iterator[ObstructionInferralStrategy]:
+    def __call__(self, comb_class: Tiling, **kwargs) -> Iterator[ObstructionInferralStrategy]:
         gcs = self.new_obs(comb_class)
         if gcs:
             yield ObstructionInferralStrategy(gcs, True)
@@ -165,7 +162,7 @@ class SubobstructionInferralFactory(ObstructionInferralFactory):
         """
         return SubobstructionInferral(tiling).new_obs()
     
-    def __call__(self, comb_class: Tiling) -> Iterator[ObstructionInferralStrategy]:
+    def __call__(self, comb_class: Tiling, **kwargs) -> Iterator[ObstructionInferralStrategy]:
         gcs = self.new_obs(comb_class)
         if gcs:
             yield ObstructionInferralStrategy(gcs, True)

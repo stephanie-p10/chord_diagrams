@@ -3,7 +3,7 @@ from functools import partial
 from itertools import chain, islice
 from typing import Callable, Dict, Iterable, List, Optional, Set, Tuple
 
-from chords import GriddedChord
+from .chords import GriddedChord
 from .minimal_gridded_perms import MinimalGriddedPerms
 
 Cell = Tuple[int, int]

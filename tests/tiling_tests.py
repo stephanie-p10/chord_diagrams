@@ -1,11 +1,8 @@
-import sys
-from pathlib import Path
-sys.path.append(str(Path(__file__).resolve().parent.parent))
-
+import _direct_run_bootstrap 
 import time
 
-from tiling import Tiling
-from chords import *
+from chord_diagrams.tiling import Tiling
+from chord_diagrams.chords import Chord, GriddedChord
 
 gc_empty = GriddedChord()
 

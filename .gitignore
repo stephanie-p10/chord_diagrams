@@ -1,6 +1,36 @@
-__pycache__/chords.cpython-312.pyc
-algorithms/__pycache__/expansion.cpython-312.pyc
-algorithms/__pycache__/map.cpython-312.pyc
-algorithms/__pycache__/obstruction_inferral.cpython-312.pyc
-algorithms/__pycache__/__init__.cpython-312.pyc
-algorithms/__pycache__/simplify.cpython-312.pyc
+### Python
+__pycache__/
+*.py[cod]
+*.pyd
+*.so
+.Python
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+### Virtual environments
+.venv/
+venv/
+ENV/
+env/
+
+### OS / editor
+.DS_Store
+*.swp
+*~
+.vscode/
+
+### Build / packaging
+dist/
+build/
+*.egg-info/
+
+### Generated outputs (LaTeX, PDFs, etc.)
+*.pdf
+*.tex
+*.log
+*.aux
+*.out
+
+### Cursor / VSCode scratch
+tempCodeRunnerFile.py

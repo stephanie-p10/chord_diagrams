@@ -1,0 +1,15 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "chord_diagrams"
+version = "4.0.0"
+description = "Combinatorial specifications for chord diagram tilings."
+readme = "README.md"
+requires-python = ">=3.6"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src", "tests"]
+

@@ -1,8 +1,5 @@
-import sys
-from pathlib import Path
-sys.path.append(str(Path(__file__).resolve().parent.parent))
-
-from chords import Chord
+import _direct_run_bootstrap 
+from chord_diagrams.chords import Chord
 
 c1 = Chord((0, 1, 1, 0))
 c2 = Chord((0, 1, 0, 1))
