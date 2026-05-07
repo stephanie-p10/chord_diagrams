@@ -1,4 +1,13 @@
+import sys
+from pathlib import Path
 import time
+
+# Allow running this example directly from the repo without requiring an
+# editable install. (Adds `<repo>/src` to the import path.)
+_SRC_ROOT = (Path(__file__).resolve().parents[1] / "src").as_posix()
+if _SRC_ROOT not in sys.path:
+    sys.path.insert(0, _SRC_ROOT)
+
 from comb_spec_searcher import (
     AtomStrategy,
     CartesianProductStrategy,
@@ -8,15 +17,17 @@ from comb_spec_searcher import (
     DisjointUnionStrategy,
     StrategyPack,
 )
-from misc import DIR_EAST, DIR_SOUTH
-
-from chords import GriddedChord, Chord
-from tiling import Tiling
-from strategies.obstruction_inferral import ObstructionInferralFactory, SubobstructionInferralFactory
-from strategies.factor import FactorFactory
-from strategies.requirement_insertion import RequirementInsertionFactory
-from strategies.row_col_separation import RowColumnSeparationStrategy
-from strategies.chord_placement import RequirementPlacementFactory
+from chord_diagrams import Chord, GriddedChord
+from chord_diagrams.misc import DIR_EAST, DIR_SOUTH
+from chord_diagrams.strategies.chord_placement import RequirementPlacementFactory
+from chord_diagrams.strategies.factor import FactorFactory
+from chord_diagrams.strategies.obstruction_inferral import (
+    ObstructionInferralFactory,
+    SubobstructionInferralFactory,
+)
+from chord_diagrams.strategies.requirement_insertion import RequirementInsertionFactory
+from chord_diagrams.strategies.row_col_separation import RowColumnSeparationStrategy
+from chord_diagrams.tiling import Tiling
 start_time = time.time()
 
 
@@ -70,6 +81,11 @@ gf = spec.get_genf()
 print(gf)
 print(end_time - start_time)
 
-spec.show()
+try:
+    spec.show()
+except Exception as e:
+    # Some environments (headless CI, missing browser, restricted automation)
+    # can't open the rendered HTML. The example still succeeds without it.
+    print(f"spec.show() failed: {e!r}")
 
 

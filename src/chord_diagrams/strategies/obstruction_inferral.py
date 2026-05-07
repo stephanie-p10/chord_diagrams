@@ -14,7 +14,7 @@ from typing import Dict, Iterable, Iterator, List, Optional, Sequence, Tuple, ca
 from comb_spec_searcher import DisjointUnionStrategy, StrategyFactory
 from comb_spec_searcher.exception import StrategyDoesNotApply
 
-from ..algorithms.obstruction_inferral import AllObstructionInferral
+from ..algorithms.obstruction_inferral import AllObstructionInferral, SubobstructionInferral
 from ..chords import GriddedChord
 from ..tiling import Tiling
 
