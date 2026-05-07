@@ -1,3 +1,14 @@
+"""Algorithms for inserting/placing requirements into a tiling.
+
+This module implements the mechanics behind requirement placement strategies:
+given a tiling and a target gridded chord (often representing a “single point”
+or “single chord” requirement), compute the derived obstructions/requirements
+and linkage updates induced by choosing a particular placement.
+
+The code is cache-heavy because strategies may query many candidate placements
+repeatedly; the caches are keyed by cells and (requirement, index) pairs.
+"""
+
 from itertools import chain, filterfalse, product
 from typing import TYPE_CHECKING, Dict, FrozenSet, Iterable, List, Optional, Tuple
 from collections import Counter

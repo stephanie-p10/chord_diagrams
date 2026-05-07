@@ -1,3 +1,15 @@
+"""Requirement insertion strategy (disjoint union split).
+
+Requirement insertion splits a tiling into two disjoint subclasses by choosing
+a set of gridded chord patterns \(H\):\n
+- one child avoids all patterns in \(H\)\n
+- the other child is constrained to contain (at least one of) the patterns in
+  \(H\)\n
+
+This is a standard `DisjointUnionStrategy` pattern used by the specification
+searcher.
+"""
+
 import abc
 from itertools import chain, product
 from typing import Dict, Iterable, Iterator, List, Optional, Set, Tuple, cast

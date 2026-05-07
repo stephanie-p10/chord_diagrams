@@ -1,3 +1,13 @@
+"""Requirement placement strategies.
+
+These strategies expose requirement placement (placing a required chord/point
+into a particular cell/direction and updating the tiling accordingly) to the
+specification searcher. They are implemented as disjoint-union strategies over
+possible placements.
+
+The heavy lifting is performed by `chord_diagrams.algorithms.requirement_placement.RequirementPlacement`.
+"""
+
 from typing import (Any, Callable, Dict, FrozenSet, Iterable, Iterator, List, Optional, Set, Tuple, cast)
 
 #import tilings.strategies as strat

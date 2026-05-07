@@ -1,3 +1,21 @@
+"""Chord and gridded-chord primitives.
+
+This module defines the two central combinatorial objects used throughout the
+library:
+
+- `Chord`: a chord-diagram pattern encoded as a sequence of integers where each
+  chord label occurs exactly twice (two endpoints), and labels appear in
+  increasing order of first occurrence (standard form).
+- `GriddedChord`: a `Chord` together with a grid placement (`pos`) assigning
+  each endpoint to a cell (column, row).
+
+Many algorithms operate on containment/avoidance of `GriddedChord` objects
+inside tilings (`chord_diagrams.tiling.Tiling`).
+
+Note: direction constants are duplicated here for historical reasons; prefer
+importing them from `chord_diagrams.misc` in new code.
+"""
+
 from comb_spec_searcher import CombinatorialObject
 from typing import Callable, Dict, FrozenSet, Iterable, Iterator, List, Optional, Tuple, Union
 from itertools import combinations, islice, tee, product, chain, filterfalse
@@ -16,6 +34,8 @@ Cell = Tuple[int, int]
 Position = Tuple[Cell, ...]
 
 class ChordException(Exception):
+    """Raised when a sequence cannot represent a valid `Chord`."""
+
     def __init__(self, msg=None):
         if msg == None:
             msg == "Chord error"
@@ -24,15 +44,28 @@ class ChordException(Exception):
         super().__init__(msg)
 
 class Chord(Tuple):
+    """A chord-diagram pattern.
+
+    A `Chord` is represented by a tuple of length 2n where each chord label
+    occurs exactly twice. The canonical/standard form expected by most routines
+    is:
+
+    - Labels are integers starting at 0.
+    - The first occurrences of labels appear in increasing order (no “skipped”
+      labels on first occurrence).
+
+    The class is a `tuple` subclass for hashability and easy comparison; it also
+    caches a few derived structures used by occurrence-finding routines.
+    """
+
     def __init__(self, iterable: Iterable[int] = ()) -> None:
-        # Cache for data used when finding occurrences of self in a perm
+        # Cached details used by occurrence-finding; computed lazily.
         self._cached_pattern_details: Optional[List[Tuple[int, int, int, int]]] = None
         self._length = len(iterable)//2
         self._pattern = tuple(iterable)
         self._patt_length = len(iterable)
 
-        # Creates dictionary of chord number and vertices it connects
-        # (0, 1, 2, 1, 3, 3, 2, 0) becomes {0: (0, 7), 1: (1, 3), 2: (2, 6), 3: (4, 5)}
+        # Map each chord label -> (left_endpoint_index, right_endpoint_index).
         self._chord_dict = {}
         for i,c in enumerate(iterable):
             if c not in self._chord_dict:
@@ -456,6 +489,15 @@ class Chord(Tuple):
         return all(visited)
 
 class GriddedChord(CombinatorialObject):
+    """A `Chord` together with a placement of endpoints into grid cells.
+
+    - `patt` is the underlying chord pattern (a tuple of labels).
+    - `pos` is a tuple of cells of the same length as `patt`.
+
+    Many methods treat a `GriddedChord` as an *embedded pattern* that can occur
+    inside another `GriddedChord` (via pattern containment with cell constraints).
+    """
+
     def __init__(
         self, chord: Chord = Chord((),), positions: Iterable[Cell] = ()
     ) -> None:
@@ -466,7 +508,7 @@ class GriddedChord(CombinatorialObject):
             raise ValueError("Pattern and position list have unequal lengths.")
         self._cells: FrozenSet[Cell] = frozenset(self._pos)
 
-        # Creates dictionary of chord number and vertices it connects
+        # Reuse the chord-level endpoint dictionary.
         # (0, 1, 2, 1, 3, 3, 2, 0) becomes {0: (0, 7), 1: (1, 3), 2: (2, 6), (3: (4, 5)}
         self._chord_dict = self._chord.chord_dict
 
@@ -769,6 +811,7 @@ class GriddedChord(CombinatorialObject):
         return len(self.patt) == 0
     
     def is_point(self) -> bool:
+        """Return True if this gridded chord consists of a single point."""
         return self._chord._patt_length == 1
 
     def is_single_chord(self) -> bool:
@@ -777,7 +820,11 @@ class GriddedChord(CombinatorialObject):
 
     # sToDo: why is this function just calling another? redundant?
     def is_localized(self) -> bool:
-        """Check if the gridded chord occupies only a single cell."""
+        """Check if the gridded chord occupies only a single cell.
+
+        This is an alias for `is_single_cell` and is used by some strategies to
+        detect “localized” (single-cell) requirements.
+        """
         return self.is_single_cell()
 
     def is_single_cell(self) -> bool:
@@ -936,12 +983,9 @@ class GriddedChord(CombinatorialObject):
         >>> GriddedChord(Chord((0, 1, 0, 1)), ((1, 0), (0, 1), (1, 1), (1, 2))).contradictory()
         True
         """
-        """Old method (for perms, does not work for chords):
-        return any(
-            (l_x > r_x or (l_v < r_v and l_y > r_y) or (l_v > r_v and l_y < r_y)) or (l_v == r_v and l_x != r_x)
-            for idx, (j_chord, (j_x, j_y)) in enumerate(self)
-            for i_chord, (i_x, i_y) in islice(self, idx)
-        )"""
+        # Old method note (for gridded perms, not for chord endpoints):
+        # a previous implementation checked permutation-style constraints rather
+        # than chord endpoint constraints.
         # loops over combinations of chords with i < j in self
         for idx, (chordj, (xj, yj)) in enumerate(self):
             for chordi, (xi, yi) in islice(self, idx):

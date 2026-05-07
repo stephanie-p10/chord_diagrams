@@ -1,3 +1,20 @@
+"""Tiling: grid classes defined by chord obstructions and requirements.
+
+`Tiling` is the main combinatorial class in this repository. Informally, a
+tiling describes a class of gridded chord diagrams constrained by:
+
+- **obstructions**: gridded chord patterns that must be avoided
+- **requirements**: tuples/lists of gridded chord patterns, where each list
+  represents an “OR” condition (at least one must occur)
+- **linkages**: sets of cells that are treated as linked (used by some
+  algorithms/strategies)
+- **assumptions**: tracking assumptions used by the specification searcher
+
+The implementation maintains cached derived data such as active/empty cells and
+row/column maps; initialization can optionally expand, simplify, and/or remove
+empty rows/columns.
+"""
+
 import json
 from itertools import chain, filterfalse, product, combinations
 from typing import (Any, Callable, Dict, FrozenSet, Iterable, Iterator, List, Optional, Set, Tuple)
@@ -35,13 +52,19 @@ GCTuple = Tuple[GriddedChord, ...]
 
 
 class Tiling(CombinatorialClass):
-    """Tiling class.
+    """A grid class of gridded chord diagrams.
 
-    Zero-indexed coordinates/cells from bottom left corner where the (x, y)
-    cell is the cell in the x-th column and y-th row.
+    **Coordinate system**: cells are 0-indexed `(x, y)` from the bottom-left,
+    where `x` is the column index and `y` the row index.
 
-    Tilings store the obstructions, requirements and linkages but also caches the empty
-    cells and the active cells.
+    **Stored inputs** (normalized to tuples during `__init__`):\n
+    - `obstructions`: tuple of `GriddedChord`\n
+    - `requirements`: tuple of requirement lists (each requirement list is a tuple of `GriddedChord`)\n
+    - `linkages`: tuple of tuples of cells\n
+    - `assumptions`: tuple of tracking assumptions\n
+
+    **Cached derived properties** include dimensions, empty/active cells, and
+    forward/backward row/column maps used by strategies and algorithms.
     """
     def __init__(self,
         obstructions: Iterable[GriddedChord] = tuple(),
@@ -53,6 +76,8 @@ class Tiling(CombinatorialClass):
         derive_empty: bool = True,
         expand: bool = True):
 
+        # Initialization can be relatively expensive (expansion/simplification),
+        # so we track timing in case callers want to profile.
         start_time = time.time()
 
         super().__init__()
@@ -80,7 +105,8 @@ class Tiling(CombinatorialClass):
         #   computations are done only on the active cells.
         self._add_point_obs(self._cached_properties["empty_cells"])
             
-        # this will take out all obs that have ends in empty cells
+        # Simplification removes redundant constraints and cleans up patterns
+        # that cannot interact with active cells.
         if simplify:
             self._simplify()
 
@@ -115,6 +141,16 @@ class Tiling(CombinatorialClass):
 
     @property
     def forward_map(self) -> RowColMap:
+        """Row/column map from this tiling to a normalized coordinate system.
+
+        Many operations (notably `remove_empty_rows_and_cols`) transform a tiling
+        by collapsing unused rows/columns. The resulting coordinate change is
+        represented as a `RowColMap` that can be applied to cells, gridded chords,
+        and tracking assumptions.
+
+        This property is computed lazily; requesting it may trigger removal of
+        empty rows/columns to populate the cache.
+        """
         try:
             return self._cached_properties["forward_map"]
         except KeyError:
@@ -123,6 +159,7 @@ class Tiling(CombinatorialClass):
 
     @property
     def backward_map(self) -> RowColMap:
+        """Inverse of `forward_map` (when the forward map is reversible)."""
         try:
             return self._cached_properties["backward_map"]
         except KeyError:
@@ -133,8 +170,11 @@ class Tiling(CombinatorialClass):
     @property
     def active_cells(self) -> CellFrozenSet:
         """
-        Returns a set of all cells that do not contain a point obstruction,
-        i.e., not empty.
+        Return the active (non-empty) cells of the tiling.
+
+        A cell is considered *empty* if it is marked by a point obstruction used
+        internally to represent derived emptiness. Active cells are those not
+        marked empty.
         """
         try:
             return self._cached_properties["active_cells"]
@@ -558,10 +598,18 @@ class Tiling(CombinatorialClass):
         factors: bool = False,
         add_assumptions: Iterable[TrackingAssumption] = tuple(),
     ) -> "Tiling":
-        """Return the tiling using only the obstructions and requirements
-        completely contained in the given cells. If factors is set to True,
-        then it assumes that the first cells confirms if a gridded perm uses only
-        the cells."""
+        """Restrict this tiling to a specified set of cells.
+
+        Only obstructions/requirements/linkages fully supported on `cells` are
+        kept (and assumptions are filtered accordingly). This is the primary
+        operation used by factorization strategies to produce child tilings.
+
+        - **cells**: iterable of cells to keep.
+        - **factors**: optimization flag used by factorization code paths. When
+          true, the implementation may use the first position as a quick filter
+          before checking all positions.
+        - **add_assumptions**: extra assumptions to include in the result.
+        """
         obstructions = tuple(
             ob
             for ob in self.obstructions
@@ -736,8 +784,16 @@ class Tiling(CombinatorialClass):
     # gridded_perms_of_length -> all_chords_on_tiling
     # s TODO check where this is used, see if the empty chord should be included?
     def all_chords_on_tiling(self, size: int = 0, use_non_chord_patts: bool = False) -> List[GriddedChord]:
-        """Returns all patterns from one to up to size points that can be gridded on the tiling
-        (only uses active cells)"""
+        """Enumerate all gridded chord patterns up to a given size.
+
+        This is an expensive, brute-force enumerator used by a few inferral and
+        emptiness checks. It only grids over the tiling's active cells.
+
+        - **size**: maximum number of points to consider (patterns are generated
+          by chord length, then gridded into active cells).
+        - **use_non_chord_patts**: if True, additionally considers certain
+          standardized subpatterns derived from larger chord patterns.
+        """
         all_chords = []
         for num_chords in range(1, size//2 + 1):
             all_chords += list(Chord.of_length(num_chords))
@@ -806,6 +862,14 @@ class Tiling(CombinatorialClass):
         return True
 
     def contains(self, gc: GriddedChord) -> bool:
+        """Return True if `gc` is valid for this tiling.
+
+        A gridded chord diagram is valid if it:
+        - satisfies every requirement list (contains at least one requirement in
+          each list),
+        - avoids every obstruction, and
+        - respects all linkage connectivity constraints.
+        """
         has_reqs = all(gc.contains(*req) for req in self._requirements)
         avoids_ob = not any(gc.contains(ob) for ob in self._obstructions)
         links_connected = all(gc.is_connected(cells) for cells in self._linkages)
@@ -813,7 +877,10 @@ class Tiling(CombinatorialClass):
     
     def add_list_requirement(self, req_list: Iterable[GriddedChord]) -> "Tiling":
         """
-        Return a new tiling with the requirement list added.
+        Return a new tiling with an additional requirement list.
+
+        Each requirement list represents an OR-condition: an object in the
+        tiling must contain at least one of the patterns in the list.
         """
         new_req = tuple(sorted(req_list))
         return Tiling(
@@ -824,13 +891,16 @@ class Tiling(CombinatorialClass):
         )
 
     def add_requirement(self, patt: Chord, pos: Iterable[Cell]) -> "Tiling":
-        """Returns a new tiling with the requirement of the pattern
-        patt with position pos."""
+        """Convenience wrapper to add a single requirement as a 1-item list."""
         new_req_list = (GriddedChord(patt, pos),)
         return self.add_list_requirement(new_req_list)
 
     def add_obstructions(self, gcs: Iterable[GriddedChord], simplify: bool = True, expand: bool = True) -> "Tiling":
-        """Returns a new tiling with the obstructions added."""
+        """Return a new tiling with additional obstructions.
+
+        - **simplify**: whether to run simplification after adding.
+        - **expand**: whether to run expansion after adding.
+        """
         new_obs = tuple(gcs)
         all_obs = sorted(self._obstructions + new_obs)
         return Tiling(

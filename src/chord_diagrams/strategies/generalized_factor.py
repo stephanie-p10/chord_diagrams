@@ -1,3 +1,14 @@
+"""Generalized factorization strategy (shifted Cartesian product).
+
+Nabergall's generalized factorization is not a plain Cartesian product: factors
+may overlap on a shared subtiling and the size accounting is shifted by the
+overlap size. This module implements a strategy using
+`ShiftedCartesianProduct` to encode the generating function identity.
+
+See also `chord_diagrams.algorithms.generalized_factor.GeneralizedFactor` for
+the partitioning logic used to build the strategy.
+"""
+
 from ..chords import GriddedChord, Chord
 from ..tiling import Tiling
 

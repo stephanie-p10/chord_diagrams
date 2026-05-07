@@ -1,3 +1,11 @@
+"""Row/column maps for tilings and related objects.
+
+`RowColMap` is used when a tiling is transformed by removing empty rows/columns
+or by other operations that change grid coordinates. The map knows how to map
+cells, gridded chords, and tracking assumptions consistently, and can be
+reversed when it is bijective.
+"""
+
 from typing import TYPE_CHECKING, Dict, Tuple
 
 from tilings.exception import InvalidOperationError

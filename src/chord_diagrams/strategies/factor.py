@@ -1,3 +1,17 @@
+"""Factorization strategies for the specification searcher.
+
+These strategies expose tiling factorization (disjoint factors and variants
+with interleaving) to `comb_spec_searcher` by implementing the
+`StrategyFactory`/`Strategy` interfaces.
+
+The core contract is:\n
+- `decomposition_function(parent)` returns the child tilings representing the
+  factors.\n
+- `forward_map`/`backward_map` translate gridded chord objects between parent
+  and children via the tilings' row/column maps.\n
+- `extra_parameters` propagates tracking assumptions when present.\n
+"""
+
 from ..chords import GriddedChord, Chord
 from ..tiling import Tiling
 

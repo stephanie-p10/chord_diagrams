@@ -1,4 +1,15 @@
-"""This module contains the algorithm that expands non chord patterns into chord patterns"""
+"""Expand “partial” gridded patterns into full chord patterns.
+
+Some construction steps introduce *non-chord* patterns temporarily (e.g., a
+label that appears only once, representing an unpaired endpoint). This module
+provides the `Expansion` algorithm which expands those partial patterns into
+valid chord patterns by inserting the missing endpoints into admissible cells,
+filtering out contradictory placements and placements that violate avoidance
+constraints.
+
+The expansion routines also deduplicate outputs and keep them in deterministic
+order (important for stable tests and reproducible strategy behavior).
+"""
 
 
 from typing import TYPE_CHECKING, Iterable, Tuple, List

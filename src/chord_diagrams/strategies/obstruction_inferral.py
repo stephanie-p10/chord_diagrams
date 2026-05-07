@@ -1,3 +1,14 @@
+"""Strategy wrappers around obstruction-inferral algorithms.
+
+Obstruction inferral is an *inferrable* step: we derive additional obstructions
+that must hold in any object of the class, and produce a (typically smaller)
+child tiling that incorporates them.
+
+This module provides `StrategyFactory` implementations that select an inferral
+algorithm (e.g., `AllObstructionInferral`) and expose it to
+`comb_spec_searcher`.
+"""
+
 from typing import Dict, Iterable, Iterator, List, Optional, Sequence, Tuple, cast
 
 from comb_spec_searcher import DisjointUnionStrategy, StrategyFactory

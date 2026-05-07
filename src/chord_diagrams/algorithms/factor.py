@@ -1,3 +1,17 @@
+"""Disjoint factorization of a tiling via Union-Find.
+
+This module provides the `Factor` algorithm used by both direct computations
+and by search strategies. It partitions the active cells of a tiling into
+connected components (“factors”) where connectivity is induced by:
+
+- sharing a row or column
+- appearing together in an obstruction or requirement list
+- being linked by tracking assumptions (when enabled)
+
+The partition is computed efficiently using a Union-Find structure over the
+grid cells.
+"""
+
 from collections import defaultdict
 from itertools import chain, combinations
 from typing import TYPE_CHECKING, Dict, Iterable, Iterator, List, Optional, Set, Tuple

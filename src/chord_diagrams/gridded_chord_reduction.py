@@ -1,12 +1,26 @@
+"""Reduction/minimization utilities (legacy, lightly adapted).
+
+This module contains a reduction routine that minimizes sets of obstructions and
+requirements by removing redundant constraints and simplifying requirement
+lists. It is not currently exercised by the main test suite, but it is kept in
+the library for historical/experimental use.
+
+The implementation is adapted from an earlier “gridded permutation” reduction
+pipeline. Type names retained from that origin (e.g. `GriddedPerm`) are treated
+as `Any` here to keep the module import-safe without pulling in extra
+dependencies.
+"""
+
 from collections import defaultdict
 from functools import partial
 from itertools import chain, islice
-from typing import Callable, Dict, Iterable, List, Optional, Set, Tuple
+from typing import Any, Callable, Dict, Iterable, List, Optional, Set, Tuple
 
 from .chords import GriddedChord
 from .minimal_gridded_perms import MinimalGriddedPerms
 
 Cell = Tuple[int, int]
+GriddedPerm = Any
 Requirement = Tuple[GriddedPerm, ...]
 
 
