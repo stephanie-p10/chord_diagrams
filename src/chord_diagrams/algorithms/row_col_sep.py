@@ -492,7 +492,7 @@ class _RowColSeparationSingleApplication:
     @staticmethod
     def _map_gridded_chord(cell_map, gc: GriddedChord) -> GriddedChord:
         """
-        Transform a gridded perm by mapping the position of the gridded perm
+        Transform a gridded chord by mapping the position of the gridded chord
         according to the cell_map
         """
         pos = (cell_map[c] for c in gc.pos)
