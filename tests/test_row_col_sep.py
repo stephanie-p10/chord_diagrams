@@ -1,11 +1,9 @@
-import sys
-from pathlib import Path
-sys.path.append(str(Path(__file__).resolve().parent.parent))
+import _direct_run_bootstrap
 
-from tiling import Tiling
-from chords import Chord, GriddedChord
-from algorithms.row_col_sep import RowColSeparation
-from strategies.row_col_separation import RowColumnSeparationStrategy
+from chord_diagrams.tiling import Tiling
+from chord_diagrams.chords import Chord, GriddedChord
+from chord_diagrams.algorithms.row_col_sep import RowColSeparation
+from chord_diagrams.strategies.row_col_separation import RowColumnSeparationStrategy
 
 non_crossing = Tiling(obstructions=(GriddedChord(Chord((0,)), ((0, 1),)),
                                     GriddedChord(Chord((0,)), ((1, 0),)),

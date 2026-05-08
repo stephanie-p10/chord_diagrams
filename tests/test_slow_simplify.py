@@ -1,9 +1,7 @@
-import sys
-from pathlib import Path
-sys.path.append(str(Path(__file__).resolve().parent.parent))
+import _direct_run_bootstrap  
 
-from chords import GriddedChord, Chord
-from tiling import Tiling
+from chord_diagrams.chords import GriddedChord, Chord
+from chord_diagrams.tiling import Tiling
 
 tiling2 = Tiling(
         obstructions=[

@@ -1,11 +1,9 @@
-import sys
-from pathlib import Path
-sys.path.append(str(Path(__file__).resolve().parent.parent))
+import _direct_run_bootstrap 
 
-from algorithms.simplify import SimplifyObstructionsAndRequirements
+from chord_diagrams.algorithms.simplify import SimplifyObstructionsAndRequirements
 
-from chords import GriddedChord, Chord
-from tiling import Tiling
+from chord_diagrams.chords import GriddedChord, Chord
+from chord_diagrams.tiling import Tiling
 
 ob_containing_ob = SimplifyObstructionsAndRequirements((GriddedChord(Chord((0, 1, 0, 2, 1, 2)), ((0,0),)*6), GriddedChord(Chord((0, 1, 0, 1)), ((0,0),)*4)),
                                                    (), 
