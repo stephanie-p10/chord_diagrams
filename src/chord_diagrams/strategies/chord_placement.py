@@ -790,7 +790,7 @@ class ChordPlacement:
     
     def _point_translation(
             self, gc: GriddedChord, idx: int, placed_cell: Cell
-            ) -> tuple[int]:
+            ) -> Tuple[int, int]:
         """Finds the cell that the point in gc at idx gets shifted to if a 
         point was placed in placed_cell.
         
@@ -1168,7 +1168,9 @@ class ChordPlacement:
         return reqs
     
     # printed and it works
-    def stretched_reqs(self, cell_placed: Cell, req_placed: GriddedChord) -> list[list[GriddedChord]]:
+    def stretched_reqs(
+        self, cell_placed: Cell, req_placed: GriddedChord
+    ) -> List[List[GriddedChord]]:
         stretched_req_lists = []
         reqs = list(self._tiling.requirements)
         reqs.remove((req_placed,))
@@ -1177,7 +1179,7 @@ class ChordPlacement:
 
         return stretched_req_lists
     
-    def stretch_links(self, cell_placed: Cell) -> list[list[Cell]]:
+    def stretch_links(self, cell_placed: Cell) -> List[List[Cell]]:
         new_links = []
         for link in self._tiling.linkages:
             assert link
@@ -1253,7 +1255,7 @@ class ChordPlacement:
         chord_placed._remove_empty_rows_and_cols()
         return chord_placed
     
-    def place_chords(self, req_list_to_place: tuple[GriddedChord], dir: int):
+    def place_chords(self, req_list_to_place: Tuple[GriddedChord, ...], dir: int):
         res = []
         for req in req_list_to_place:
             res.append(self.place_chord(req, dir))
@@ -1287,14 +1289,19 @@ t5 = Tiling(obstructions=(GriddedChord.single_chord(((0, 0), (0, 0))),
 t3 = Tiling(obstructions=(GriddedChord(c1, ((0, 0),) *6), GriddedChord(c2, ((0, 0),) *6)),
             requirements=((GriddedChord(Chord((0, 0)), ((0, 0), (0, 0))),),))
 
-non_crossing = Tiling(obstructions=(GriddedChord(Chord((0, 1, 0, 1)), ((0, 0), (0, 0), (0, 0), (0, 0))),),
-                       requirements=((GriddedChord(Chord((0, 0)), ((0, 0), (0, 0))),),))
+non_crossing = Tiling(
+    obstructions=(
+        GriddedChord(Chord((0, 1, 0, 1)), ((0, 0), (0, 0), (0, 0), (0, 0))),
+    ),
+    requirements=((GriddedChord(Chord((0, 0)), ((0, 0), (0, 0))),),),
+)
 
-placement_nc = ChordPlacement(non_crossing)
-placement = ChordPlacement(t3)
+if __name__ == "__main__":
+    placement_nc = ChordPlacement(non_crossing)
+    placement = ChordPlacement(t3)
 
-GriddedChord.single_chord([(0, 0), (0, 0)])
-GriddedChord(Chord((0, 0)), ((0, 0), (0, 0)))
+    GriddedChord.single_chord([(0, 0), (0, 0)])
+    GriddedChord(Chord((0, 0)), ((0, 0), (0, 0)))
 
 t = placement_nc.place_chord(GriddedChord(Chord((0, 0)), ((0, 0), (0, 0))), 0, DIR_SOUTH)
 print()

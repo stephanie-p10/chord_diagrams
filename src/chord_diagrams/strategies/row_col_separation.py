@@ -3,9 +3,21 @@ The row and column separation strategy. The details of the algorithm can be
 found in the algorithms folder.
 """
 
-from ..chords import GriddedChord
-from ..tiling import Tiling
-from ..algorithms.row_col_sep import RowColSeparation
+try:
+    from ..chords import GriddedChord
+    from ..tiling import Tiling
+    from ..algorithms.row_col_sep import RowColSeparation
+except ImportError:  
+    import sys
+    from pathlib import Path
+
+    _src_root = Path(__file__).resolve().parents[2]  # .../src
+    if str(_src_root) not in sys.path:
+        sys.path.insert(0, str(_src_root))
+
+    from chord_diagrams.chords import GriddedChord
+    from chord_diagrams.tiling import Tiling
+    from chord_diagrams.algorithms.row_col_sep import RowColSeparation
 
 from typing import Dict, Iterator, Optional, Tuple
 from comb_spec_searcher import DisjointUnionStrategy

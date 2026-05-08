@@ -9,8 +9,17 @@ from itertools import product
 from math import factorial
 from typing import TYPE_CHECKING, Dict, Iterable, Set, Tuple
 
-from ..chords import Chord, GriddedChord
+try:
+    from ..chords import Chord, GriddedChord
+except ImportError:  
+    import sys
+    from pathlib import Path
 
+    _src_root = Path(__file__).resolve().parents[2]  # .../src
+    if str(_src_root) not in sys.path:
+        sys.path.insert(0, str(_src_root))
+
+    from chord_diagrams.chords import Chord, GriddedChord
 
 def binomial(x: int, y: int) -> int:
     """Returns the binomial coefficient x choose y."""
@@ -81,6 +90,79 @@ class SimplifyObstructionsAndRequirements:
         self.requirements = tuple(
             req for i, req in enumerate(self.requirements) if i not in indices
         )
+    
+    def remove_redundant_cells(self) -> None:
+        """
+        Here we simplify a cell to have a point-obstruction if it 
+        originally has a chord obstruction in it and all other active cells 
+        in the row have a chord obstruction between them and the cell.
+        Remove cells that are forced empty by row-wise chord obstructions.
+
+        When a cell is removed, we:
+        - add a point-obstruction marker,
+        - remove all obstructions mentioning the cell (except the point marker),
+        - check if any requirements used the cell and if so make this the empty tiling
+        """
+
+        active_cells = set(self.active_cells())
+        if not active_cells:
+            return
+
+        obs_set = set(self.obstructions)
+
+        def has_single_chord_obstruction_in_cells(c1: Tuple[int, int], c2: Tuple[int, int]) -> bool:
+            # A single-chord obstruction is represented by pattern (0,0) placed in two cells.
+            # The cell could have the source or sink of the chord so check both.
+            return (
+                GriddedChord(Chord((0, 0)), (c1, c2)) in obs_set
+                or GriddedChord(Chord((0, 0)), (c2, c1)) in obs_set
+            )
+
+        cells_to_remove: Set[Tuple[int, int]] = set()
+        for cell in active_cells:
+            # Must obstruct a chord entirely within the cell.
+            if not has_single_chord_obstruction_in_cells(cell, cell):
+                continue
+            row_cells = {c for c in active_cells if c[1] == cell[1] and c != cell}
+            if not row_cells:
+                continue
+            # Must obstruct a chord between this cell and every other active cell in the row.
+            if all(has_single_chord_obstruction_in_cells(cell, other) for other in row_cells):
+                cells_to_remove.add(cell)
+
+        if not cells_to_remove:
+            return
+
+        # Remove any requirements that reference removed cells. If this empties a
+        # requirement list, then the tiling is empty (as there are no valid gridded chords).
+        if self.requirements:
+            new_requirements = []
+            for req_list in self.requirements:
+                filtered = tuple(
+                    req
+                    for req in req_list
+                    if not any(pos in cells_to_remove for pos in req.pos)
+                )
+                if req_list and not filtered:
+                    self.obstructions = (GriddedChord.empty_chord(),)
+                    self.requirements = tuple()
+                    return
+                new_requirements.append(filtered)
+            self.requirements = tuple(new_requirements)
+
+        # Remove all obstructions involving removed cells
+        new_obstructions = []
+        for ob in self.obstructions:
+            if any(pos in cells_to_remove for pos in ob.pos):
+                continue
+            new_obstructions.append(ob)
+
+        # Mark removed cells as empty with point-obstruction markers.
+        point_markers = {GriddedChord.single_cell(Chord((0,)), cell) for cell in cells_to_remove}
+        new_obstructions.extend(pm for pm in point_markers if pm not in new_obstructions)
+        
+        self.obstructions = tuple(new_obstructions)
+
 
     def requirement_implied_by_some_requirement(
         self,
@@ -124,6 +206,7 @@ class SimplifyObstructionsAndRequirements:
         #print("after remove redundant", self.obstructions)
         self.remove_redundant_requirements()
         self.remove_redundant_lists_requirements()
+        self.remove_redundant_cells()
         # maybe add this back in, not sure what it is doing, but it skrews with obstructions in tilings tests
         #self.remove_factors_from_obstructions() 
         #print("after remove factors", self.obstructions)
@@ -194,7 +277,8 @@ class SimplifyObstructionsAndRequirements:
             product(range(self.dimensions[0]), range(self.dimensions[1]))
         )
         for ob in self.obstructions:
-            if len(ob) == 1:
+            # Empty cells are marked by a point obstruction `Chord((0,))`.
+            if ob.is_point() and ob.pos:
                 active_cells.discard(ob.pos[0])
         return active_cells
 

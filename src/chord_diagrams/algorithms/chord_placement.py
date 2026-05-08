@@ -13,11 +13,24 @@ from itertools import chain, filterfalse, product, chain
 from typing import TYPE_CHECKING, Dict, FrozenSet, Iterable, List, Optional, Tuple
 from collections import Counter
 
-from ..misc import DIR_EAST, DIR_NONE, DIR_NORTH, DIR_SOUTH, DIR_WEST, DIRS
-from ..assumptions import TrackingAssumption
-from ..chords import Chord, GriddedChord
-from ..tiling import Tiling
-from .simplify import SimplifyObstructionsAndRequirements
+try:
+    from ..misc import DIR_EAST, DIR_NONE, DIR_NORTH, DIR_SOUTH, DIR_WEST, DIRS
+    from ..assumptions import TrackingAssumption
+    from ..chords import Chord, GriddedChord
+    from ..tiling import Tiling
+    from .simplify import SimplifyObstructionsAndRequirements
+except ImportError:  
+    import sys
+    from pathlib import Path
+
+    _src_root = Path(__file__).resolve().parents[2]  # .../src
+    if str(_src_root) not in sys.path:
+        sys.path.insert(0, str(_src_root))
+    from chord_diagrams.misc import DIR_EAST, DIR_NONE, DIR_NORTH, DIR_SOUTH, DIR_WEST, DIRS
+    from chord_diagrams.assumptions import TrackingAssumption
+    from chord_diagrams.chords import Chord, GriddedChord
+    from chord_diagrams.tiling import Tiling
+    from chord_diagrams.algorithms.simplify import SimplifyObstructionsAndRequirements
 
 Cell = Tuple[int, int]
 Dir = int
