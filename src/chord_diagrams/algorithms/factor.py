@@ -17,7 +17,18 @@ from itertools import chain, combinations
 from typing import TYPE_CHECKING, Dict, Iterable, Iterator, List, Optional, Set, Tuple
 
 from permuta.misc import UnionFind
-from ..chords import GriddedChord, Chord
+try:
+    from ..chords import GriddedChord, Chord
+except ImportError:  
+    import sys
+    from pathlib import Path
+
+    _src_root = Path(__file__).resolve().parents[2]  # .../src
+    if str(_src_root) not in sys.path:
+        sys.path.insert(0, str(_src_root))
+
+    from chord_diagrams.chords import GriddedChord, Chord
+    
 from tilings.assumptions import ComponentAssumption, TrackingAssumption
 from tilings.misc import partitions_iterator
 

@@ -975,11 +975,15 @@ class Tiling(CombinatorialClass):
             or self.assumptions != other.assumptions
         )
 
-    # sToDo: fix for linkages
     def __contains__(self, gp: GriddedChord) -> bool:
         """Test if a gridded chord is griddable on the given tiling."""
-        return gp.avoids(*self.obstructions) and all(
-            gp.contains(*req) for req in self.requirements
+        return (
+            gp.avoids(*self.obstructions)
+            and all(gp.contains(*req) for req in self.requirements)
+            and all(
+                (len(linkage) == 0) or gp.is_connected(list(linkage))
+                for linkage in self.linkages
+            )
         )
 
     def __repr__(self) -> str:

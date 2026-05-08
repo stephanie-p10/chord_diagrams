@@ -16,7 +16,17 @@ from typing import TYPE_CHECKING, Iterable, Tuple, List
 
 from itertools import product, chain
 
-from ..chords import Chord, GriddedChord
+try:
+    from ..chords import Chord, GriddedChord
+except ImportError:  
+    import sys
+    from pathlib import Path
+
+    _src_root = Path(__file__).resolve().parents[2]  # .../src
+    if str(_src_root) not in sys.path:
+        sys.path.insert(0, str(_src_root))
+
+    from chord_diagrams.chords import Chord, GriddedChord
 Cell = Tuple[int, int]
 
 class Expansion: 

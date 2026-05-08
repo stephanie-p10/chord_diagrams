@@ -9,8 +9,17 @@ from itertools import product
 from math import factorial
 from typing import TYPE_CHECKING, Dict, Iterable, Set, Tuple
 
-from ..chords import Chord, GriddedChord
+try:
+    from ..chords import Chord, GriddedChord
+except ImportError:  
+    import sys
+    from pathlib import Path
 
+    _src_root = Path(__file__).resolve().parents[2]  # .../src
+    if str(_src_root) not in sys.path:
+        sys.path.insert(0, str(_src_root))
+
+    from chord_diagrams.chords import Chord, GriddedChord
 
 def binomial(x: int, y: int) -> int:
     """Returns the binomial coefficient x choose y."""

@@ -1,11 +1,22 @@
 import abc
 from typing import TYPE_CHECKING, Iterable, List, Optional, Set, Tuple
 
-from ..chords import GriddedChord
-#from tilings.algorithms.gridded_perm_generation import GriddedPermsOnTiling
+try:
+    from ..chords import GriddedChord
+    if TYPE_CHECKING:
+        from ..tiling import Tiling
+except ImportError:  
+    import sys
+    from pathlib import Path
 
-if TYPE_CHECKING:
-    from ..tiling import Tiling
+    _src_root = Path(__file__).resolve().parents[2]  # .../src
+    if str(_src_root) not in sys.path:
+        sys.path.insert(0, str(_src_root))
+
+    from chord_diagrams.chords import GriddedChord
+    if TYPE_CHECKING:
+        from chord_diagrams.tiling import Tiling
+
 
 Cell = Tuple[int, int]
 

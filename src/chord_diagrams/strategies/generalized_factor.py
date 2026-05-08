@@ -8,9 +8,20 @@ overlap size. This module implements a strategy using
 See also `chord_diagrams.algorithms.generalized_factor.GeneralizedFactor` for
 the partitioning logic used to build the strategy.
 """
+try:
+    from ..chords import GriddedChord, Chord
+    from ..tiling import Tiling
+except ImportError:  
+    import sys
+    from pathlib import Path
 
-from ..chords import GriddedChord, Chord
-from ..tiling import Tiling
+    _src_root = Path(__file__).resolve().parents[2]  # .../src
+    if str(_src_root) not in sys.path:
+        sys.path.insert(0, str(_src_root))
+
+    from chord_diagrams.chords import GriddedChord, Chord
+    from chord_diagrams.tiling import Tiling
+
 
 from collections import Counter
 from functools import reduce

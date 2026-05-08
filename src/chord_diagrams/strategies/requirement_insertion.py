@@ -19,8 +19,21 @@ from comb_spec_searcher import DisjointUnionStrategy, StrategyFactory
 from comb_spec_searcher.exception import StrategyDoesNotApply
 from comb_spec_searcher.strategies import Rule
 from comb_spec_searcher.strategies.strategy import VerificationStrategy
-from ..chords import Chord, GriddedChord
-from ..tiling import Tiling
+
+try:
+    from ..chords import Chord, GriddedChord
+    from ..tiling import Tiling
+except ImportError:  
+    import sys
+    from pathlib import Path
+
+    _src_root = Path(__file__).resolve().parents[2]  # .../src
+    if str(_src_root) not in sys.path:
+        sys.path.insert(0, str(_src_root))
+
+    from chord_diagrams.chords import Chord, GriddedChord
+    from chord_diagrams.tiling import Tiling
+
 from tilings.algorithms import Factor, SubobstructionInferral
 
 Cell = Tuple[int, int]

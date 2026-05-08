@@ -11,11 +11,24 @@ import heapq
 from itertools import combinations, product
 from typing import TYPE_CHECKING, Dict, List, Tuple
 
-from ..chords import GriddedChord, Chord
-from ..tiling import Tiling
-
-if TYPE_CHECKING:
+try:
+    from ..chords import GriddedChord, Chord
     from ..tiling import Tiling
+
+    if TYPE_CHECKING:
+        from ..tiling import Tiling
+except ImportError:  
+    import sys
+    from pathlib import Path
+
+    _src_root = Path(__file__).resolve().parents[2]  # .../src
+    if str(_src_root) not in sys.path:
+        sys.path.insert(0, str(_src_root))
+
+    from chord_diagrams.chords import GriddedChord, Chord
+    from chord_diagrams.tiling import Tiling
+    if TYPE_CHECKING:
+        from chord_diagrams.tiling import Tiling
 
 Cell = Tuple[int, int]
 
