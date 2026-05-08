@@ -462,6 +462,7 @@ class GriddedChord(CombinatorialObject):
         self._patt = chord.get_pattern()
         self._pos = tuple(positions)
         if len(self._patt) != len(self._pos):
+            print(self._patt, self._pos)
             raise ValueError("Pattern and position list have unequal lengths.")
         self._cells: FrozenSet[Cell] = frozenset(self._pos)
 

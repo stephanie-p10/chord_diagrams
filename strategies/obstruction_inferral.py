@@ -14,7 +14,7 @@ from tiling import Tiling
 class ObstructionInferralStrategy(DisjointUnionStrategy[Tiling, GriddedChord]):
     def __init__(self, gcs: Iterable[GriddedChord], reduce = True):
         self.gcs = tuple(sorted(gcs))
-        self.reduce = False
+        self.reduce = reduce
         super().__init__(
             ignore_parent=True, inferrable=True, possibly_empty=False, workable=True
         )

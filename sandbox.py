@@ -7,6 +7,7 @@ import time
 from strategies.obstruction_inferral import SubobstructionInferralFactory
 
 
+
 # first pattern in theorem 3.1.2 class
 c1 = Chord((0, 1, 2, 0, 1, 2))
 # second pattern in theorem 3.1.2 class
@@ -117,19 +118,22 @@ row_col_sep_test = Tiling((GriddedChord(Chord((0, 0)), ((0, 0), (1, 0))),
                            GriddedChord(Chord((0, 1, 0, 1)), ((1, 0),)*4),
                            GriddedChord(Chord((0, 1, 0, 1)), ((0, 0),)*4),),)
 
+t5 = Tiling(obstructions=(GriddedChord.single_chord(((0, 0), (0, 0))),
+                                      GriddedChord.single_chord(((2, 0), (2, 0))), 
+                                      GriddedChord(Chord((0, 1, 0, 1)), ((0, 0), (0, 0), (2, 0), (2, 0))),
+                                      GriddedChord(Chord((0, 1, 1, 0)), ((0, 0), (0, 0), (2, 0), (2, 0))),
 
-lukas_t3_prime = Tiling((GriddedChord(Chord((0, 1, 0, 1)), ((1, 1),)*4),
-                         GriddedChord(Chord((0, 1, 0, 1)), ((3, 1),)*4),
-                         GriddedChord(Chord((0, 0)), ((1, 1), (3, 1))),
+                                      GriddedChord(c1, ((1, 1), (1, 1), (1, 1), (1, 1), (1, 1), (1, 1))),
+                                      GriddedChord(c1, ((1, 1), (1, 1), (1, 1), (1, 1), (1, 1), (3, 1))),
+                                      GriddedChord(c1, ((1, 1), (3, 1), (3, 1), (3, 1), (3, 1), (3, 1))),
+                                      GriddedChord(c1, ((3, 1), (3, 1), (3, 1), (3, 1), (3, 1), (3, 1))),
 
-                         GriddedChord(Chord((0, 0)), ((0, 0), (0, 0))), 
-                         GriddedChord(Chord((0, 0)), ((2, 0), (2, 0))),
-                         GriddedChord(Chord((1, 0)), ((0, 0), (0, 0))), 
-                         GriddedChord(Chord((1, 0)), ((2, 0), (2, 0))),
-                         GriddedChord(Chord((0, 1)), ((0, 0), (0, 0))), 
-                         GriddedChord(Chord((0, 1)), ((2, 0), (2, 0))), ),
-                         ((GriddedChord(Chord((0, 0)), ((0, 0), (2, 0))),),))
+                                      GriddedChord(c2, ((1, 1), (1, 1), (1, 1), (1, 1), (1, 1), (1, 1))),
+                                      GriddedChord(c2, ((1, 1), (1, 1), (1, 1), (1, 1), (1, 1), (3, 1))),
+                                      GriddedChord(c2, ((1, 1), (3, 1), (3, 1), (3, 1), (3, 1), (3, 1))),
+                                      GriddedChord(c2, ((3, 1), (3, 1), (3, 1), (3, 1), (3, 1), (3, 1))),
+                                
+                                      GriddedChord(Chord((0, 1, 0, 1)), ((1, 1), (1, 1), (3, 1), (3, 1))),
+                                      GriddedChord(Chord((0, 1, 1, 0)), ((1, 1), (1, 1), (3, 1), (3, 1))),),
+                        requirements=((GriddedChord.single_chord(((0, 0), (2, 0))),),))
 
-strat = RowColumnSeparationStrategy()
-for comp in strat.decomposition_function(lukas_t3_prime):
-    print(comp)

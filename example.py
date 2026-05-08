@@ -22,9 +22,9 @@ start_time = time.time()
 
 
 pack = StrategyPack(
-    initial_strats=[FactorFactory(), RequirementInsertionFactory(maxreqlen=1, limited_insertion=True), ], # rules for initial strategies that are domain specific to be applied right away (like factor strategy)
+    initial_strats=[FactorFactory(), ], # rules for initial strategies that are domain specific to be applied right away (like factor strategy)
     inferral_strats=[RowColumnSeparationStrategy(), SubobstructionInferralFactory()], # rules equivalence strategies (that get applied right away)  
-    expansion_strats=[[RequirementPlacementFactory(max_reqlist_size=2, max_chord_size=3, dirs=(DIR_SOUTH, DIR_EAST))]], # rules for domain specific strategies that are used less often
+    expansion_strats=[[RequirementInsertionFactory(maxreqlen=1, limited_insertion=1), ], [RequirementPlacementFactory(max_reqlist_size=2, max_chord_size=3, dirs=(DIR_SOUTH, DIR_EAST))]], # rules for domain specific strategies that are used less often
     ver_strats=[AtomStrategy()], # returns a rule when the count of a class is known.
     name=("Finding specification for pattern avoiding chord diagrams (ex. non crossing)"),
 )
@@ -61,7 +61,7 @@ face_ex = Tiling((GriddedChord(Chord((0, 1, 0, 1)), ((0, 0), (0, 0), (0, 0), (0,
                   GriddedChord(Chord((0, 0)), ((0, 0), (1, 0)))))
 
 start_time = time.time()
-searcher = CombinatorialSpecificationSearcher(non_crossing, pack)
+searcher = CombinatorialSpecificationSearcher(fig3_6, pack)
 spec = searcher.auto_search()
 
 end_time = time.time()

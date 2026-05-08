@@ -192,15 +192,17 @@ class RequirementInsertionFactory(RequirementInsertionWithRestrictionFactory):
     Insert all possible requirements the obstruction allows if the tiling does
     not have requirements.
 
-    If <limited_insertion> is true, the default behavior, requirements will only be
-    inserted on Tilings that have no requirements.
+    For limited_insertion = n, requirements will only be inserted on Tilings that 
+    have at most n-1 requirements
     """
+    #Note that previous behavious was if limited_insertion is true, the default behavior, 
+    #requirements will only be inserted on Tilings that have no requirements.
 
     def __init__(
         self,
         maxreqlen: int = 2,
         extra_basis: Optional[List[Chord]] = None,
-        limited_insertion: bool = True,
+        limited_insertion: int = 1,
         ignore_parent: bool = False,
         allow_factorable_insertions: bool = False,
     ) -> None:
@@ -234,7 +236,7 @@ class RequirementInsertionFactory(RequirementInsertionWithRestrictionFactory):
                     yield (GriddedChord(Chord(gc.patt), gc.pos),)
 
     def __call__(self, comb_class: Tiling) -> Iterator[RequirementInsertionStrategy]:
-        if self.limited_insertion and comb_class.requirements:
+        if len(comb_class.requirements) >= self.limited_insertion:
             return
         yield from super().__call__(comb_class)
 
