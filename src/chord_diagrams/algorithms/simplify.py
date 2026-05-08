@@ -96,13 +96,6 @@ class SimplifyObstructionsAndRequirements:
         Here we simplify a cell to have a point-obstruction if it 
         originally has a chord obstruction in it and all other active cells 
         in the row have a chord obstruction between them and the cell.
-        Remove cells that are forced empty by row-wise chord obstructions.
-
-        When a cell is removed, we:
-        - remove the cell from the active cells,
-        - remove all obstructions mentioning the cell,
-        - check if any requirement lists require the cell and if so make this the empty tiling
-        - remove any requirements that reference the cell
         """
 
         active_cells = set(self.active_cells())
@@ -134,35 +127,11 @@ class SimplifyObstructionsAndRequirements:
         if not cells_to_remove:
             return
 
-        # Remove any requirements that reference removed cells. If this empties a
-        # requirement list, then the tiling is empty (as there are no valid gridded chords).
-        if self.requirements:
-            new_requirements = []
-            for req_list in self.requirements:
-                filtered = tuple(
-                    req
-                    for req in req_list
-                    if not any(pos in cells_to_remove for pos in req.pos)
-                )
-                if req_list and not filtered:
-                    self.obstructions = (GriddedChord.empty_chord(),)
-                    self.requirements = tuple()
-                    return
-                new_requirements.append(filtered)
-            self.requirements = tuple(new_requirements)
-
-        # Remove all obstructions involving removed cells
-        new_obstructions = []
-        for ob in self.obstructions:
-            if any(pos in cells_to_remove for pos in ob.pos):
-                continue
-            new_obstructions.append(ob)
-        
-        self.obstructions = tuple(new_obstructions)
-
-        # Remove the simplified cells from the active cells
-        self.active_cells = self.active_cells.difference(cells_to_remove)
-
+        # Add a point obstruction for each removed cell
+        point_obs = tuple(
+            GriddedChord.single_cell(Chord((0,)), cell) for cell in sorted(cells_to_remove)
+        )
+        self.obstructions = tuple(sorted(set(self.obstructions + point_obs)))
 
     def requirement_implied_by_some_requirement(
         self,
