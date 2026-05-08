@@ -99,9 +99,10 @@ class SimplifyObstructionsAndRequirements:
         Remove cells that are forced empty by row-wise chord obstructions.
 
         When a cell is removed, we:
-        - add a point-obstruction marker,
-        - remove all obstructions mentioning the cell (except the point marker),
-        - check if any requirements used the cell and if so make this the empty tiling
+        - remove the cell from the active cells,
+        - remove all obstructions mentioning the cell,
+        - check if any requirement lists require the cell and if so make this the empty tiling
+        - remove any requirements that reference the cell
         """
 
         active_cells = set(self.active_cells())
@@ -156,12 +157,11 @@ class SimplifyObstructionsAndRequirements:
             if any(pos in cells_to_remove for pos in ob.pos):
                 continue
             new_obstructions.append(ob)
-
-        # Mark removed cells as empty with point-obstruction markers.
-        point_markers = {GriddedChord.single_cell(Chord((0,)), cell) for cell in cells_to_remove}
-        new_obstructions.extend(pm for pm in point_markers if pm not in new_obstructions)
         
         self.obstructions = tuple(new_obstructions)
+
+        # Remove the simplified cells from the active cells
+        self.active_cells = self.active_cells.difference(cells_to_remove)
 
 
     def requirement_implied_by_some_requirement(
@@ -202,11 +202,11 @@ class SimplifyObstructionsAndRequirements:
 
     def simplify_once(self) -> None:
         """Do one pass of all the different simplify methods."""
+        self.remove_redundant_cells()
         self.remove_redundant_obstructions()
         #print("after remove redundant", self.obstructions)
         self.remove_redundant_requirements()
         self.remove_redundant_lists_requirements()
-        self.remove_redundant_cells()
         # maybe add this back in, not sure what it is doing, but it skrews with obstructions in tilings tests
         #self.remove_factors_from_obstructions() 
         #print("after remove factors", self.obstructions)
