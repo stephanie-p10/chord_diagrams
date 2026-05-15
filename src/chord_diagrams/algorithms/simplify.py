@@ -113,6 +113,8 @@ class SimplifyObstructionsAndRequirements:
             )
 
         cells_to_remove: Set[Tuple[int, int]] = set()
+
+        # removes cells that are empty due to chord obstructions in the row
         for cell in active_cells:
             # Must obstruct a chord entirely within the cell.
             if not has_single_chord_obstruction_in_cells(cell, cell):
@@ -122,6 +124,14 @@ class SimplifyObstructionsAndRequirements:
                 continue
             # Must obstruct a chord between this cell and every other active cell in the row.
             if all(has_single_chord_obstruction_in_cells(cell, other) for other in row_cells):
+                cells_to_remove.add(cell)
+
+        # removes cells that are empty due to RGF properties of chord diagrams.
+        required_cells = [cell for cell in active_cells if self.implied_by_requirements(GriddedChord(Chord((0,)), (cell,)))]
+        for cell in active_cells:
+            southwest_active_cells = [c2 for c2 in active_cells if (c2[0] <= cell[0] and c2[1] <= cell[1])]
+            southeast_required_cells = [c2 for c2 in required_cells if (c2[0] > cell[0] and c2[1] < cell[1])]
+            if len(southwest_active_cells) == 0 and len(southeast_required_cells) > 0:
                 cells_to_remove.add(cell)
 
         if not cells_to_remove:
@@ -254,11 +264,11 @@ class SimplifyObstructionsAndRequirements:
     def implied_by_requirement(
         self, gc: "GriddedChord", req_list: Iterable["GriddedChord"]
     ) -> bool:
-        """Check whether a gridded Cayley permutation is implied by a requirement."""
+        """Check whether a gridded chord diagram is implied by a requirement."""
         return all(req.contains(gc) for req in req_list)
 
     def implied_by_requirements(self, gc: "GriddedChord") -> bool:
-        """Check whether a gridded Cayley permutation is implied by the requirements."""
+        """Check whether a gridded chord diagram is implied by the requirements."""
         return any(
             self.implied_by_requirement(gc, req_list) for req_list in self.requirements
         )
