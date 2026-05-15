@@ -707,6 +707,8 @@ class ChordPlacement:
                 translated_req_lists.append(self.get_multiplexes_of_gcs(req_list, cell_placed))
 
         # makes sure there is actually a requirement that was placed. 
+        print(translated_req_lists)
+        print(tiling_placed.requirements)
         assert len(translated_req_lists) < len(tiling_placed.requirements)
 
         single_point_req = GriddedChord(Chord((0,)), (translated_req_placed.pos[idx_to_place],)) # C in notes
@@ -728,6 +730,7 @@ class ChordPlacement:
             idx_place_second = source_idx
 
         placed_first_point = self.place_point(req_placed, idx_place_first, idx_place_second, dir)
+        print("placed first point", placed_first_point)
 
         translated_req_placed = self._gridded_chord_translation_with_point(req_placed, idx_place_first) 
 
@@ -776,13 +779,15 @@ non_crossing = Tiling(
     requirements=((GriddedChord(Chord((0, 0)), ((0, 0), (0, 0))),),),
 )
 
-if __name__ == "__main__":
-    placement_nc = ChordPlacement(non_crossing)
-    placement = ChordPlacement(t3)
+#if __name__ == "__main__":
+placement_nc = ChordPlacement(non_crossing)
+placement = ChordPlacement(t3)
 
-    GriddedChord.single_chord([(0, 0), (0, 0)])
-    GriddedChord(Chord((0, 0)), ((0, 0), (0, 0)))
+GriddedChord.single_chord([(0, 0), (0, 0)])
+GriddedChord(Chord((0, 0)), ((0, 0), (0, 0)))
+
+print("placement:")
 
 t = placement_nc.place_chord(GriddedChord(Chord((0, 0)), ((0, 0), (0, 0))), 0, DIR_SOUTH)
-print()
+t._simplify()
 print(t)

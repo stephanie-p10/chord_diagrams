@@ -40,10 +40,14 @@ class SimplifyObstructionsAndRequirements:
         obstructions: Tuple["GriddedChord", ...],
         requirements: Tuple[Tuple["GriddedChord", ...], ...],
         dimensions: Tuple[int, int],
+        active_cells: Tuple[Tuple[int, int]],
+        empty_cells: Tuple[Tuple[int, int]]
     ):
         self.obstructions = obstructions
         self.requirements = requirements
         self.dimensions = dimensions
+        self.active_cells = active_cells
+        self.empty_cells = empty_cells
         self.sort_obstructions()
 
     def remove_redundant_gridded_chords(
@@ -98,7 +102,7 @@ class SimplifyObstructionsAndRequirements:
         in the row have a chord obstruction between them and the cell.
         """
 
-        active_cells = set(self.active_cells())
+        active_cells = set(self.active_cells)
         if not active_cells:
             return
 
@@ -143,6 +147,9 @@ class SimplifyObstructionsAndRequirements:
         )
         self.obstructions = tuple(sorted(set(self.obstructions + point_obs)))
 
+        self.update_cells_status()
+        print("updated obstructions", self.obstructions[0])
+
     def requirement_implied_by_some_requirement(
         self,
         requirement: Tuple["GriddedChord", ...],
@@ -170,22 +177,29 @@ class SimplifyObstructionsAndRequirements:
         curr_obs = None
         curr_reqs = None
         while curr_obs != self.obstructions or curr_reqs != self.requirements:
-            #print(self.obstructions, self.requirements)
+            
+            print(self.obstructions[0])
             curr_obs = self.obstructions
             curr_reqs = self.requirements
             self.simplify_once()
-            #print("after simplify once", self.obstructions)
+            print("after simplify once", self.obstructions[0])
             self.sort_requirements()
+            print("after sort requirements", self.obstructions[0])
             self.sort_obstructions()
-            #print("after sort", self.obstructions)
+            print("after sort obs", self.obstructions[0])
+            print()
 
     def simplify_once(self) -> None:
         """Do one pass of all the different simplify methods."""
         self.remove_redundant_cells()
+        #print("before removing redundant obs", self.obstructions[0])
         self.remove_redundant_obstructions()
+        #print("after removing redundant obs", self.obstructions[0])
         #print("after remove redundant", self.obstructions)
         self.remove_redundant_requirements()
+        #print("after removing requirements", self.obstructions[0])
         self.remove_redundant_lists_requirements()
+        #print("after removing requirements lists", self.obstructions[0])
         # maybe add this back in, not sure what it is doing, but it skrews with obstructions in tilings tests
         #self.remove_factors_from_obstructions() 
         #print("after remove factors", self.obstructions)
@@ -200,7 +214,7 @@ class SimplifyObstructionsAndRequirements:
         """Orders the obstructions and removes duplicates."""
         self.obstructions = tuple(sorted(set(self.obstructions)))
 
-    def remove_factors_from_obstructions(self) -> None:
+    '''def remove_factors_from_obstructions(self) -> None:
         """Removes factors from all of the obstructions."""
         self.obstructions = tuple(
             self.remove_factors_from_obstruction(ob) for ob in self.obstructions
@@ -247,19 +261,23 @@ class SimplifyObstructionsAndRequirements:
         for cell in self.active_cells():
             if cell[1] == row:
                 cells.add(cell)
-        return cells
+        return cells'''
 
-    def active_cells(self) -> Set[Tuple[int, int]]:  # should be in tilings repo
+    def update_cells_status(self):  # should be in tilings repo
         """Returns the set of active cells in the tiling.
         (Cells are active if they do not contain a point obstruction.)"""
-        active_cells = set(
-            product(range(self.dimensions[0]), range(self.dimensions[1]))
-        )
+        active_cells = set(self.active_cells)
         for ob in self.obstructions:
             # Empty cells are marked by a point obstruction `Chord((0,))`.
             if ob.is_point() and ob.pos:
                 active_cells.discard(ob.pos[0])
-        return active_cells
+        self.active_cells = list(active_cells)
+        self.empty_cells = tuple(
+                cell
+                for cell in product(range(self.dimensions[0]), range(self.dimensions[1]))
+                if cell not in active_cells
+            ) 
+        
 
     def implied_by_requirement(
         self, gc: "GriddedChord", req_list: Iterable["GriddedChord"]

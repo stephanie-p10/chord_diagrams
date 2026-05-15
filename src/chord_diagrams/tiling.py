@@ -112,7 +112,6 @@ class Tiling(CombinatorialClass):
 
         if remove_empty_rows_and_cols:
             self._remove_empty_rows_and_cols()
-
  
     @property
     def obstructions(self):
@@ -398,7 +397,7 @@ class Tiling(CombinatorialClass):
 
         self._cached_properties["dimensions"] = (max_x + 1, max_y + 1)
 
-        return 
+        return
 
     def _prepare_properties(self, derive_empty = True) -> None:
         """
@@ -505,10 +504,17 @@ class Tiling(CombinatorialClass):
         self._requirements = tuple(expansion_class._requirements)
 
     def _simplify(self) -> None:
-        simplify_algo = SimplifyObstructionsAndRequirements(self.obstructions, self.requirements, self._cached_properties["dimensions"])
+        simplify_algo = SimplifyObstructionsAndRequirements(self.obstructions, 
+                                                            self.requirements, 
+                                                            self._cached_properties["dimensions"], 
+                                                            self._cached_properties["active_cells"], 
+                                                            self._cached_properties["empty_cells"])
         simplify_algo.simplify()
         self._obstructions = simplify_algo.obstructions
+        print("tiling obs", self._obstructions[0])
         self._requirements = simplify_algo.requirements
+        self._cached_properties["active_cells"] = simplify_algo.active_cells
+        self._cached_properties["empty_cells"] = simplify_algo.empty_cells
 
     def _minimize_mapping(self) -> RowColMap:
         """
