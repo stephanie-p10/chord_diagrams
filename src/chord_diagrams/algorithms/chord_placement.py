@@ -16,10 +16,10 @@ _src_root = Path(__file__).resolve().parents[2]  # .../src
 if str(_src_root) not in sys.path:
     sys.path.insert(0, str(_src_root))
  
-from chord_diagrams.misc import DIR_EAST, DIR_NONE, DIR_NORTH, DIR_SOUTH, DIR_WEST, DIRS
-from chord_diagrams.assumptions import TrackingAssumption
-from chord_diagrams.chords import Chord, GriddedChord
-from chord_diagrams.tiling import Tiling
+from src.chord_diagrams.misc import DIR_EAST, DIR_NONE, DIR_NORTH, DIR_SOUTH, DIR_WEST, DIRS
+from src.chord_diagrams.assumptions import TrackingAssumption
+from src.chord_diagrams.chords import Chord, GriddedChord
+from src.chord_diagrams.tiling import Tiling
 
 
 from itertools import chain, filterfalse, product, chain
@@ -508,6 +508,10 @@ class ChordPlacement:
         if self.own_col:  # Only placing in own column
             return placed_in_col
         raise Exception("Not placing at all!!")
+
+    def chords_already_placed(self, gcs: Iterable[GriddedChord], chords: Iterable[int]) -> bool:
+        all_placed = all(self.chord_already_placed(gc, chord) for gc, chord in zip(gcs, chords))
+        return all_placed
     
     def _point_translation(
             self, gc: GriddedChord, idx: int, placed_cell: Cell
@@ -571,6 +575,7 @@ class ChordPlacement:
 
         These are point multiplexes around the point point_index in gc. 
         """
+        #print("type of gc in _gridded_chord_translation", type(gc))
         chord_placed = gc.patt[point_index] # gets the chord number of the chord being placed
 
         new_pos = [
@@ -679,11 +684,11 @@ class ChordPlacement:
         return list(chain(isolate_chord, isolate_row, isolate_col))
 
 
-    def place_point(self, req_placed: GriddedChord, idx_to_place: int, idx_other_end: int, dir: int, tiling_placed: Tiling = None):
+    def place_point(self, req_placed: GriddedChord, idx_to_place: int, idx_other_end: int, dir: int, tiling_placed: Tiling = None, remove_empty: bool = True):
         """Places the point at idx in req_placed in the direction dir on tiling_placed."""
         if tiling_placed == None:
             tiling_placed = self._tiling
-
+        #print("tiling to place", tiling_placed)
         cell_placed = req_placed.pos[idx_to_place]  # 'c' in notes
 
         translated_req_placed = self._gridded_chord_translation_with_point(req_placed, idx_to_place)  # {m_c^I(r)} in notes
@@ -703,12 +708,21 @@ class ChordPlacement:
         translated_req_lists = [] # {R_2',...,R_k'} in notes.
         # However, the requirement list being placed may not be the first one WLOG like on paper
         for req_list in tiling_placed.requirements:
+            #print("len req_list", len(req_list)==1)
+            '''print("req_placed:", req_placed, type(req_placed)) 
+            print("req_list:")
+            for req in req_list:
+                print(req, req_placed == req, type(req))
+            print("req_placed in req_list:", req_placed in req_list)'''
+            print("type of req_placed", type(req_placed))
+            print("type of req", type(req_list[0]))
             if not (len(req_list) == 1 and req_placed in req_list):
                 translated_req_lists.append(self.get_multiplexes_of_gcs(req_list, cell_placed))
 
+        
         # makes sure there is actually a requirement that was placed. 
-        print(translated_req_lists)
-        print(tiling_placed.requirements)
+        #print(translated_req_lists, len(translated_req_lists))
+        #print(tiling_placed.requirements, len(tiling_placed.requirements))
         assert len(translated_req_lists) < len(tiling_placed.requirements)
 
         single_point_req = GriddedChord(Chord((0,)), (translated_req_placed.pos[idx_to_place],)) # C in notes
@@ -719,29 +733,41 @@ class ChordPlacement:
 
         new_reqs = list(chain([(translated_req_placed,)], translated_req_lists, [(single_point_req,)]))
 
-        return Tiling(new_obs, new_reqs, new_linkages)
+        return Tiling(new_obs, new_reqs, new_linkages, remove_empty_rows_and_cols = remove_empty)
     
     def place_chord(self, req_placed: GriddedChord, chord_to_place: int, dir: int):
         source_idx, sink_idx = req_placed.chord_dict[chord_to_place]
         idx_place_first = source_idx
         idx_place_second = sink_idx
-        if dir == DIR_SOUTH or dir == DIR_NORTH:
+        if dir == DIR_EAST or dir == DIR_WEST:
             idx_place_first = sink_idx
             idx_place_second = source_idx
 
-        placed_first_point = self.place_point(req_placed, idx_place_first, idx_place_second, dir)
-        print("placed first point", placed_first_point)
+        print("\n\n\n")
+        print("type of req_placed before first placement", type(req_placed))
+        # Tiling after the first point of chord_to_place has been placed. Note that empty rows and columns remain 
+        # to make it easier to calculate the updated position of the requirement being placed. 
+        placed_first_point = self.place_point(req_placed, idx_place_first, idx_place_second, dir, remove_empty=False)
 
+        print("type of gcs in self.tiling reqs", type(self._tiling.requirements[0][0]))
+        print("type of gcs in placed_first_point reqs", type(placed_first_point.requirements[0][0]))
+        #print("placed first point", placed_first_point)
+
+        print("type of req_placed before translation", type(req_placed))
+        # This is the requirement being placed updated to the position it would be after the first point has been placed.
         translated_req_placed = self._gridded_chord_translation_with_point(req_placed, idx_place_first) 
+        print("translated_req_placed type", type(translated_req_placed))
+        #print("req placed for placing second point", translated_req_placed)
 
-        placed_second_point = self.place_point(translated_req_placed, idx_place_second, idx_place_first, dir, placed_first_point)
+        # Tiling after the second point of the chord being placed has been placed.
+        placed_second_point = self.place_point(translated_req_placed, idx_place_second, idx_place_first, dir, placed_first_point, remove_empty=True)
 
         return placed_second_point
 
-    def place_chords(self, req_list_to_place: Tuple[GriddedChord, ...], dir: int):
+    def place_chords(self, req_list_to_place: Tuple[GriddedChord, ...], chords_to_place: Iterable[int], dir: int):
         res = []
-        for req in req_list_to_place:
-            res.append(self.place_chord(req, dir))
+        for req, chord in zip(req_list_to_place, chords_to_place):
+            res.append(self.place_chord(req, chord, dir))
         return tuple(res)
 
 
@@ -786,8 +812,10 @@ placement = ChordPlacement(t3)
 GriddedChord.single_chord([(0, 0), (0, 0)])
 GriddedChord(Chord((0, 0)), ((0, 0), (0, 0)))
 
-print("placement:")
+#print("placement:")
 
 t = placement_nc.place_chord(GriddedChord(Chord((0, 0)), ((0, 0), (0, 0))), 0, DIR_SOUTH)
+#print(t)
 t._simplify()
-print(t)
+#print(t)
+#print([t])

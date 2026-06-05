@@ -133,7 +133,8 @@ class SimplifyObstructionsAndRequirements:
         # removes cells that are empty due to RGF properties of chord diagrams.
         required_cells = [cell for cell in active_cells if self.implied_by_requirements(GriddedChord(Chord((0,)), (cell,)))]
         for cell in active_cells:
-            southwest_active_cells = [c2 for c2 in active_cells if (c2[0] <= cell[0] and c2[1] <= cell[1])]
+            southwest_active_cells = [c2 for c2 in active_cells if (c2[0] <= cell[0] and c2[1] <= cell[1]) and not 
+                                                                   (c2[0] == cell[0] and c2[1] == cell[1])]
             southeast_required_cells = [c2 for c2 in required_cells if (c2[0] > cell[0] and c2[1] < cell[1])]
             if len(southwest_active_cells) == 0 and len(southeast_required_cells) > 0:
                 cells_to_remove.add(cell)
@@ -145,10 +146,11 @@ class SimplifyObstructionsAndRequirements:
         point_obs = tuple(
             GriddedChord.single_cell(Chord((0,)), cell) for cell in sorted(cells_to_remove)
         )
+        print("cells being removed:", cells_to_remove)
         self.obstructions = tuple(sorted(set(self.obstructions + point_obs)))
 
         self.update_cells_status()
-        print("updated obstructions", self.obstructions[0])
+        #print("updated obstructions", self.obstructions[0])
 
     def requirement_implied_by_some_requirement(
         self,
@@ -178,16 +180,16 @@ class SimplifyObstructionsAndRequirements:
         curr_reqs = None
         while curr_obs != self.obstructions or curr_reqs != self.requirements:
             
-            print(self.obstructions[0])
+            #print(self.obstructions[0])
             curr_obs = self.obstructions
             curr_reqs = self.requirements
             self.simplify_once()
-            print("after simplify once", self.obstructions[0])
+            #print("after simplify once", self.obstructions[0])
             self.sort_requirements()
-            print("after sort requirements", self.obstructions[0])
+            #print("after sort requirements", self.obstructions[0])
             self.sort_obstructions()
-            print("after sort obs", self.obstructions[0])
-            print()
+            #print("after sort obs", self.obstructions[0])
+            #print()
 
     def simplify_once(self) -> None:
         """Do one pass of all the different simplify methods."""

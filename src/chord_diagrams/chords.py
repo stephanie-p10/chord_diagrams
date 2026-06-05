@@ -1360,39 +1360,44 @@ class GriddedChord(CombinatorialObject):
             (next(new_subchord) if pos == cell else val for val, pos in self), self.pos
         )
 
-
-    ### Miscellaneous/Not sure what is happening ###
-    # used for finding extreme point for point placement
     def forced_point_of_requirement(
-        self, gcs: Tuple["GriddedChord", ...], indices: Tuple[int, ...], direction: int
-    ) -> Optional[Tuple[int, int]]:
+        self, gcs: Tuple["GriddedChord", ...], chords: Tuple[int, ...], direction: int
+    ) -> Optional[Tuple[int, Tuple[int, int]]]:
         """
-        Return the pair (x, y) where x is the gridded chord in gcs that is
-        farthest in the given direction in self, and y is index of the forced point
-        with respect to the gps and indices. If gcs is avoided, then
+        Return the pair (x, y) where x is the index of the gridded chord in gcs that is
+        farthest in the given direction in self, and y is the indices of the forced chord
+        with respect to the gcs and chords. If gcs is avoided, then
         return None.
         """
 
-        def directionmost(i1: int, i2: int) -> int:
-            """return the directionmost between i1 and i2."""
-            if direction == DIR_EAST:
-                return i1 if self._patt[i1] > self._patt[i2] else i2
+        def directionmost(c1: Tuple[int, int], c2: Tuple[int, int]) -> Tuple[int, int]:
+            """return the directionmost between c1 and c2."""
+            if direction == DIR_EAST: # determined based off source
+                if c1[0] < c2[0]:
+                    return c1
+                return c2
             if direction == DIR_NORTH:
-                return max(i1, i2)
-            if direction == DIR_WEST:
-                return i1 if self._patt[i1] < self._patt[i2] else i2
+                if self._patt[c1[0]] > self._patt[c2[0]]:
+                    return c1
+                return c2
+            if direction == DIR_WEST: # determined based off sink
+                if c1[1] > c2[1]:
+                    return c1
+                return c2
             if direction == DIR_SOUTH:
-                return min(i1, i2)
+                if self._patt[c1[0]] < self._patt[c2[0]]:
+                    return c1
+                return c2
             raise ValueError("You're lost, no valid direction")
 
-        res: Optional[Tuple[int, int]] = None
-        for idx, gp in enumerate(gcs):
-            forced_index_in_patt = indices[idx]
-            for occurrence in gp.occurrences_in(self):
+        res: Optional[Tuple[int, Tuple[int, int]]] = None
+        for idx, gc in enumerate(gcs):
+            forced_source_in_patt, forced_sink_in_patt = self.chord_dict[chords[idx]]
+            for occurrence in gc.occurrences_in(self):
                 if res is None:
-                    res = idx, occurrence[forced_index_in_patt]
+                    res = idx, (occurrence[forced_source_in_patt], occurrence[forced_sink_in_patt])
                 else:
-                    new_res = directionmost(res[1], occurrence[forced_index_in_patt])
+                    new_res = directionmost(res[1], (occurrence[forced_source_in_patt], occurrence[forced_sink_in_patt]))
                     if res[1] != new_res:
                         res = idx, new_res
         return res
@@ -1523,6 +1528,8 @@ class GriddedChord(CombinatorialObject):
 
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, type(self)):
+            #print(self, type(self))
+            #print(other, type(other))
             return False
         return self._patt == other._patt and self._pos == other._pos
 

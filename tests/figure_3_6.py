@@ -1,3 +1,10 @@
+import sys
+from pathlib import Path
+ 
+_src_root = Path(__file__).resolve().parents[2]  # .../src
+if str(_src_root) not in sys.path:
+    sys.path.insert(0, str(_src_root))
+
 from comb_spec_searcher import (
     AtomStrategy,
     CartesianProductStrategy,
@@ -7,15 +14,15 @@ from comb_spec_searcher import (
     DisjointUnionStrategy,
     StrategyPack,
 )
-from misc import DIR_EAST, DIR_SOUTH
+from src.chord_diagrams.misc import DIR_EAST, DIR_SOUTH
 
-from chords import GriddedChord, Chord
-from tiling import Tiling
-from strategies.obstruction_inferral import SubobstructionInferralFactory
-from strategies.factor import FactorFactory, FactorStrategy, Factor
-from strategies.requirement_insertion import RequirementInsertionFactory, RequirementInsertionStrategy
-from strategies.row_col_separation import RowColumnSeparationStrategy
-from strategies.chord_placement import RequirementPlacementFactory, RequirementPlacementStrategy, RequirementPlacement
+from src.chord_diagrams.chords import GriddedChord, Chord
+from src.chord_diagrams.tiling import Tiling
+from src.chord_diagrams.strategies.obstruction_inferral import SubobstructionInferralFactory
+from src.chord_diagrams.strategies.factor import FactorFactory, FactorStrategy, Factor
+from src.chord_diagrams.strategies.requirement_insertion import RequirementInsertionFactory, RequirementInsertionStrategy
+from src.chord_diagrams.strategies.row_col_separation import RowColumnSeparationStrategy
+from src.chord_diagrams.strategies.chord_placement import RequirementPlacementFactory, RequirementPlacementStrategy, RequirementPlacement
 
 # patterns from in theorem 3.1.2 class
 c1 = Chord((0, 1, 2, 0, 1, 2))
