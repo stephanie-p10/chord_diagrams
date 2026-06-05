@@ -353,7 +353,6 @@ class ChordPlacementStrategy(DisjointUnionStrategy[Tiling, GriddedChord]):
         return ChordPlacement(tiling, own_col=self.own_col, own_row=self.own_row)
 
     def decomposition_function(self, comb_class: Tiling) -> Tuple[Tiling, ...]:
-        #print("type of gc in decomposition function in req placement strategy", self.gcs[0])
         placement_class = self.placement_class(comb_class)
         # if the gcs are a valid requirement that can be placed and they have not already been placed
         if self.gcs in comb_class.requirements and not placement_class.chords_already_placed(self.gcs, self.chords_to_place):
