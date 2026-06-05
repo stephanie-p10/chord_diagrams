@@ -15,10 +15,10 @@ from comb_spec_searcher import DisjointUnionStrategy, StrategyFactory
 from comb_spec_searcher.exception import StrategyDoesNotApply
 from comb_spec_searcher.strategies import Rule
 from comb_spec_searcher.strategies.strategy import VerificationStrategy
-from ..chords import Chord, GriddedChord
-from ..tiling import Tiling
+from ..common.chords import Chord, GriddedChord
+from ..common.tiling import Tiling
 from ..algorithms.chord_placement import RequirementPlacement, ChordPlacement
-from ..misc import DIR_EAST, DIR_NONE, DIR_NORTH, DIR_SOUTH, DIR_WEST, DIRS
+from ..common import DIR_EAST, DIR_NONE, DIR_NORTH, DIR_SOUTH, DIR_WEST, DIRS
 from itertools import product
 
 Cell = Tuple[int, int]

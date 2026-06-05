@@ -1,16 +1,19 @@
-"""Generalized factorization strategy (shifted Cartesian product).
+"""Factorization strategies for the specification searcher.
 
-Nabergall's generalized factorization is not a plain Cartesian product: factors
-may overlap on a shared subtiling and the size accounting is shifted by the
-overlap size. This module implements a strategy using
-`ShiftedCartesianProduct` to encode the generating function identity.
+These strategies expose tiling factorization (disjoint factors and variants
+with interleaving) to `comb_spec_searcher` by implementing the
+`StrategyFactory`/`Strategy` interfaces.
 
-See also `chord_diagrams.algorithms.generalized_factor.GeneralizedFactor` for
-the partitioning logic used to build the strategy.
+The core contract is:\n
+- `decomposition_function(parent)` returns the child tilings representing the
+  factors.\n
+- `forward_map`/`backward_map` translate gridded chord objects between parent
+  and children via the tilings' row/column maps.\n
+- `extra_parameters` propagates tracking assumptions when present.\n
 """
 try:
-    from ..chords import GriddedChord, Chord
-    from ..tiling import Tiling
+    from steph_chords.src.common.chords import GriddedChord, Chord
+    from steph_chords.src.common.tiling import Tiling
 except ImportError:  
     import sys
     from pathlib import Path
@@ -19,9 +22,8 @@ except ImportError:
     if str(_src_root) not in sys.path:
         sys.path.insert(0, str(_src_root))
 
-    from chord_diagrams.chords import GriddedChord, Chord
-    from chord_diagrams.tiling import Tiling
-
+    from steph_chords.src.common.chords import GriddedChord, Chord
+    from steph_chords.src.common.tiling import Tiling
 
 from collections import Counter
 from functools import reduce
@@ -71,22 +73,11 @@ from tilings.strategies.assumption_insertion import (
 Cell = Tuple[int, int]
 
 __all__ = (
-    "GeneralizedFactorFactory",
-    "GeneralizedFactorStrategy",
+    "FactorFactory",
+    "FactorStrategy",
+    "FactorWithInterleavingStrategy",
+    "FactorWithMonotoneInterleavingStrategy",
 )
-
-# NOTE:
-# The generalized factorization of Nabergall (Section 2.2.4) is *not* a plain
-# cartesian product: factors may overlap on a common subtiling and the size
-# accounting is shifted by the overlap sizes. We implement this by using a
-# custom constructor (ShiftedCartesianProduct) that encodes the generating
-# function identity
-#
-#   T(x) = Π_i V_i(x) / x^{N_i}
-#
-# from the paper, rather than the standard Π_i V_i(x).
-
-from .shifted_cartesian_product import ShiftedCartesianProduct
 
 TempGP = Tuple[
     Tuple[
@@ -96,36 +87,16 @@ TempGP = Tuple[
 ]
 
 
-class GeneralizedFactorStrategy(CartesianProductStrategy[Tiling, GriddedChord]):
+class FactorStrategy(CartesianProductStrategy[Tiling, GriddedChord]):
     def __init__(
         self,
         partition: Iterable[Iterable[Cell]],
-        shifts: Optional[Tuple[int, ...]] = None,
-        shift_reliance: Optional[Set[int]] = None,
         ignore_parent: bool = True,
         workable: bool = True,
     ):
         self.partition = tuple(sorted(tuple(sorted(p)) for p in partition))
-        self.shifts = tuple(shifts or (0 for _ in self.partition))
-        # indices of children whose reliance profile should stop at n-1 (paper's S)
-        self.shift_reliance = set(shift_reliance or set())
         super().__init__(
             ignore_parent=ignore_parent, workable=workable, inferrable=False
-        )
-
-    def constructor(
-        self, comb_class: Tiling, children: Optional[Tuple[Tiling, ...]] = None
-    ) -> ShiftedCartesianProduct:
-        if children is None:
-            children = self.decomposition_function(comb_class)
-            if children is None:
-                raise StrategyDoesNotApply("Strategy does not apply")
-        return ShiftedCartesianProduct(
-            parent=comb_class,
-            children=children,
-            shifts=self.shifts,
-            shift_reliance=self.shift_reliance,
-            extra_parameters=self.extra_parameters(comb_class, children),
         )
 
     def decomposition_function(self, comb_class: Tiling) -> Tuple[Tiling, ...]:
@@ -158,9 +129,7 @@ class GeneralizedFactorStrategy(CartesianProductStrategy[Tiling, GriddedChord]):
         partition_str = " / ".join(
             f"{{{', '.join(map(str, part))}}}" for part in self.partition
         )
-        if any(self.shifts):
-            return f"generalized factor with cover {partition_str} (shifts={self.shifts})"
-        return f"generalized factor with partition {partition_str}"
+        return f"factor with partition {partition_str}"
 
     def backward_map(
         self,
@@ -198,14 +167,12 @@ class GeneralizedFactorStrategy(CartesianProductStrategy[Tiling, GriddedChord]):
         )
 
     def __str__(self) -> str:
-        return "generalized_factor"
+        return "factor"
 
     def __repr__(self) -> str:
         args = ", ".join(
             [
                 f"partition={self.partition}",
-                f"shifts={self.shifts}",
-                f"shift_reliance={sorted(self.shift_reliance)}",
                 f"ignore_parent={self.ignore_parent}",
                 f"workable={self.workable}",
             ]
@@ -220,23 +187,19 @@ class GeneralizedFactorStrategy(CartesianProductStrategy[Tiling, GriddedChord]):
         d.pop("inferrable")
         d.pop("possibly_empty")
         d["partition"] = self.partition
-        d["shifts"] = self.shifts
-        d["shift_reliance"] = sorted(self.shift_reliance)
         return d
 
     @classmethod
-    def from_dict(cls, d: dict) -> "GeneralizedFactorStrategy":
+    def from_dict(cls, d: dict) -> "FactorStrategy":
         partition = cast(
             Tuple[Tuple[Cell]],
             tuple(tuple(tuple(c) for c in p) for p in d.pop("partition")),
         )
-        shifts = tuple(d.pop("shifts", (0 for _ in partition)))
-        shift_reliance = set(d.pop("shift_reliance", []))
-        return cls(partition=partition, shifts=shifts, shift_reliance=shift_reliance, **d)
+        return cls(partition=partition, **d)
     
 
 
-class GeneralizedFactorFactory(StrategyFactory[Tiling]):
+class FactorFactory(StrategyFactory[Tiling]):
     def __init__(
         self,
         unions: bool = False,
@@ -244,58 +207,38 @@ class GeneralizedFactorFactory(StrategyFactory[Tiling]):
         workable: bool = True,
     ) -> None:
         
-        self.factor_class = GeneralizedFactorStrategy
+        self.factor_class = FactorStrategy
         self.unions = unions
         self.ignore_parent = ignore_parent
         self.workable = workable
         self.tracked = False
 
-    def __call__(
-        self, comb_class: Tiling, **kwargs
-    ) -> Iterator[GeneralizedFactorStrategy]:
-        # Prefer generalized factorizations when they exist; fall back to the
-        # plain disjoint factorization when not.
-        from ..algorithms.generalized_factor import GeneralizedFactor
-
-        gf = GeneralizedFactor(comb_class)
-        for parts, shifts, shift_rel in gf.generalized_factorizations():
-            yield GeneralizedFactorStrategy(
-                parts,
-                shifts=shifts,
-                shift_reliance=shift_rel,
-                ignore_parent=self.ignore_parent,
-                workable=self.workable,
-            )
-            return
-
-        # fallback: disjoint factorization
+    def __call__(self, comb_class: Tiling, **kwargs) -> Iterator[FactorStrategy]:
         factor_algo = Factor(comb_class)
         if factor_algo.factorable():
             min_comp = tuple(tuple(part) for part in factor_algo.get_components())
             if self.unions:
                 for partition in partitions_iterator(min_comp):
-                    components = tuple(tuple(chain.from_iterable(part)) for part in partition)
+                    components = tuple(
+                        tuple(chain.from_iterable(part)) for part in partition
+                    )
                     yield self._build_strategy(components, workable=False)
             yield self._build_strategy(min_comp, workable=self.workable)
 
     def _build_strategy(
         self, components: Tuple[Tuple[Cell, ...], ...], workable: bool
-    ) -> GeneralizedFactorStrategy:
+    ) -> FactorStrategy:
         """
         Build the factor strategy for the given components.
 
         It ensure that a plain factor rule is returned.
         """
-        return GeneralizedFactorStrategy(
-            components,
-            shifts=tuple(0 for _ in components),
-            shift_reliance=set(),
-            ignore_parent=self.ignore_parent,
-            workable=workable,
+        return FactorStrategy(
+            components, ignore_parent=self.ignore_parent, workable=workable
         )
 
     def __str__(self) -> str:
-        s = "generalized_factor"
+        s = "factor"
         if self.unions:
             s = "unions of " + s
         if self.tracked:
@@ -323,6 +266,5 @@ class GeneralizedFactorFactory(StrategyFactory[Tiling]):
         return d
 
     @classmethod
-    def from_dict(cls, d: dict) -> "GeneralizedFactorFactory":
+    def from_dict(cls, d: dict) -> "FactorFactory":
         return cls(**d)
-

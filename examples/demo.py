@@ -8,15 +8,15 @@ from comb_spec_searcher import (
     CombinatorialSpecificationSearcher,
     StrategyPack,
 )
-from src.chord_diagrams.misc import DIR_EAST, DIR_SOUTH
+from steph_chords.src.common import DIR_EAST, DIR_SOUTH
 
-from src.chord_diagrams.chords import GriddedChord, Chord
-from src.chord_diagrams.tiling import Tiling
-from src.chord_diagrams.strategies.obstruction_inferral import SubobstructionInferralFactory
-from src.chord_diagrams.strategies.factor import FactorFactory
-from src.chord_diagrams.strategies.requirement_insertion import RequirementInsertionFactory
-from src.chord_diagrams.strategies.row_col_separation import RowColumnSeparationStrategy
-from src.chord_diagrams.strategies.chord_placement import ChordPlacementFactory
+from steph_chords.src.common.chords import GriddedChord, Chord
+from steph_chords.src.common.tiling import Tiling
+from steph_chords.src.strategies.obstruction_inferral import SubobstructionInferralFactory
+from steph_chords.src.strategies.factor import FactorFactory
+from steph_chords.src.strategies.requirement_insertion import RequirementInsertionFactory
+from steph_chords.src.strategies.row_col_separation import RowColumnSeparationStrategy
+from steph_chords.src.strategies.chord_placement import ChordPlacementFactory
 
 
 pack = StrategyPack(

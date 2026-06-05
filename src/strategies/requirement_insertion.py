@@ -21,8 +21,8 @@ from comb_spec_searcher.strategies import Rule
 from comb_spec_searcher.strategies.strategy import VerificationStrategy
 
 try:
-    from ..chords import Chord, GriddedChord
-    from ..tiling import Tiling
+    from ..common.chords import Chord, GriddedChord
+    from ..common.tiling import Tiling
 except ImportError:  
     import sys
     from pathlib import Path
@@ -31,8 +31,8 @@ except ImportError:
     if str(_src_root) not in sys.path:
         sys.path.insert(0, str(_src_root))
 
-    from chord_diagrams.chords import Chord, GriddedChord
-    from chord_diagrams.tiling import Tiling
+    from steph_chords.src.common.chords import Chord, GriddedChord
+    from steph_chords.src.common.tiling import Tiling
 
 from tilings.algorithms import Factor, SubobstructionInferral
 

@@ -34,9 +34,9 @@ from tilings.assumptions import (
     SumComponentAssumption,
 )
 from .assumptions import TrackingAssumption
-from .algorithms.map import RowColMap
-from .algorithms.simplify import SimplifyObstructionsAndRequirements
-from .algorithms.expansion import Expansion
+from ..algorithms.map import RowColMap
+from ..algorithms.simplify import SimplifyObstructionsAndRequirements
+from ..algorithms.expansion import Expansion
 from .latex_exporter import export_tiling_to_latex
 
 import time

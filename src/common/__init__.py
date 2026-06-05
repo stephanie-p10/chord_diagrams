@@ -23,4 +23,6 @@ __all__ = [
     "DIR_WEST",
     "DIR_SOUTH",
     "DIR_NONE",
+    "Chord",
+    "GriddedChord",
 ]

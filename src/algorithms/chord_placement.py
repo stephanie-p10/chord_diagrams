@@ -16,10 +16,10 @@ _src_root = Path(__file__).resolve().parents[2]  # .../src
 if str(_src_root) not in sys.path:
     sys.path.insert(0, str(_src_root))
  
-from src.chord_diagrams.misc import DIR_EAST, DIR_NONE, DIR_NORTH, DIR_SOUTH, DIR_WEST, DIRS
-from src.chord_diagrams.assumptions import TrackingAssumption
-from src.chord_diagrams.chords import Chord, GriddedChord
-from src.chord_diagrams.tiling import Tiling
+from steph_chords.src.common import DIR_EAST, DIR_NONE, DIR_NORTH, DIR_SOUTH, DIR_WEST, DIRS
+from steph_chords.src.common.assumptions import TrackingAssumption
+from steph_chords.src.common.chords import Chord, GriddedChord
+from steph_chords.src.common.tiling import Tiling
 
 
 from itertools import chain, filterfalse, product, chain

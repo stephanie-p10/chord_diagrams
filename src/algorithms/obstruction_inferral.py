@@ -2,9 +2,9 @@ import abc
 from typing import TYPE_CHECKING, Iterable, List, Optional, Set, Tuple
 
 try:
-    from ..chords import GriddedChord
+    from ..common.chords import GriddedChord
     if TYPE_CHECKING:
-        from ..tiling import Tiling
+        from ..common.tiling import Tiling
 except ImportError:  
     import sys
     from pathlib import Path
@@ -13,9 +13,9 @@ except ImportError:
     if str(_src_root) not in sys.path:
         sys.path.insert(0, str(_src_root))
 
-    from chord_diagrams.chords import GriddedChord
+    from steph_chords.src.common.chords import GriddedChord
     if TYPE_CHECKING:
-        from chord_diagrams.tiling import Tiling
+        from steph_chords.src.common.tiling import Tiling
 
 
 Cell = Tuple[int, int]

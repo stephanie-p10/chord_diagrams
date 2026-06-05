@@ -4,8 +4,8 @@ found in the algorithms folder.
 """
 
 try:
-    from ..chords import GriddedChord
-    from ..tiling import Tiling
+    from ..common.chords import GriddedChord
+    from ..common.tiling import Tiling
     from ..algorithms.row_col_sep import RowColSeparation
 except ImportError:  
     import sys
@@ -15,9 +15,9 @@ except ImportError:
     if str(_src_root) not in sys.path:
         sys.path.insert(0, str(_src_root))
 
-    from chord_diagrams.chords import GriddedChord
-    from chord_diagrams.tiling import Tiling
-    from chord_diagrams.algorithms.row_col_sep import RowColSeparation
+    from steph_chords.src.common.chords import GriddedChord
+    from steph_chords.src.common.tiling import Tiling
+    from steph_chords.src.algorithms.row_col_sep import RowColSeparation
 
 from typing import Dict, Iterator, Optional, Tuple
 from comb_spec_searcher import DisjointUnionStrategy

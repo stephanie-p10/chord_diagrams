@@ -11,8 +11,8 @@ from typing import TYPE_CHECKING, Dict, Tuple
 from tilings.exception import InvalidOperationError
 
 try:
-    from ..assumptions import TrackingAssumption
-    from ..chords import GriddedChord, Chord
+    from ..common.assumptions import TrackingAssumption
+    from ..common.chords import GriddedChord, Chord
 except ImportError:  
     import sys
     from pathlib import Path
@@ -21,8 +21,8 @@ except ImportError:
     if str(_src_root) not in sys.path:
         sys.path.insert(0, str(_src_root))
 
-    from chord_diagrams.assumptions import TrackingAssumption
-    from chord_diagrams.chords import GriddedChord, Chord
+    from steph_chords.src.common.assumptions import TrackingAssumption
+    from steph_chords.src.common.chords import GriddedChord, Chord
 
 Cell = Tuple[int, int]
 

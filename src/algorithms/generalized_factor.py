@@ -1,24 +1,10 @@
-"""Disjoint factorization of a tiling via Union-Find.
-
-This module provides the `Factor` algorithm used by both direct computations
-and by search strategies. It partitions the active cells of a tiling into
-connected components (“factors”) where connectivity is induced by:
-
-- sharing a row or column
-- appearing together in an obstruction or requirement list
-- being linked by tracking assumptions (when enabled)
-
-The partition is computed efficiently using a Union-Find structure over the
-grid cells.
-"""
-
 from collections import defaultdict
 from itertools import chain, combinations
 from typing import TYPE_CHECKING, Dict, Iterable, Iterator, List, Optional, Set, Tuple
 
 from permuta.misc import UnionFind
 try:
-    from ..chords import GriddedChord, Chord
+    from ..common.chords import GriddedChord, Chord
 except ImportError:  
     import sys
     from pathlib import Path
@@ -27,8 +13,7 @@ except ImportError:
     if str(_src_root) not in sys.path:
         sys.path.insert(0, str(_src_root))
 
-    from chord_diagrams.chords import GriddedChord, Chord
-    
+    from steph_chords.src.common.chords import GriddedChord, Chord
 from tilings.assumptions import ComponentAssumption, TrackingAssumption
 from tilings.misc import partitions_iterator
 
@@ -39,15 +24,22 @@ if TYPE_CHECKING:
 Cell = Tuple[int, int]
 ReqList = Tuple[GriddedChord, ...]
 
+__all__ = ("GeneralizedFactor",)
 
-class Factor:
-    """Algorithm to compute the factorisation of a tiling.
 
-    Two active cells are in the same factor if they are in the same row
-    or column, or they share an obstruction or a requirement.
+class GeneralizedFactor:
+    """
+    Implements a restricted version of Nabergall's generalized factorization (Section 2.2.4).
 
-    If using tracking assumptions, then two cells will also be in the same
-    factor if they are covered by the same assumption.
+    The full paper definition works with *factorizable covers* Q of the nonempty cells,
+    where the induced subtilings may overlap on intersection subtilings U^(ij) of size 0 or 1,
+    and the resulting size relation is shifted by the overlap sizes.
+
+    In this codebase we currently only implement the most basic special case:
+    - all overlaps are on a single common, atom subtiling U (|U| = 1),
+    - every factor is of the form A_i = C_i ∪ U where C_i are the strong components
+      (row/col + obstruction/requirement/linkage) of the complement.
+
     """
     def __init__(self, tiling: "Tiling") -> None:
         self._tiling = tiling
@@ -214,6 +206,145 @@ class Factor:
         """
         return len(self.get_components()) > 1
 
+    # ------------------------
+    # Generalized factorization
+    # ------------------------
+
+    def _cells_in_common_patterns(self) -> Set[Cell]:
+        """
+        Return cells participating in any obstruction/requirement/linkage.
+
+        Used to identify candidate overlap subtile cells U that are weakly isolated
+        from the rest of the tiling (i.e. no pattern spans U and its complement).
+        """
+        cells: Set[Cell] = set()
+        for ob in self._tiling.obstructions:
+            cells.update(ob.pos)
+        for req_list in self._tiling.requirements:
+            for req in req_list:
+                cells.update(req.pos)
+        for linkage in self._tiling.linkages:
+            cells.update(linkage)
+        for ass in self._tiling.assumptions:
+            for gp in getattr(ass, "gps", ()):
+                cells.update(gp.pos)
+        return cells
+
+    def _is_weakly_non_interacting(self, s1: Set[Cell], s2: Set[Cell]) -> bool:
+        """
+        Check the paper's *weakly non-interacting* condition for s1 and s2:
+        no obstruction, requirement list, linkage, or assumption involves cells from both.
+        """
+        if not s1 or not s2:
+            return True
+
+        # obstructions
+        for ob in self._tiling.obstructions:
+            pos = set(ob.pos)
+            if pos & s1 and pos & s2:
+                return False
+
+        # requirement lists
+        for req_list in self._tiling.requirements:
+            cells = set(chain.from_iterable(req.pos for req in req_list))
+            if cells & s1 and cells & s2:
+                return False
+
+        # linkages
+        for linkage in self._tiling.linkages:
+            cells = set(linkage)
+            if cells & s1 and cells & s2:
+                return False
+
+        # assumptions (treated like patterns on their gp positions)
+        for assumption in self._tiling.assumptions:
+            if isinstance(assumption, ComponentAssumption):
+                for cells in assumption.cell_decomposition(self._tiling):
+                    cells = set(cells)
+                    if cells & s1 and cells & s2:
+                        return False
+            else:
+                for gp in getattr(assumption, "gps", ()):
+                    cells = set(gp.pos)
+                    if cells & s1 and cells & s2:
+                        return False
+        return True
+
+    @staticmethod
+    def _is_strongly_non_interacting(s1: Set[Cell], s2: Set[Cell]) -> bool:
+        if not s1 or not s2:
+            return True
+        for c1 in s1:
+            for c2 in s2:
+                if c1[0] == c2[0] or c1[1] == c2[1]:
+                    return False
+        return True
+
+    def generalized_factorizations(
+        self,
+    ) -> Iterator[Tuple[Tuple[Tuple[Cell, ...], ...], Tuple[int, ...], Set[int]]]:
+        """
+        Yield generalized factorizations as (parts, shifts, shift_reliance).
+
+        - parts is a cover Q of active cells.
+        - shifts is the tuple N from the paper, one per part.
+        - shift_reliance is the paper's set S, represented as 0-based child indices.
+        """
+        active = set(self._active_cells)
+        if len(active) <= 1:
+            return
+
+        # Candidate U: a subset of active cells that is weakly non-interacting with its complement
+        # and whose induced subtiling is an atom (|U| = 1).
+        # We only try single-cell U first, then (rarely) pairs.
+        candidates: List[Set[Cell]] = [{c} for c in active]
+        if len(active) <= 12:
+            candidates += [set(p) for p in combinations(active, 2)]
+
+        for U in candidates:
+            rest = active - U
+            if not rest:
+                continue
+            if not self._is_weakly_non_interacting(U, rest):
+                continue
+
+            U_tiling = self._tiling.sub_tiling(tuple(sorted(U)))
+            if not U_tiling.is_atom():
+                continue
+
+            # Split the remainder by strong interaction (row/col) *plus* weak interactions.
+            # We approximate this using the existing union-find components on the full tiling,
+            # then refine by removing U.
+            comps = [set(comp) - U for comp in self.get_components()]
+            comps = [c for c in comps if c]
+            if len(comps) <= 1:
+                continue
+
+            # Build cover parts A_i = C_i ∪ U
+            parts = [tuple(sorted(c | U)) for c in comps]
+
+            # Ensure each part has something outside U.
+            if any(len(set(p) - U) == 0 for p in parts):
+                continue
+
+            # Compute shifts N as in the paper for the case where every intersection is U.
+            nU = U_tiling.minimum_size_of_object()
+            shifts = [0] + [nU for _ in range(1, len(parts))]
+
+            # Compute shift reliance S using minimum sizes (sufficient condition for |V_{N_i}|=0).
+            children = [self._tiling.sub_tiling(p) for p in parts]
+            shift_reliance: Set[int] = set()
+            for i in range(len(children)):
+                for j in range(len(children)):
+                    if i == j:
+                        continue
+                    if children[j].minimum_size_of_object() > shifts[j]:
+                        shift_reliance.add(i)
+                        break
+
+            yield tuple(parts), tuple(shifts), shift_reliance
+            return
+
     def factors(self) -> Tuple["Tiling", ...]:
         """
         Returns all the irreducible factors of the tiling.
@@ -229,15 +360,15 @@ class Factor:
             for f in self._get_factors_obs_and_reqs()
         )
 
-    def reducible_factorisations(self) -> Iterator[Tuple["Tiling", ...]]:
+    def reducible_factorizations(self) -> Iterator[Tuple["Tiling", ...]]:
         """
-        Iterator over all reducible factorisation that can be obtained by
+        Iterator over all reducible factorization that can be obtained by
         grouping of irreducible factors.
 
-        Each factorisation is a list of tiling.
+        Each factorization is a list of tiling.
 
         For example if T = T1 x T2 x T3 then (T1 x T3) x T2 is a possible
-        reducible factorisation.
+        reducible factorization.
         """
         min_comp = self._get_factors_obs_and_reqs()
         for partition in partitions_iterator(min_comp):
@@ -253,3 +384,4 @@ class Factor:
                     )
                 )
             yield tuple(factors)
+
