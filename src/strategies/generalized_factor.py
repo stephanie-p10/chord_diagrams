@@ -19,9 +19,9 @@ except ImportError:
     if str(_src_root) not in sys.path:
         sys.path.insert(0, str(_src_root))
 
-    from steph_chords.src.common.chords import GriddedChord, Chord
-    from steph_chords.src.common.tiling import Tiling
-
+    from src.common.chords import GriddedChord, Chord
+    from src.common.tiling import Tiling
+    from src.strategies.shifted_cartesian_product import ShiftedCartesianProduct
 
 from collections import Counter
 from functools import reduce
@@ -86,7 +86,7 @@ __all__ = (
 #
 # from the paper, rather than the standard Π_i V_i(x).
 
-from .shifted_cartesian_product import ShiftedCartesianProduct
+
 
 TempGP = Tuple[
     Tuple[

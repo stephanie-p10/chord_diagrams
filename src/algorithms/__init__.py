@@ -5,3 +5,6 @@ This package contains algorithmic helpers used by `Tiling` methods and by
 factorization, row/column separation, simplification, and pattern expansion.
 """
 
+__all__ = [
+    "RowColMap",
+]

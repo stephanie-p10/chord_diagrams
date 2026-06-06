@@ -15,9 +15,9 @@ except ImportError:
     if str(_src_root) not in sys.path:
         sys.path.insert(0, str(_src_root))
 
-    from steph_chords.src.common.chords import GriddedChord
-    from steph_chords.src.common.tiling import Tiling
-    from steph_chords.src.algorithms.row_col_sep import RowColSeparation
+    from src.common.chords import GriddedChord
+    from src.common.tiling import Tiling
+    from src.algorithms.row_col_sep import RowColSeparation
 
 from typing import Dict, Iterator, Optional, Tuple
 from comb_spec_searcher import DisjointUnionStrategy

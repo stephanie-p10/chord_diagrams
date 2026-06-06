@@ -6,8 +6,6 @@ Most code should import the core primitives from here:
 - `GriddedChord`: a chord pattern embedded into grid cells
 """
 
-from .common.chords import Chord, GriddedChord
-
 __version__ = "4.0.0"
 
-__all__ = ["Chord", "GriddedChord"]
+__all__ = []

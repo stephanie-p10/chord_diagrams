@@ -14,15 +14,15 @@ from comb_spec_searcher import (
     DisjointUnionStrategy,
     StrategyPack,
 )
-from steph_chords.src.common import DIR_EAST, DIR_SOUTH
+from src.common import DIR_EAST, DIR_SOUTH
 
-from steph_chords.src.common.chords import GriddedChord, Chord
-from steph_chords.src.common.tiling import Tiling
-from steph_chords.src.strategies.obstruction_inferral import SubobstructionInferralFactory
-from steph_chords.src.strategies.factor import FactorFactory, FactorStrategy, Factor
-from steph_chords.src.strategies.requirement_insertion import RequirementInsertionFactory, RequirementInsertionStrategy
-from steph_chords.src.strategies.row_col_separation import RowColumnSeparationStrategy
-from steph_chords.src.strategies.chord_placement import RequirementPlacementFactory, RequirementPlacementStrategy, RequirementPlacement
+from src.common.chords import GriddedChord, Chord
+from src.common.tiling import Tiling
+from src.strategies.obstruction_inferral import SubobstructionInferralFactory
+from src.strategies.factor import FactorFactory, FactorStrategy, Factor
+from src.strategies.requirement_insertion import RequirementInsertionFactory, RequirementInsertionStrategy
+from src.strategies.row_col_separation import RowColumnSeparationStrategy
+from src.strategies.chord_placement import RequirementPlacementFactory, RequirementPlacementStrategy, RequirementPlacement
 
 # patterns from in theorem 3.1.2 class
 c1 = Chord((0, 1, 2, 0, 1, 2))

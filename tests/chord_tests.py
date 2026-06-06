@@ -1,5 +1,5 @@
 import _direct_run_bootstrap 
-from chord_diagrams.chords import Chord
+from src.common.chords import Chord
 
 c1 = Chord((0, 1, 1, 0))
 c2 = Chord((0, 1, 0, 1))

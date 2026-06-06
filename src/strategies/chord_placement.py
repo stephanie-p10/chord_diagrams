@@ -10,15 +10,28 @@ The heavy lifting is performed by `chord_diagrams.algorithms.requirement_placeme
 
 from typing import (Any, Callable, Dict, FrozenSet, Iterable, Iterator, List, Optional, Set, Tuple, cast)
 
-#import tilings.strategies as strat
+try:
+    from ..common.chords import Chord, GriddedChord
+    from ..common.tiling import Tiling
+    from ..algorithms.chord_placement import RequirementPlacement, ChordPlacement
+    from ..common import DIR_EAST, DIR_NONE, DIR_NORTH, DIR_SOUTH, DIR_WEST, DIRS
+except ImportError: 
+    import sys
+    from pathlib import Path
+
+    _src_root = Path(__file__).resolve().parents[2]  # .../src
+    if str(_src_root) not in sys.path:
+        sys.path.insert(0, str(_src_root))
+
+    from src.common.chords import Chord, GriddedChord
+    from src.common.tiling import Tiling
+    from src.algorithms.chord_placement import RequirementPlacement, ChordPlacement
+    from src.common import DIR_EAST, DIR_NONE, DIR_NORTH, DIR_SOUTH, DIR_WEST, DIRS
+
 from comb_spec_searcher import DisjointUnionStrategy, StrategyFactory
 from comb_spec_searcher.exception import StrategyDoesNotApply
 from comb_spec_searcher.strategies import Rule
 from comb_spec_searcher.strategies.strategy import VerificationStrategy
-from ..common.chords import Chord, GriddedChord
-from ..common.tiling import Tiling
-from ..algorithms.chord_placement import RequirementPlacement, ChordPlacement
-from ..common import DIR_EAST, DIR_NONE, DIR_NORTH, DIR_SOUTH, DIR_WEST, DIRS
 from itertools import product
 
 Cell = Tuple[int, int]

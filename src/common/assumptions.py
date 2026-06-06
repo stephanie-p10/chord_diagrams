@@ -5,12 +5,22 @@ from typing import TYPE_CHECKING, Iterable, List, Optional, Tuple, Type
 
 from permuta import Perm
 
-from .chords import GriddedChord
+try:
+    from .chords import GriddedChord
+except ImportError:  
+    import sys
+    from pathlib import Path
+
+    _src_root = Path(__file__).resolve().parents[2]  # .../src
+    if str(_src_root) not in sys.path:
+        sys.path.insert(0, str(_src_root))
+
+    from src.common.chords import GriddedChord
 
 Cell = Tuple[int, int]
 
 if TYPE_CHECKING:
-    from .tiling import Tiling
+    from common.tiling import Tiling
 
 
 class TrackingAssumption:

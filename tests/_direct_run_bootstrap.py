@@ -5,11 +5,11 @@ Running a test module directly puts `tests/` on `sys.path` but not `src/`, so
 as the first statement in each test file to make direct execution work.
 """
 
-import sys
-from pathlib import Path
-
-_REPO_ROOT = Path(__file__).resolve().parent.parent
+'''REPO_ROOT = Path(__file__).resolve().parent.parent
 _SRC = _REPO_ROOT / "src"
 if _SRC.is_dir():
-    sys.path.insert(0, str(_SRC))
+    sys.path.insert(0, str(_SRC))'''
 
+import sys
+from pathlib import Path
+sys.path.append(str(Path(__file__).resolve().parent.parent))

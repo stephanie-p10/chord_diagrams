@@ -26,9 +26,9 @@ except ImportError:
     if str(_src_root) not in sys.path:
         sys.path.insert(0, str(_src_root))
 
-    from steph_chords.src.algorithms.obstruction_inferral import AllObstructionInferral, SubobstructionInferral
-    from steph_chords.src.common.chords import GriddedChord, Chord
-    from steph_chords.src.common.tiling import Tiling
+    from src.algorithms.obstruction_inferral import AllObstructionInferral, SubobstructionInferral
+    from src.common.chords import GriddedChord, Chord
+    from src.common.tiling import Tiling
 
 
 class ObstructionInferralStrategy(DisjointUnionStrategy[Tiling, GriddedChord]):
@@ -242,38 +242,3 @@ class SubobstructionInferralFactory(ObstructionInferralFactory):
         return cls()'''
 
 
-obfact = ObstructionInferralFactory()
-
-t = Tiling(obstructions=(GriddedChord(Chord((0, 0)), ((0, 0), (0, 0))),
-              GriddedChord(Chord((0, 0)), ((0, 1), (0, 1))),
-              GriddedChord(Chord((0, 0)), ((1, 1), (1, 1))),
-              GriddedChord(Chord((0, 0)), ((1, 1), (3, 1))),
-              GriddedChord(Chord((0, 0)), ((2, 0), (2, 0))),
-              GriddedChord(Chord((0, 0)), ((3, 1), (3, 1))),
-              GriddedChord(Chord((0, 1, 0, 1)), ((0, 0), (0, 0), (2, 0), (2, 0))),
-              GriddedChord(Chord((0, 1, 0, 1)), ((0, 0), (0, 1), (2, 0), (3, 1))),
-              GriddedChord(Chord((0, 1, 0, 1)), ((0, 0), (1, 2), (2, 0), (3, 2))),
-              GriddedChord(Chord((0, 1, 0, 1)), ((0, 1), (0, 1), (1, 1), (1, 1))),
-              GriddedChord(Chord((0, 1, 0, 1)), ((0, 1), (0, 1), (1, 1), (3, 1))),
-              GriddedChord(Chord((0, 1, 0, 1)), ((0, 1), (0, 1), (3, 1), (3, 1))),
-              GriddedChord(Chord((0, 1, 0, 1)), ((0, 1), (1, 2), (1, 1), (1, 2))),
-              GriddedChord(Chord((0, 1, 0, 1)), ((0, 1), (1, 2), (1, 1), (3, 2))),
-              GriddedChord(Chord((0, 1, 0, 1)), ((0, 1), (1, 2), (3, 1), (3, 2))),
-              GriddedChord(Chord((0, 1, 0, 1)), ((0, 1), (3, 2), (3, 1), (3, 2))),
-              GriddedChord(Chord((0, 1, 0, 1)), ((1, 2), (1, 2), (1, 2), (1, 2))),
-              GriddedChord(Chord((0, 1, 0, 1)), ((1, 2), (1, 2), (1, 2), (3, 2))),
-              GriddedChord(Chord((0, 1, 0, 1)), ((1, 2), (1, 2), (3, 2), (3, 2))),
-              GriddedChord(Chord((0, 1, 0, 1)), ((1, 2), (3, 2), (3, 2), (3, 2))),
-              GriddedChord(Chord((0, 1, 0, 1)), ((3, 2), (3, 2), (3, 2), (3, 2))),
-              GriddedChord(Chord((0, 1, 1, 0)), ((0, 0), (0, 0), (2, 0), (2, 0))),
-              GriddedChord(Chord((0, 1, 1, 0)), ((0, 0), (0, 1), (1, 1), (2, 0))),
-              GriddedChord(Chord((0, 1, 1, 0)), ((0, 1), (0, 1), (1, 1), (1, 1))),
-              GriddedChord(Chord((0, 1, 1, 0)), ((0, 1), (0, 1), (1, 1), (3, 1))),
-              GriddedChord(Chord((0, 1, 1, 0)), ((0, 1), (0, 1), (3, 1), (3, 1)))), 
-              requirements=((GriddedChord(Chord((0, 0)), ((0, 0), (2, 0))),),), assumptions=())
-
-print(t)
-
-newstrat = next(obfact(t))
-print(newstrat)
-print(newstrat.decomposition_function(t)[0])

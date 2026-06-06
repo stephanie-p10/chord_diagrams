@@ -1,21 +1,16 @@
 import abc
 from typing import TYPE_CHECKING, Iterable, List, Optional, Set, Tuple
 
-try:
-    from ..common.chords import GriddedChord
-    if TYPE_CHECKING:
-        from ..common.tiling import Tiling
-except ImportError:  
-    import sys
-    from pathlib import Path
+import sys
+from pathlib import Path
 
-    _src_root = Path(__file__).resolve().parents[2]  # .../src
-    if str(_src_root) not in sys.path:
-        sys.path.insert(0, str(_src_root))
+_src_root = Path(__file__).resolve().parents[2]  # .../src
+if str(_src_root) not in sys.path:
+    sys.path.insert(0, str(_src_root))
 
-    from steph_chords.src.common.chords import GriddedChord
-    if TYPE_CHECKING:
-        from steph_chords.src.common.tiling import Tiling
+from src.common.chords import GriddedChord
+
+from src.common.tiling import Tiling
 
 
 Cell = Tuple[int, int]
@@ -107,7 +102,9 @@ class SubobstructionInferral(ObstructionInferral):
         """
         subobs: Set[GriddedChord] = set()
         for ob in self._tiling.obstructions:
+            print(ob)
             subobs.update(ob.all_subchords(proper=True, return_all_subpatts=False))
+            print(type(list(subobs)[0]), type(GriddedChord.empty_chord()))
         subobs.remove(GriddedChord.empty_chord())
         return subobs
 

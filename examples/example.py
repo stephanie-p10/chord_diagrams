@@ -4,9 +4,9 @@ import time
 
 # Allow running this example directly from the repo without requiring an
 # editable install. (Adds `<repo>/src` to the import path.)
-_SRC_ROOT = (Path(__file__).resolve().parents[1] / "src").as_posix()
-if _SRC_ROOT not in sys.path:
-    sys.path.insert(0, _SRC_ROOT)
+import sys
+from pathlib import Path
+sys.path.append(str(Path(__file__).resolve().parent.parent))
 
 from comb_spec_searcher import (
     AtomStrategy,
@@ -17,17 +17,17 @@ from comb_spec_searcher import (
     DisjointUnionStrategy,
     StrategyPack,
 )
-from chord_diagrams import Chord, GriddedChord
-from chord_diagrams.misc import DIR_EAST, DIR_SOUTH
-from chord_diagrams.strategies.chord_placement import RequirementPlacementFactory
-from chord_diagrams.strategies.factor import FactorFactory
-from chord_diagrams.strategies.obstruction_inferral import (
+from src.common.chords import Chord, GriddedChord
+from src.common import DIR_EAST, DIR_SOUTH
+from src.strategies.chord_placement import RequirementPlacementFactory
+from src.strategies.factor import FactorFactory
+from src.strategies.obstruction_inferral import (
     ObstructionInferralFactory,
     SubobstructionInferralFactory,
 )
-from chord_diagrams.strategies.requirement_insertion import RequirementInsertionFactory
-from chord_diagrams.strategies.row_col_separation import RowColumnSeparationStrategy
-from chord_diagrams.tiling import Tiling
+from src.strategies.requirement_insertion import RequirementInsertionFactory
+from src.strategies.row_col_separation import RowColumnSeparationStrategy
+from src.common.tiling import Tiling
 start_time = time.time()
 
 

@@ -1,10 +1,10 @@
 import _direct_run_bootstrap 
 
-from chord_diagrams.chords import Chord, GriddedChord
-from chord_diagrams.strategies.chord_placement import RequirementPlacementStrategy
-from chord_diagrams.strategies.factor import FactorFactory
-from chord_diagrams.strategies.requirement_insertion import RequirementInsertionStrategy
-from chord_diagrams.tiling import Tiling
+from src.common.chords import Chord, GriddedChord
+from src.strategies.chord_placement import RequirementPlacementStrategy
+from src.strategies.factor import FactorFactory
+from src.strategies.requirement_insertion import RequirementInsertionStrategy
+from src.common.tiling import Tiling
 
 
 def crossed_chord(pos):

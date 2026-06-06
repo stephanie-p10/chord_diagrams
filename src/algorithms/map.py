@@ -10,19 +10,15 @@ from typing import TYPE_CHECKING, Dict, Tuple
 
 from tilings.exception import InvalidOperationError
 
-try:
-    from ..common.assumptions import TrackingAssumption
-    from ..common.chords import GriddedChord, Chord
-except ImportError:  
-    import sys
-    from pathlib import Path
+import sys
+from pathlib import Path
 
-    _src_root = Path(__file__).resolve().parents[2]  # .../src
-    if str(_src_root) not in sys.path:
-        sys.path.insert(0, str(_src_root))
+_src_root = Path(__file__).resolve().parents[2]  # src
+if str(_src_root) not in sys.path:
+    sys.path.insert(0, str(_src_root))
 
-    from steph_chords.src.common.assumptions import TrackingAssumption
-    from steph_chords.src.common.chords import GriddedChord, Chord
+from src.common.assumptions import TrackingAssumption
+from src.common.chords import GriddedChord, Chord
 
 Cell = Tuple[int, int]
 

@@ -1,7 +1,7 @@
 import _direct_run_bootstrap 
 
-from chord_diagrams.chords import GriddedChord, Chord
-from chord_diagrams.algorithms.map import RowColMap
+from src.common.chords import GriddedChord, Chord
+from src.algorithms.map import RowColMap
 
 id = RowColMap.identity((3,3))
 double = RowColMap({0:0, 1:2, 2:4, 3:6}, {0:0, 1:2, 2:4}, False)

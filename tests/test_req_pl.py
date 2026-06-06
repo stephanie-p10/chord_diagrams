@@ -3,10 +3,10 @@ import _direct_run_bootstrap
 from itertools import chain
 
 
-from chord_diagrams.misc import DIR_EAST, DIR_NORTH, DIR_SOUTH, DIR_WEST
-from chord_diagrams.chords import GriddedChord, Chord
-from chord_diagrams.tiling import Tiling
-from chord_diagrams.algorithms.requirement_placement import RequirementPlacement
+from src.common import DIR_EAST, DIR_NORTH, DIR_SOUTH, DIR_WEST
+from src.common.chords import GriddedChord, Chord
+from src.common.tiling import Tiling
+from src.algorithms.chord_placement import RequirementPlacement
 
 non_crossing = Tiling(
         obstructions=(

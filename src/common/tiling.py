@@ -14,6 +14,12 @@ The implementation maintains cached derived data such as active/empty cells and
 row/column maps; initialization can optionally expand, simplify, and/or remove
 empty rows/columns.
 """
+import sys
+from pathlib import Path
+
+_src_root = Path(__file__).resolve().parents[2]  # src
+if str(_src_root) not in sys.path:
+    sys.path.insert(0, str(_src_root))
 
 import json
 from itertools import chain, filterfalse, product, combinations
@@ -26,18 +32,18 @@ from comb_spec_searcher import CombinatorialClass, VerificationStrategy
 from comb_spec_searcher.exception import StrategyDoesNotApply
 from comb_spec_searcher.typing import Parameters
 
-from .chords import GriddedChord, Chord
+from src.common.chords import GriddedChord, Chord
+from src.common.assumptions import TrackingAssumption
+from src.common.latex_exporter import export_tiling_to_latex
+from src.algorithms.map import RowColMap
+from src.algorithms.simplify import SimplifyObstructionsAndRequirements
+from src.algorithms.expansion import Expansion
 from tilings.misc import intersection_reduce, union_reduce
 from tilings.assumptions import (
     ComponentAssumption,
     SkewComponentAssumption,
     SumComponentAssumption,
 )
-from .assumptions import TrackingAssumption
-from ..algorithms.map import RowColMap
-from ..algorithms.simplify import SimplifyObstructionsAndRequirements
-from ..algorithms.expansion import Expansion
-from .latex_exporter import export_tiling_to_latex
 
 import time
 
@@ -511,7 +517,6 @@ class Tiling(CombinatorialClass):
                                                             self._cached_properties["empty_cells"])
         simplify_algo.simplify()
         self._obstructions = simplify_algo.obstructions
-        print("tiling obs", self._obstructions[0])
         self._requirements = simplify_algo.requirements
         self._cached_properties["active_cells"] = simplify_algo.active_cells
         self._cached_properties["empty_cells"] = simplify_algo.empty_cells

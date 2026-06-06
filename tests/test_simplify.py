@@ -1,9 +1,9 @@
 import _direct_run_bootstrap 
 
-from chord_diagrams.algorithms.simplify import SimplifyObstructionsAndRequirements
+from src.algorithms.simplify import SimplifyObstructionsAndRequirements
 
-from chord_diagrams.chords import GriddedChord, Chord
-from chord_diagrams.tiling import Tiling
+from src.common.chords import GriddedChord, Chord
+from src.common.tiling import Tiling
 
 ob_containing_ob = SimplifyObstructionsAndRequirements((GriddedChord(Chord((0, 1, 0, 2, 1, 2)), ((0,0),)*6), GriddedChord(Chord((0, 1, 0, 1)), ((0,0),)*4)),
                                                    (), 

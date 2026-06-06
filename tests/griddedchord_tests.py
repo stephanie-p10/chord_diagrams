@@ -1,8 +1,8 @@
 import _direct_run_bootstrap 
 from typing import Tuple
 
-from chord_diagrams.chords import Chord, GriddedChord
-from chord_diagrams.misc import DIR_EAST, DIR_NORTH, DIR_SOUTH, DIR_WEST
+from src.common.chords import Chord, GriddedChord
+from src.common import DIR_EAST, DIR_NORTH, DIR_SOUTH, DIR_WEST
 
 Cell = Tuple[int, int]
 

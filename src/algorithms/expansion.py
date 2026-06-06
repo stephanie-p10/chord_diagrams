@@ -13,20 +13,16 @@ order (important for stable tests and reproducible strategy behavior).
 
 
 from typing import TYPE_CHECKING, Iterable, Tuple, List
-
 from itertools import product, chain
 
-try:
-    from ..common.chords import Chord, GriddedChord
-except ImportError:  
-    import sys
-    from pathlib import Path
+import sys
+from pathlib import Path
 
-    _src_root = Path(__file__).resolve().parents[2]  # .../src
-    if str(_src_root) not in sys.path:
-        sys.path.insert(0, str(_src_root))
+_src_root = Path(__file__).resolve().parents[2]  # .../src
+if str(_src_root) not in sys.path:
+    sys.path.insert(0, str(_src_root))
 
-    from steph_chords.src.common.chords import Chord, GriddedChord
+from src.common.chords import Chord, GriddedChord
 Cell = Tuple[int, int]
 
 class Expansion: 

@@ -12,8 +12,8 @@ The core contract is:\n
 - `extra_parameters` propagates tracking assumptions when present.\n
 """
 try:
-    from steph_chords.src.common.chords import GriddedChord, Chord
-    from steph_chords.src.common.tiling import Tiling
+    from ..common.chords import GriddedChord, Chord
+    from ..common.tiling import Tiling
 except ImportError:  
     import sys
     from pathlib import Path
@@ -22,8 +22,8 @@ except ImportError:
     if str(_src_root) not in sys.path:
         sys.path.insert(0, str(_src_root))
 
-    from steph_chords.src.common.chords import GriddedChord, Chord
-    from steph_chords.src.common.tiling import Tiling
+    from src.common.chords import GriddedChord, Chord
+    from src.common.tiling import Tiling
 
 from collections import Counter
 from functools import reduce

@@ -1,7 +1,7 @@
 import _direct_run_bootstrap
 
-from chord_diagrams.chords import Chord, GriddedChord
-from chord_diagrams.algorithms.expansion import Expansion
+from src.common.chords import Chord, GriddedChord
+from src.algorithms.expansion import Expansion
 
 gc = GriddedChord(Chord((0, 1)), ((0, 0),)*2)
 

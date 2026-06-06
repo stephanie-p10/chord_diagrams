@@ -1,9 +1,9 @@
 import _direct_run_bootstrap 
 
-from chord_diagrams.algorithms.factor import Factor
-from chord_diagrams.chords import Chord, GriddedChord
-from chord_diagrams.strategies.factor import FactorFactory, FactorStrategy
-from chord_diagrams.tiling import Tiling
+from src.algorithms.factor import Factor
+from src.common.chords import Chord, GriddedChord
+from src.strategies.factor import FactorFactory, FactorStrategy
+from src.common.tiling import Tiling
 
 
 def _make_non_crossing() -> Tiling:

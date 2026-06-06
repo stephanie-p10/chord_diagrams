@@ -1,8 +1,8 @@
 import _direct_run_bootstrap 
 import time
 
-from chord_diagrams.tiling import Tiling
-from chord_diagrams.chords import Chord, GriddedChord
+from src.common.tiling import Tiling
+from src.common.chords import Chord, GriddedChord
 
 gc_empty = GriddedChord()
 

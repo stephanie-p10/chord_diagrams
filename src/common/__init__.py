@@ -25,4 +25,6 @@ __all__ = [
     "DIR_NONE",
     "Chord",
     "GriddedChord",
+    "TrackingAssumption",
+    "Tiling",
 ]

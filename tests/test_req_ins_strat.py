@@ -1,11 +1,11 @@
 import _direct_run_bootstrap
 
-from chord_diagrams.strategies.requirement_insertion import (
+from src.strategies.requirement_insertion import (
     RequirementInsertionFactory,
     RequirementInsertionStrategy,
 )
-from chord_diagrams.chords import GriddedChord, Chord
-from chord_diagrams.tiling import Tiling
+from src.common.chords import GriddedChord, Chord
+from src.common.tiling import Tiling
 
 crossed_chord = GriddedChord(Chord((0, 1, 0, 1)), ((0, 0),) *4)
 def single_chord(pos_left, pos_right):

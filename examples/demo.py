@@ -8,15 +8,15 @@ from comb_spec_searcher import (
     CombinatorialSpecificationSearcher,
     StrategyPack,
 )
-from steph_chords.src.common import DIR_EAST, DIR_SOUTH
+from src.common import DIR_EAST, DIR_SOUTH
 
-from steph_chords.src.common.chords import GriddedChord, Chord
-from steph_chords.src.common.tiling import Tiling
-from steph_chords.src.strategies.obstruction_inferral import SubobstructionInferralFactory
-from steph_chords.src.strategies.factor import FactorFactory
-from steph_chords.src.strategies.requirement_insertion import RequirementInsertionFactory
-from steph_chords.src.strategies.row_col_separation import RowColumnSeparationStrategy
-from steph_chords.src.strategies.chord_placement import ChordPlacementFactory
+from src.common.chords import GriddedChord, Chord
+from src.common.tiling import Tiling
+from src.strategies.obstruction_inferral import SubobstructionInferralFactory
+from src.strategies.factor import FactorFactory
+from src.strategies.requirement_insertion import RequirementInsertionFactory
+from src.strategies.row_col_separation import RowColumnSeparationStrategy
+from src.strategies.chord_placement import ChordPlacementFactory
 
 
 pack = StrategyPack(
@@ -34,6 +34,6 @@ spec = searcher.auto_search()
 
 #print(spec.get_genf())
 #print(spec.get_terms(10))
-#spec.show()
+spec.show()
 
 print(type(GriddedChord(Chord((0, 1, 0, 1)), ((0, 0), (0, 0), (0, 0), (0, 0)))))

@@ -1,7 +1,7 @@
 import _direct_run_bootstrap
 
-from chord_diagrams.chords import GriddedChord, Chord
-from chord_diagrams.tiling import Tiling
+from src.common.chords import GriddedChord, Chord
+from src.common.tiling import Tiling
 
 # tiling2 = Tiling(
 #         obstructions=[

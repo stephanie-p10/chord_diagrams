@@ -13,7 +13,7 @@ except ImportError:
     if str(_src_root) not in sys.path:
         sys.path.insert(0, str(_src_root))
 
-    from steph_chords.src.common.chords import GriddedChord, Chord
+    from src.common.chords import GriddedChord, Chord
 from tilings.assumptions import ComponentAssumption, TrackingAssumption
 from tilings.misc import partitions_iterator
 
