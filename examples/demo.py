@@ -34,6 +34,5 @@ spec = searcher.auto_search()
 
 #print(spec.get_genf())
 #print(spec.get_terms(10))
-spec.show()
+#spec.show()
 
-print(type(GriddedChord(Chord((0, 1, 0, 1)), ((0, 0), (0, 0), (0, 0), (0, 0)))))

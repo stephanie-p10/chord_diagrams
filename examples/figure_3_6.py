@@ -22,7 +22,7 @@ from src.strategies.obstruction_inferral import SubobstructionInferralFactory
 from src.strategies.factor import FactorFactory, FactorStrategy, Factor
 from src.strategies.requirement_insertion import RequirementInsertionFactory, RequirementInsertionStrategy
 from src.strategies.row_col_separation import RowColumnSeparationStrategy
-from src.strategies.chord_placement import RequirementPlacementFactory, RequirementPlacementStrategy, RequirementPlacement
+from src.strategies.chord_placement import ChordPlacementFactory, RequirementPlacementStrategy, RequirementPlacement
 
 # patterns from in theorem 3.1.2 class
 c1 = Chord((0, 1, 2, 0, 1, 2))
@@ -166,7 +166,7 @@ strat_t7_to_t8 = RequirementPlacementStrategy([GriddedChord.single_chord(((0, 0)
 
 print(strat_t7_to_t8.decomposition_function(t7)[0])
 
-#strat_t6_to_t7_t7 = next(factor_fact_new(t6))
+
 
 
 

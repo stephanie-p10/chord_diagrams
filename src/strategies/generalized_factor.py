@@ -11,6 +11,7 @@ the partitioning logic used to build the strategy.
 try:
     from ..common.chords import GriddedChord, Chord
     from ..common.tiling import Tiling
+    from ..strategies.shifted_cartesian_product import ShiftedCartesianProduct
 except ImportError:  
     import sys
     from pathlib import Path

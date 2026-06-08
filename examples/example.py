@@ -19,23 +19,25 @@ from comb_spec_searcher import (
 )
 from src.common.chords import Chord, GriddedChord
 from src.common import DIR_EAST, DIR_SOUTH
-from src.strategies.chord_placement import RequirementPlacementFactory
+from src.strategies.chord_placement import ChordPlacementFactory
 from src.strategies.factor import FactorFactory
 from src.strategies.obstruction_inferral import (
     ObstructionInferralFactory,
     SubobstructionInferralFactory,
 )
+from src.strategies.generalized_factor import GeneralizedFactorFactory
 from src.strategies.requirement_insertion import RequirementInsertionFactory
 from src.strategies.row_col_separation import RowColumnSeparationStrategy
 from src.common.tiling import Tiling
-start_time = time.time()
 
 
 
 pack = StrategyPack(
     initial_strats=[FactorFactory(), ], # rules for initial strategies that are domain specific to be applied right away (like factor strategy)
     inferral_strats=[RowColumnSeparationStrategy(), SubobstructionInferralFactory()], # rules equivalence strategies (that get applied right away)  
-    expansion_strats=[[RequirementInsertionFactory(maxreqlen=1, limited_insertion=1), ], [RequirementPlacementFactory(max_reqlist_size=2, max_chord_size=3, dirs=(DIR_SOUTH, DIR_EAST))]], # rules for domain specific strategies that are used less often
+    expansion_strats=[[RequirementInsertionFactory(maxreqlen=1, limited_insertion=1), ], 
+                      [ChordPlacementFactory(max_reqlist_size=2, max_gc_size=2, dirs=(DIR_SOUTH, DIR_EAST))],
+                      [GeneralizedFactorFactory()]], # rules for domain specific strategies that are used less often
     ver_strats=[AtomStrategy()], # returns a rule when the count of a class is known.
     name=("Finding specification for pattern avoiding chord diagrams (ex. non crossing)"),
 )

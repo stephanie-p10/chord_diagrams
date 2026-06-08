@@ -578,7 +578,6 @@ class ChordPlacementFactory(StrategyFactory[Tiling]):
         self.max_len = max_len
         self.dirs = dirs
 
-    # need to pass what chord to place
     def __call__(
         self, comb_class: Tiling, **kwargs
     ) -> Iterator[ChordPlacementStrategy]:

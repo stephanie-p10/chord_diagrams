@@ -143,7 +143,6 @@ class SimplifyObstructionsAndRequirements:
         point_obs = tuple(
             GriddedChord.single_cell(Chord((0,)), cell) for cell in sorted(cells_to_remove)
         )
-        print("cells being removed:", cells_to_remove)
         self.obstructions = tuple(sorted(set(self.obstructions + point_obs)))
 
         self.update_cells_status()
