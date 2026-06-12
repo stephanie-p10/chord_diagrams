@@ -22,7 +22,7 @@ if str(_src_root) not in sys.path:
     sys.path.insert(0, str(_src_root))
 
 import json
-from itertools import chain, filterfalse, product, combinations
+from itertools import chain, filterfalse, product, combinations, combinations_with_replacement
 from typing import (Any, Callable, Dict, FrozenSet, Iterable, Iterator, List, Optional, Set, Tuple)
 from collections import Counter, defaultdict
 
@@ -827,6 +827,54 @@ class Tiling(CombinatorialClass):
                         chords_on_tiling.update(filter(self.contains, GriddedChord.all_grids(subchord, cells)))
                     
         return list(chords_on_tiling)
+    
+    def build_all_chords_on_tiling(self, size: int = 0) -> List[GriddedChord]:
+        size_one_chords = []
+        for cell1, cell2 in combinations_with_replacement(self.active_cells, 2):
+            if cell1[1] == cell2[1]:
+                if cell1[0] <= cell2[0]:
+                    size_one_chords.append(GriddedChord(Chord((0, 0)), ((cell1, cell2))))
+                else:
+                    size_one_chords.append(GriddedChord(Chord((0, 0)), (cell2, cell1)))
+        size_one_chords = [gc for gc in size_one_chords if gc.avoids(*self.obstructions)]
+
+        def build_from_gc(starting_gc: GriddedChord, 
+                          potential_chords_to_insert: List[GriddedChord],
+                          ) -> List[GriddedChord]:
+            chords_inserted = []
+            one_bigger_gcs = []
+            min_source_idx_in_patt = starting_gc.chord_dict[len(starting_gc) - 1][0] # index of highest chord in starting gc
+            min_source_pos = starting_gc.pos[min_source_idx_in_patt]
+
+            for gc_to_add in potential_chords_to_insert:
+                if gc_to_add.pos[0][0] >= min_source_pos[0] and gc_to_add.pos[0][1] >= min_source_pos[1]:
+                    
+                    min_source_idx_in_col, max_source_idx, min_sink_idx, max_sink_idx = starting_gc.get_bounding_indices(gc_to_add.pos[0][0], gc_to_add.pos[1][0])
+                    min_source_idx = max(min_source_idx_in_col, min_source_idx_in_patt + 1)
+                    for source_idx in range(min_source_idx, max_source_idx + 1):
+                        for sink_idx in range(max(source_idx, min_sink_idx), max_sink_idx + 1):
+                            added_gc = starting_gc.insert_specific_chord(gc_to_add.pos[0][1], 
+                                                                         gc_to_add.pos[0][0], 
+                                                                         gc_to_add.pos[1][0],
+                                                                         source_idx,
+                                                                         sink_idx)
+                            if added_gc != None and added_gc.avoids(*self.obstructions):  # this check is not optimized
+                                chords_inserted.append(gc_to_add)
+                                one_bigger_gcs.append(added_gc)
+            chords_built = one_bigger_gcs.copy()
+            
+            for gc_to_build_on in one_bigger_gcs:
+                if len(gc_to_build_on) < size: 
+                    chords_built.extend(build_from_gc(gc_to_build_on, chords_inserted))
+
+            return chords_built
+        
+        all_gcs: List[GriddedChord] = size_one_chords.copy()
+        if size == 1:
+            return all_gcs
+        for gc in size_one_chords:
+            all_gcs.extend(build_from_gc(gc, size_one_chords))
+        return [gc for gc in all_gcs if all(gc.contains(*req) for req in self._requirements)]
 
     def is_empty(self) -> bool:
         """Checks if the tiling is empty.
@@ -884,6 +932,7 @@ class Tiling(CombinatorialClass):
         has_reqs = all(gc.contains(*req) for req in self._requirements)
         avoids_ob = not any(gc.contains(ob) for ob in self._obstructions)
         links_connected = all(gc.is_connected(cells) for cells in self._linkages)
+        #print(has_reqs, avoids_ob, links_connected)
         return has_reqs and avoids_ob and links_connected
     
     def add_list_requirement(self, req_list: Iterable[GriddedChord]) -> "Tiling":

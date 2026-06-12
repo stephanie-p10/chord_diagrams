@@ -378,7 +378,6 @@ class Chord(Tuple):
             return self.concat(Chord((0, 0)))
         if n is None:
             n = listlen
-        
         assert (0 <= m) and (m <= n) and (n <= listlen)
         result = list(self)
         result.insert(m, -1)
@@ -1275,7 +1274,6 @@ class GriddedChord(CombinatorialObject):
         positions = list(self._pos)
         positions.insert(source, (col_source, row))
         positions.insert(sink + 1, (col_sink, row)) # +1 needed to account for source being inserted first.
-        
         gc =  GriddedChord(patt, positions)
         if not gc.contradictory():
             return gc
