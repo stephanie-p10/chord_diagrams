@@ -22,7 +22,7 @@ if str(_src_root) not in sys.path:
     sys.path.insert(0, str(_src_root))
 
 import json
-from itertools import chain, filterfalse, product, combinations, combinations_with_replacement
+from itertools import chain, filterfalse, product, combinations, combinations_with_replacement, groupby
 from typing import (Any, Callable, Dict, FrozenSet, Iterable, Iterator, List, Optional, Set, Tuple)
 from collections import Counter, defaultdict
 
@@ -829,52 +829,65 @@ class Tiling(CombinatorialClass):
         return list(chords_on_tiling)
     
     def build_all_chords_on_tiling(self, size: int = 0) -> List[GriddedChord]:
-        size_one_chords = []
+        # Sort obstructions by size
+        obstructions_by_size = dict(groupby(sorted(self.obstructions, key=len), key=len))
+
+        single_chords = [] # All allowable single chords on the tiling
         for cell1, cell2 in combinations_with_replacement(self.active_cells, 2):
             if cell1[1] == cell2[1]:
                 if cell1[0] <= cell2[0]:
-                    size_one_chords.append(GriddedChord(Chord((0, 0)), ((cell1, cell2))))
+                    chord = GriddedChord(Chord((0, 0)), (cell1, cell2))
                 else:
-                    size_one_chords.append(GriddedChord(Chord((0, 0)), (cell2, cell1)))
-        size_one_chords = [gc for gc in size_one_chords if gc.avoids(*self.obstructions)]
+                    chord = GriddedChord(Chord((0, 0)), (cell2, cell1))
+                # Only add the chord if it's valid
+                if chord.avoids(*obstructions_by_size.get(1, ())):
+                    single_chords.append(chord)
 
         def build_from_gc(starting_gc: GriddedChord, 
                           potential_chords_to_insert: List[GriddedChord],
                           ) -> List[GriddedChord]:
+            """
+            Returns all chord diagrams (with length <= size), including starting_gc,
+                that can be built by adding chords from potential_chords_to_insert
+
+            Does not modify input
+            """
+            if len(starting_gc) == size:
+                return [starting_gc]
+            
             chords_inserted = []
-            one_bigger_gcs = []
-            min_source_idx_in_patt = starting_gc.chord_dict[len(starting_gc) - 1][0] # index of highest chord in starting gc
-            min_source_pos = starting_gc.pos[min_source_idx_in_patt]
+            newly_constructed_gcs = []
+            min_source_idx_in_patt = 0 if len(starting_gc) == 0 else 1 + starting_gc.chord_dict[len(starting_gc) - 1][0] # one more than the highest chord in starting gc
+            min_source_pos = (0, 0) if len(starting_gc) == 0 else starting_gc.pos[min_source_idx_in_patt - 1] # position of highest chord in starting gc
 
             for gc_to_add in potential_chords_to_insert:
+                # If the source cell above the previous highest source...
                 if gc_to_add.pos[0][0] >= min_source_pos[0] and gc_to_add.pos[0][1] >= min_source_pos[1]:
                     
                     min_source_idx_in_col, max_source_idx, min_sink_idx, max_sink_idx = starting_gc.get_bounding_indices(gc_to_add.pos[0][0], gc_to_add.pos[1][0])
-                    min_source_idx = max(min_source_idx_in_col, min_source_idx_in_patt + 1)
+                    # minimum index for next chord
+                    min_source_idx = max(min_source_idx_in_col, min_source_idx_in_patt)
+                    # for each source index and sink index after the source, from the minimums to the maximums inclusive...
                     for source_idx in range(min_source_idx, max_source_idx + 1):
                         for sink_idx in range(max(source_idx, min_sink_idx), max_sink_idx + 1):
-                            added_gc = starting_gc.insert_specific_chord(gc_to_add.pos[0][1], 
+                            # get the chord diagram where we've added this chord
+                            extended_gc = starting_gc.insert_specific_chord(gc_to_add.pos[0][1], 
                                                                          gc_to_add.pos[0][0], 
                                                                          gc_to_add.pos[1][0],
                                                                          source_idx,
                                                                          sink_idx)
-                            if added_gc != None and added_gc.avoids(*self.obstructions):  # this check is not optimized
+                            if extended_gc != None and extended_gc.avoids(*self.obstructions):  # this check is not optimized
                                 chords_inserted.append(gc_to_add)
-                                one_bigger_gcs.append(added_gc)
-            chords_built = one_bigger_gcs.copy()
-            
-            for gc_to_build_on in one_bigger_gcs:
-                if len(gc_to_build_on) < size: 
-                    chords_built.extend(build_from_gc(gc_to_build_on, chords_inserted))
+                                newly_constructed_gcs.append(extended_gc)
+
+            chords_built = [starting_gc]            
+            for gc_to_build_on in newly_constructed_gcs:
+                chords_built.extend(build_from_gc(gc_to_build_on, chords_inserted))
 
             return chords_built
-        
-        all_gcs: List[GriddedChord] = size_one_chords.copy()
-        if size == 1:
-            return all_gcs
-        for gc in size_one_chords:
-            all_gcs.extend(build_from_gc(gc, size_one_chords))
-        return [gc for gc in all_gcs if all(gc.contains(*req) for req in self._requirements)]
+
+        all_chords = build_from_gc(GriddedChord.empty_chord(), single_chords)
+        return [gc for gc in all_chords if all(gc.contains(*req) for req in self._requirements)]
 
     def is_empty(self) -> bool:
         """Checks if the tiling is empty.
