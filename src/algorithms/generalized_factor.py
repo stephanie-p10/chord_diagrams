@@ -115,6 +115,11 @@ class GeneralizedFactor:
             req_cells = chain.from_iterable(req.pos for req in req_list)
             self._unite_cells(req_cells)
 
+    def _unite_linkages(self) -> None:
+        """For each linkage unite all of its cells."""
+        for link in self._tiling.linkages:
+            self._unite_cells(link)
+
     @staticmethod
     def _same_row_or_col(cell1: Cell, cell2: Cell) -> bool:
         """
@@ -137,10 +142,11 @@ class GeneralizedFactor:
     def _unite_all(self) -> None:
         """
         Unite all the cells that share an obstruction, a requirement list,
-        a row or a column.
+        a linkage, a row or a column.
         """
         self._unite_obstructions()
         self._unite_requirements()
+        self._unite_linkages()
         self._unite_assumptions()
         self._unite_rows_and_cols()
 
@@ -349,15 +355,9 @@ class GeneralizedFactor:
         """
         Returns all the irreducible factors of the tiling.
         """
-        #print(self._get_factors_obs_and_reqs())
         return tuple(
-            self._tiling.__class__(
-                obstructions=f[0],
-                requirements=f[1],
-                assumptions=tuple(sorted(f[2])),
-                simplify=False,
-            )
-            for f in self._get_factors_obs_and_reqs()
+            self._tiling.sub_tiling(tuple(sorted(comp)), factors=True)
+            for comp in self.get_components()
         )
 
     def reducible_factorizations(self) -> Iterator[Tuple["Tiling", ...]]:

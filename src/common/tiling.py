@@ -459,6 +459,8 @@ class Tiling(CombinatorialClass):
         cells_used.update(
             *(union_reduce(set(comp.pos) for comp in req) for req in self.requirements)
         )
+        # adds all cells that are used in a linkage to the active cells
+        cells_used.update(chain.from_iterable(self._linkages))
 
         # calculates dimensions based on what the max cells used in an obstuction or requirement
         max_row = 0
@@ -510,14 +512,18 @@ class Tiling(CombinatorialClass):
         self._requirements = tuple(expansion_class._requirements)
 
     def _simplify(self) -> None:
-        simplify_algo = SimplifyObstructionsAndRequirements(self.obstructions, 
-                                                            self.requirements, 
-                                                            self._cached_properties["dimensions"], 
-                                                            self._cached_properties["active_cells"], 
-                                                            self._cached_properties["empty_cells"])
+        simplify_algo = SimplifyObstructionsAndRequirements(
+            self.obstructions,
+            self.requirements,
+            self._cached_properties["dimensions"],
+            self._cached_properties["active_cells"],
+            self._cached_properties["empty_cells"],
+            self._linkages,
+        )
         simplify_algo.simplify()
         self._obstructions = simplify_algo.obstructions
         self._requirements = simplify_algo.requirements
+        self._linkages = simplify_algo.linkages
         self._cached_properties["active_cells"] = simplify_algo.active_cells
         self._cached_properties["empty_cells"] = simplify_algo.empty_cells
 
@@ -540,7 +546,6 @@ class Tiling(CombinatorialClass):
         row_mapping = {y: actual for actual, y in enumerate(row_list)}
         return RowColMap(row_map=row_mapping, col_map=col_mapping, is_identity=identity)
 
-    # I don't think we care about linkages; if a linkage has a row of empty cells, then we can still reduce.
     def _remove_empty_rows_and_cols(self) -> None:
         """Remove empty rows and columns."""
         # Produce the mapping between the two tilings
@@ -549,6 +554,7 @@ class Tiling(CombinatorialClass):
             self._cached_properties["forward_map"] = RowColMap.identity((0, 0))
             self._obstructions = (GriddedChord.single_cell(Chord((0,0)), (0, 0)),)
             self._requirements = tuple()
+            self._linkages = tuple()
             self._assumptions = tuple()
             self._cached_properties["dimensions"] = (1, 1)
             return
@@ -572,6 +578,11 @@ class Tiling(CombinatorialClass):
                     forward_map.map_assumption(assumption)
                     for assumption in self._assumptions
                 )
+            )
+            self._linkages = tuple(
+                tuple(forward_map.map_cell(cell) for cell in link)
+                for link in self._linkages
+                if all(forward_map.is_mappable_cell(cell) for cell in link)
             )
             self._cached_properties["active_cells"] = frozenset(
                 forward_map.map_cell(cell)
@@ -906,6 +917,16 @@ class Tiling(CombinatorialClass):
         new_req_list = (GriddedChord(patt, pos),)
         return self.add_list_requirement(new_req_list)
 
+    def add_linkage(self, cells: Iterable[Cell]) -> "Tiling":
+        """Return a new tiling with an additional linkage."""
+        new_link = tuple(cells)
+        return Tiling(
+            self._obstructions,
+            self._requirements,
+            self._linkages + (new_link,),
+            self._assumptions,
+        )
+
     def add_obstructions(self, gcs: Iterable[GriddedChord], simplify: bool = True, expand: bool = True) -> "Tiling":
         """Return a new tiling with additional obstructions.
 
@@ -959,6 +980,7 @@ class Tiling(CombinatorialClass):
         return (
             hash(self._requirements)
             ^ hash(self._obstructions)
+            ^ hash(self._linkages)
             ^ hash(self._assumptions)
         )
 
@@ -986,13 +1008,13 @@ class Tiling(CombinatorialClass):
             or self.assumptions != other.assumptions
         )
 
-    def __contains__(self, gp: GriddedChord) -> bool:
+    def __contains__(self, gc: GriddedChord) -> bool:
         """Test if a gridded chord is griddable on the given tiling."""
         return (
-            gp.avoids(*self.obstructions)
-            and all(gp.contains(*req) for req in self.requirements)
+            gc.avoids(*self.obstructions)
+            and all(gc.contains(*req) for req in self.requirements)
             and all(
-                (len(linkage) == 0) or gp.is_connected(list(linkage))
+                (len(linkage) == 0) or gc.is_connected(list(linkage))
                 for linkage in self.linkages
             )
         )

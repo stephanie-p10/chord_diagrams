@@ -636,8 +636,9 @@ class ChordPlacement:
         raise ValueError("must give valid direction")
     
     # NOT TESTED TODO
-    def translate_linkage(self, cell_placed: Cell, linkage: List[Cell]):
-        new_linkage = []
+    def translate_linkage(self, cell_placed: Cell, linkage: List[Cell]) -> Tuple[Cell, ...]:
+        """Apply the linkage map mu_e when splitting row/column at cell_placed."""
+        new_linkage: List[Cell] = []
         for cell in linkage:
             expand_x = 0
             expand_y = 0
@@ -657,6 +658,7 @@ class ChordPlacement:
             for i in range(corrected_x, corrected_x + expand_x + 1):
                 for j in range(corrected_y, corrected_y + expand_y + 1):
                     new_linkage.append((i, j))
+        return tuple(dict.fromkeys(new_linkage))
 
     def _isolate_point_obs(self, isolated_cell: Cell, end_cell: Cell, dimensions: Tuple[int, int]):
         isolate_chord = [GriddedChord(Chord((0, 0)), (isolated_cell, isolated_cell)),
@@ -712,13 +714,22 @@ class ChordPlacement:
 
         single_point_req = GriddedChord(Chord((0,)), (translated_req_placed.pos[idx_to_place],)) # C in notes
 
-        new_linkages = [self.translate_linkage(cell_placed, linkage) for linkage in tiling_placed.linkages]
+        new_linkages = tuple(
+            self.translate_linkage(cell_placed, list(linkage))
+            for linkage in tiling_placed.linkages
+        )
 
         new_obs = list(chain(obs_multiplexes, isolate_chord_obs, direction_obs))
 
         new_reqs = list(chain([(translated_req_placed,)], translated_req_lists, [(single_point_req,)]))
 
-        return Tiling(new_obs, new_reqs, new_linkages, remove_empty_rows_and_cols = remove_empty)
+        return Tiling(
+            new_obs,
+            new_reqs,
+            new_linkages,
+            tiling_placed.assumptions,
+            remove_empty_rows_and_cols=remove_empty,
+        )
     
     def place_chord(self, req_placed: GriddedChord, chord_to_place: int, dir: int):
         source_idx, sink_idx = req_placed.chord_dict[chord_to_place]

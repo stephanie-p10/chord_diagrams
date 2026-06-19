@@ -32,8 +32,8 @@ non_crossing = Tiling(obstructions=(GriddedChord(Chord((0, 1, 0, 1)), ((0, 0), (
 searcher = CombinatorialSpecificationSearcher(non_crossing, pack)
 spec = searcher.auto_search()
 
-#print(spec.get_genf())
-#print(spec.get_terms(10))
-spec.show()
+print(spec.get_genf())
+print(spec.get_terms(10))
+#spec.show()
 
 print(type(GriddedChord(Chord((0, 1, 0, 1)), ((0, 0), (0, 0), (0, 0), (0, 0)))))
