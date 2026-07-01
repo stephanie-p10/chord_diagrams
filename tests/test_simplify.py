@@ -90,7 +90,7 @@ _dims_3x1 = (3, 1)
 _empty = ()
 
 
-def test_simplify_removes_singleton_linkage():
+def test_simplify_keeps_singleton_linkage():
     algo = SimplifyObstructionsAndRequirements(
         (),
         (),
@@ -100,7 +100,7 @@ def test_simplify_removes_singleton_linkage():
         linkages=(((0, 0),),),
     )
     algo.simplify()
-    assert algo.linkages == ()
+    assert algo.linkages == (((0, 0),),)
 
 
 def test_simplify_removes_subset_linkage():

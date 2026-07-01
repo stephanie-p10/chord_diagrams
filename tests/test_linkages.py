@@ -86,9 +86,9 @@ def test_json_roundtrip_with_linkages():
     assert Tiling.from_dict(tiling.to_jsonable()) == tiling
 
 
-def test_simplify_deletes_singleton_linkage():
+def test_simplify_keeps_singleton_linkage():
     tiling = Tiling((), (), (((0, 0),),), derive_empty=False, simplify=True)
-    assert tiling.linkages == ()
+    assert tiling.linkages == (((0, 0),),)
 
 
 def test_simplify_deletes_subset_linkage():

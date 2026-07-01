@@ -65,6 +65,51 @@ theorem303 = Tiling(obstructions=(GriddedChord(Chord((0, 1, 2, 0, 1, 2)), ((0, 0
 fig3_6 = Tiling(obstructions=(GriddedChord(Chord((0, 1, 2, 0, 1, 2)), ((0, 0), (0,0), (0,0), (0,0), (0,0), (0,0))),
                               GriddedChord(Chord((0, 1, 2, 0, 2, 1)), ((0, 0), (0,0), (0,0), (0,0), (0,0), (0,0))),))
 
+fig2_5 = Tiling(obstructions=(GriddedChord(Chord((0, 1, 2, 0, 1, 2)), ((0, 0), (0,0), (0,0), (0,0), (0,0), (0,0))),
+                              GriddedChord(Chord((0, 1, 2, 0, 2, 1)), ((0, 0), (0,0), (0,0), (0,0), (0,0), (0,0))),),
+                linkages=(((0, 0),),))  
+
+thm143a = Tiling(obstructions=(GriddedChord(Chord((0, 1, 2, 1, 0, 2)), ((0, 0),)*6),))
+
+thm143b = Tiling(obstructions=(GriddedChord(Chord((0, 1, 2, 1, 2, 0)), ((0, 0),)*6),
+                              GriddedChord(Chord((0, 1, 2, 0, 2, 1)), ((0, 0),)*6),
+                              GriddedChord(Chord((0, 1, 2, 1, 0, 2)), ((0, 0),)*6),))
+
+thm143c = Tiling(obstructions=(GriddedChord(Chord((0, 1, 2, 2, 1, 0)), ((0, 0),)*6),
+                              GriddedChord(Chord((0, 1, 2, 0, 1, 2)), ((0, 0),)*6),
+                              GriddedChord(Chord((0, 1, 2, 1, 0, 2)), ((0, 0),)*6),))
+thm143d = Tiling(obstructions=(GriddedChord(Chord((0, 1, 2, 1, 0, 2)), ((0, 0),)*6),
+                              GriddedChord(Chord((0, 1, 0, 2, 1, 2)), ((0, 0),)*6),))
+
+thm312a = Tiling(obstructions=(GriddedChord(Chord((0, 1, 2, 0, 1, 2)), ((0, 0),)*6),
+                              GriddedChord(Chord((0, 1, 2, 1, 0, 2)), ((0, 0),)*6),))
+
+thm312b = Tiling(obstructions=(GriddedChord(Chord((0, 1, 2, 0, 1, 2)), ((0, 0),)*6),
+                              GriddedChord(Chord((0, 1, 2, 0, 2, 1)), ((0, 0),)*6),))
+
+thm312c = Tiling(obstructions=(GriddedChord(Chord((0, 1, 2, 2, 1, 0)), ((0, 0),)*6),
+                              GriddedChord(Chord((0, 1, 2, 2, 0, 1)), ((0, 0),)*6),))
+
+thm312d = Tiling(obstructions=(GriddedChord(Chord((0, 1, 2, 1, 2, 0)), ((0, 0),)*6),
+                              GriddedChord(Chord((0, 1, 2, 2, 0, 1)), ((0, 0),)*6),))
+
+thm312e = Tiling(obstructions=(GriddedChord(Chord((0, 1, 2, 1, 2, 0)), ((0, 0),)*6),
+                              GriddedChord(Chord((0, 1, 2, 1, 0, 2)), ((0, 0),)*6),))
+
+thm312f = Tiling(obstructions=(GriddedChord(Chord((0, 1, 2, 1, 2, 0)), ((0, 0),)*6),
+                              GriddedChord(Chord((0, 1, 2, 1, 0, 2)), ((0, 0),)*6),))
+
+thm312g = Tiling(obstructions=(GriddedChord(Chord((0, 1, 2, 2, 0, 1)), ((0, 0),)*6),
+                              GriddedChord(Chord((0, 1, 2, 1, 0, 2)), ((0, 0),)*6),))
+
+thm312h = Tiling(obstructions=(GriddedChord(Chord((0, 1, 2, 2, 0, 1)), ((0, 0),)*6),
+                              GriddedChord(Chord((0, 1, 2, 0, 2, 1)), ((0, 0),)*6),))
+
+thm312i = Tiling(obstructions=(GriddedChord(Chord((0, 1, 2, 1, 0, 2)), ((0, 0),)*6),
+                              GriddedChord(Chord((0, 1, 2, 0, 2, 1)), ((0, 0),)*6),))
+
+
+
 non_nesting = Tiling(obstructions=(GriddedChord(Chord((0, 1, 1, 0)), ((0, 0),)*4),))
 
 face_ex = Tiling((GriddedChord(Chord((0, 1, 0, 1)), ((0, 0), (0, 0), (0, 0), (0, 0))),
@@ -72,12 +117,14 @@ face_ex = Tiling((GriddedChord(Chord((0, 1, 0, 1)), ((0, 0), (0, 0), (0, 0), (0,
                   GriddedChord(Chord((0, 0)), ((0, 0), (1, 0)))))
 
 start_time = time.time()
-searcher = CombinatorialSpecificationSearcher(fig3_6, pack)
+#searcher = CombinatorialSpecificationSearcher(fig3_6, pack)
+searcher = CombinatorialSpecificationSearcher(thm143b, pack)
 spec = searcher.auto_search()
 
 end_time = time.time()
 
 gf = spec.get_genf()
+#spec.show()
 print(gf)
 print(end_time - start_time)
 

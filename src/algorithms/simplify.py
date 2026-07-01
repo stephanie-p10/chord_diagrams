@@ -125,8 +125,10 @@ def _linkage_apriori_finite_connected(
     dimensions: Tuple[int, int],
 ) -> bool:
     """Condition 3: on T \\ {L}, only finitely many L-restrictions and all connected."""
+    # Singleton linkages are kept as seeds for strategy-induced expansion
+    # (e.g. requirement placement stretching linkages to new cells).
     if len(linkage) <= 1:
-        return True
+        return False
 
     remaining = tuple(
         tuple(sorted(link)) for link in linkages if link != linkage
@@ -191,11 +193,12 @@ def _linkage_can_delete(
 
     others = tuple(link for link in linkages if link != linkage)
 
-    if len(linkage) <= 1:
-        return True
-
     if any(linkage < other for other in others):
         return True
+
+    # Keep singleton linkages: they carry connectivity intent for later expansion.
+    if len(linkage) == 1:
+        return False
 
     return _linkage_apriori_finite_connected(
         obstructions,
