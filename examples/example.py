@@ -74,7 +74,7 @@ face_ex = Tiling((GriddedChord(Chord((0, 1, 0, 1)), ((0, 0), (0, 0), (0, 0), (0,
                   GriddedChord(Chord((0, 0)), ((0, 0), (1, 0)))))
 
 start_time = time.time()
-searcher = CombinatorialSpecificationSearcher(fig3_6, pack)
+searcher = CombinatorialSpecificationSearcher(non_crossing, pack)
 spec = searcher.auto_search()
 
 end_time = time.time()
@@ -83,11 +83,13 @@ gf = spec.get_genf()
 print(gf)
 print(end_time - start_time)
 
+
 try:
     spec.show()
 except Exception as e:
     # Some environments (headless CI, missing browser, restricted automation)
     # can't open the rendered HTML. The example still succeeds without it.
     print(f"spec.show() failed: {e!r}")
+
 
 

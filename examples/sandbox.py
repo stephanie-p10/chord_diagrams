@@ -1,3 +1,4 @@
+from cProfile import run
 import sys
 from pathlib import Path
 sys.path.append(str(Path(__file__).resolve().parent.parent))
@@ -38,7 +39,7 @@ t5 = Tiling(obstructions=(GriddedChord.single_chord(((0, 0), (0, 0))),
 
 t_plain = Tiling(requirements=((GriddedChord(Chord((0,0)), ((0, 0), (0, 0))),),))
 
-time1_start = time.time()
+'''time1_start = time.time()
 old_method = t5.all_chords_on_tiling(6)
 time1_end = time.time()
 print("old:")
@@ -62,7 +63,10 @@ assert set(old_method) == set(new_method)
 chords_built = t_plain.build_all_chords_on_tiling(3)
 
 for chord in chords_built:
-    print(chord)
+    print(chord)'''
+
+print(t5)
+
 
 
 

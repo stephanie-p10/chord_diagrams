@@ -154,6 +154,13 @@ class Chord(Tuple):
     
     def __len__(self) -> int:
         return self._length
+
+    def __str__(self) -> "str":
+        if not self:
+            return "\u03B5"
+        if len(self) <= 10:
+            return "".join(str(i) for i in self)
+        return "".join(f"({i})" for i in self)
     
     def get_pattern(self) -> Tuple[int, ...]:
         """Return the pattern of the chord."""
@@ -1177,15 +1184,15 @@ class GriddedChord(CombinatorialObject):
         """
         assert(col_source <= col_sink)
 
-        points_left_col_source = list(self.get_points_left_col(col_source))
-        points_right_col_source = list(self.get_points_right_col(col_source))
+        points_left_col_source = self.get_points_left_col(col_source)
+        points_right_col_source = self.get_points_right_col(col_source)
         # finds minimun index a source of a new chord in col_source can have, by checking what the largest index left of col_source
         min_index_source = max([idx for idx, _ in points_left_col_source] + [-1]) + 1
         # finds maximum index a source of a new chord in col_source, checking what the smallest index right col_source is.
         max_index_source = min([idx for idx, _ in points_right_col_source] + [len(self) * 2])
 
-        points_left_col_sink = list(self.get_points_left_col(col_sink))
-        points_right_col_sink = list(self.get_points_right_col(col_sink))
+        points_left_col_sink = self.get_points_left_col(col_sink)
+        points_right_col_sink = self.get_points_right_col(col_sink)
 
         # finds minimum index a sink of a new chord in row_sink can have, checking what the largest chord below row_sink is
         min_index_sink = max([idx for idx, _ in points_left_col_sink] + [min_index_source - 1]) + 1
@@ -1423,7 +1430,7 @@ class GriddedChord(CombinatorialObject):
 
     ### Data processing and printing ###
     @property
-    def patt(self) -> Chord:
+    def patt(self) -> Tuple[int]:
         return self._patt
 
     @property
@@ -1519,7 +1526,7 @@ class GriddedChord(CombinatorialObject):
         return f"{type(self).__name__}({tuple(self._patt)!r}, {self._pos})"
 
     def __str__(self) -> str:
-        return f"{self._patt}: {', '.join(str(c) for c in self._pos)}"
+        return f"{self._chord}: {', '.join(str(c) for c in self._pos)}"
 
     def __hash__(self) -> int:
         return hash(self._patt) ^ hash(self._pos)
