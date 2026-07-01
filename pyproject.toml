@@ -7,7 +7,14 @@ name = "chord_diagrams"
 version = "4.0.0"
 description = "Combinatorial specifications for chord diagram tilings."
 readme = "README.md"
-requires-python = ">=3.6"
+requires-python = ">=3.10"
+dependencies = [
+    "comb_spec_searcher>=4.3.0",
+    "tilings>=4.1.0",
+    "permuta>=2.3.0",
+    "sympy>=1.14.0",
+    "typing_extensions>=4.14.0",
+]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

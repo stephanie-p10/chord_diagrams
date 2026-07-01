@@ -511,7 +511,7 @@ class GriddedChord(CombinatorialObject):
         self._patt = chord.get_pattern()
         self._pos = tuple(positions)
         if len(self._patt) != len(self._pos):
-            print(self._patt, self._pos)
+         #   print(self._patt, self._pos)
             raise ValueError("Pattern and position list have unequal lengths.")
         self._cells: FrozenSet[Cell] = frozenset(self._pos)
 
@@ -897,7 +897,7 @@ class GriddedChord(CombinatorialObject):
         True
         >>> GriddedChord(Chord((0, 1, 0, 1)), ((0, 0), (1, 0), (0, 0), (2, 0))).is_connected([(0, 0)]))
         True"""
-        # likage is decided to be everything strictly contained in must be connected.
+        # linkage is decided to be everything strictly contained in must be connected.
         subchord = self
         if len(cells) != 0:
             subchord = self.get_subchord_in_cells(cells)

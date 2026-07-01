@@ -402,7 +402,247 @@ class Tiling(CombinatorialClass):
             all_row_isolated_cells = row_isolated_chord_cells + row_isolated_point_cells
             self._cached_properties["chord_row_cells"] = all_row_isolated_cells
             return all_row_isolated_cells
+            
+        
+    def _compute_dimensions(self) -> None:
+        max_x = 0
+        max_y = 0
+
+        for ob in self._obstructions:
+            for x, y in ob.pos:
+                if x > max_x:
+                    max_x = x
+                if y > max_y:
+                    max_y = y
+
+        for reqlist in self._requirements:
+            for req in reqlist:
+                for x, y in req.pos:
+                    if x > max_x:
+                        max_x = x
+                    if y > max_y:
+                        max_y = y
+
+        for link in self._linkages:
+            for (x, y) in link:
+                if x > max_x:
+                    max_x = x
+                if y > max_y:
+                    max_y = y
+
+        self._cached_properties["dimensions"] = (max_x + 1, max_y + 1)
+
+        return
+
+    def _prepare_properties(self, derive_empty = True) -> None:
+        """
+        Compute active_cells and empty_cells, and store them in cached_properties
+        """
+        ''' OLD VERY SLOW CODE (checks all edge cases)
+        potential_active_cells = []
+        max_x = self.dimensions[0]
+        max_y = self.dimensions[1]
+        all_cells = list(product(range(max_x), range(max_y)))
+
+        # If we are derviving the tiling empty, a cell can only be active if it is found in an ob or req
+        if derive_empty:
+            cell_set = set()
+            cell_set = union_reduce(
+                set(ob.pos) for ob in self._obstructions if not ob.is_point()
+            )
+            cell_set.update(
+                *(union_reduce(set(comp.pos) for comp in req) for req in self._requirements)
+            )
+            potential_active_cells = list(cell_set)
+        # If we were not assuming everything non used cell is empty, any cell could be an active cell
+        else:
+            potential_active_cells = all_cells
+
+        # A cell is empty if there are no chord diagrams that can be gridded on the tiling with a point in the cell
+        # If there is a chord diagram with a point in the cell, there will be one with at most size max_size_to_check
+        max_size_to_check = self.maximum_length_of_minimum_gridded_chord() + 1
+        all_chords = []
+        for num_chords in range(1, max_size_to_check + 1):
+            all_chords += list(Chord.of_length(num_chords))
+
+        # Checks what cells are used in any gridded chord diagram up to max_size_to_check
+        cells_used = set()
+        for chord in all_chords:
+            for gc in GriddedChord.all_grids(chord, potential_active_cells):
+                if self.contains(gc):
+                    cells_used.update(gc.pos)
+
+        # calculates empty cells as complement of active cells
+        empty_cells = tuple(
+            cell
+            for cell in all_cells
+            if cell not in cells_used
+        )'''
+
+        # Fast method of calculating active cells, assumes the user did not do anything "silly"
+        # adds all cells that an obstuction larger than a single point uses
+        cells_used = union_reduce(
+            set(ob.pos) for ob in self.obstructions if len(ob.patt) > 1
+        )
+        # adds all cells that are used in a requirement to the active cells.
+        cells_used.update(
+            *(union_reduce(set(comp.pos) for comp in req) for req in self.requirements)
+        )
+        # adds all cells that are used in a linkage to the active cells
+        cells_used.update(chain.from_iterable(self._linkages))
+
+        # calculates dimensions based on what the max cells used in an obstuction or requirement
+        max_row = 0
+        max_col = 0
+        for cell in cells_used:
+            max_col = max(max_col, cell[0])
+            max_row = max(max_row, cell[1])
+        dimensions = (max_col + 1, max_row + 1)
+
+        # finds the cells that have point obstructions - these should be empty
+        point_ob_cells = []
+        for ob in self.obstructions:
+            if len(ob.patt) == 1:
+                point_ob_cells.append(ob.pos[0])
+
+        if derive_empty:
+            # if we are assuming cells with no information are empty, the active cells
+            # are the cells that get mentioned in an ob or req, minus any point cells
+            active_cells = cells_used.difference(point_ob_cells)
+            empty_cells = tuple(
+                cell
+                for cell in product(range(dimensions[0]), range(dimensions[1]))
+                if cell not in active_cells
+            ) 
+        else:
+            # if we are assuming all cells are active unless explicitly stated, the only empty
+            # cells are the cells that have point obstructions, and the active cells are the complement
+            empty_cells = tuple([])
+            active_cells = tuple(cell 
+                                 for cell in product(range(dimensions[0]), range(dimensions[1]))
+                                 if cell not in empty_cells) 
+
+        self._cached_properties["active_cells"] = frozenset(active_cells)
+        self._cached_properties["empty_cells"] = frozenset(empty_cells)
+        self._cached_properties["dimensions"] = dimensions
+
+    def _add_point_obs(self, cells: Tuple[Cell]):
+        new_obs = list(self._obstructions)
+        for cell in cells:
+            new_obs.append(GriddedChord.single_cell(Chord((0,)), cell))
+
+        self._obstructions = tuple(new_obs)
   
+    def _expand(self) -> None:
+        expansion_class = Expansion(self._obstructions, self._requirements, self.dimensions, self.active_cells)
+        expansion_class.expand_obstructions()
+        expansion_class.expand_requirements()
+        self._obstructions = tuple(expansion_class._obstructions)
+        self._requirements = tuple(expansion_class._requirements)
+
+    def _simplify(self) -> None:
+        simplify_algo = SimplifyObstructionsAndRequirements(
+            self.obstructions,
+            self.requirements,
+            self._cached_properties["dimensions"],
+            self._cached_properties["active_cells"],
+            self._cached_properties["empty_cells"],
+            self._linkages,
+        )
+        simplify_algo.simplify()
+        self._obstructions = simplify_algo.obstructions
+        self._requirements = simplify_algo.requirements
+        self._linkages = simplify_algo.linkages
+        self._cached_properties["active_cells"] = simplify_algo.active_cells
+        self._cached_properties["empty_cells"] = simplify_algo.empty_cells
+
+    def _minimize_mapping(self) -> RowColMap:
+        """
+        Returns a pair of dictionaries, that map rows/columns to an
+        equivalent set of rows/columns where empty ones have been removed.
+        Also returns a boolean describing whether this mapping is the identity
+        mapping which saves some later computation.
+        """
+        active_cells = self.active_cells
+        assert active_cells
+        col_set = set(c[0] for c in active_cells)
+        row_set = set(c[1] for c in active_cells)
+        col_list, row_list = sorted(col_set), sorted(row_set)
+        identity = (self.dimensions[0] == len(col_list)) and (
+            self.dimensions[1] == len(row_list)
+        )
+        col_mapping = {x: actual for actual, x in enumerate(col_list)}
+        row_mapping = {y: actual for actual, y in enumerate(row_list)}
+        return RowColMap(row_map=row_mapping, col_map=col_mapping, is_identity=identity)
+
+    def _remove_empty_rows_and_cols(self) -> None:
+        """Remove empty rows and columns."""
+        # Produce the mapping between the two tilings
+        if not self.active_cells:
+            assert GriddedChord.empty_chord() not in self.obstructions
+            self._cached_properties["forward_map"] = RowColMap.identity((0, 0))
+            self._obstructions = (GriddedChord.single_cell(Chord((0,0)), (0, 0)),)
+            self._requirements = tuple()
+            self._linkages = tuple()
+            self._assumptions = tuple()
+            self._cached_properties["dimensions"] = (1, 1)
+            return
+        forward_map = self._minimize_mapping()
+        self._cached_properties["forward_map"] = forward_map
+        # We still may need to remove point obstructions if the empty row or col
+        # was on the end so we do it outside the next if statement.
+        self._obstructions = tuple(
+            forward_map.map_gc(ob)
+            for ob in self.obstructions
+            if not ob.is_point() and forward_map.is_mappable_gc(ob)
+        )
+
+        if not forward_map.is_identity():
+            self._requirements = tuple(
+                tuple(forward_map.map_gc(req) for req in reqlist)
+                for reqlist in self._requirements
+            )
+            self._assumptions = tuple(
+                sorted(
+                    forward_map.map_assumption(assumption)
+                    for assumption in self._assumptions
+                )
+            )
+            self._linkages = tuple(
+                tuple(forward_map.map_cell(cell) for cell in link)
+                for link in self._linkages
+                if all(forward_map.is_mappable_cell(cell) for cell in link)
+            )
+            self._cached_properties["active_cells"] = frozenset(
+                forward_map.map_cell(cell)
+                for cell in self._cached_properties["active_cells"]
+                if forward_map.is_mappable_cell(cell)
+            )
+            self._cached_properties["empty_cells"] = frozenset(
+                forward_map.map_cell(cell)
+                for cell in self._cached_properties["empty_cells"]
+                if forward_map.is_mappable_cell(cell)
+            )
+            self._cached_properties["dimensions"] = (
+                forward_map.max_col() + 1,
+                forward_map.max_row() + 1,
+            )
+
+    def maximum_length_of_minimum_gridded_chord(self) -> int:
+        """Returns the maximum length of the minimum gridded chord diagram that
+        can be gridded on the tiling.
+        """
+        if not self.requirements:
+            return 1 # should this be 0? sTODO
+        
+        sum_largest_req_lengths = 0
+        for reqs in self.requirements:
+            if len(reqs) != 0:
+                req_lengths = [max(req.patt) + 1 for req in reqs if len(req.patt) > 0]
+                sum_largest_req_lengths += max(req_lengths)
+        
+        return 2 * sum_largest_req_lengths - 1
+
     def sub_tiling(
         self,
         cells: Iterable[Cell],
@@ -934,6 +1174,16 @@ class Tiling(CombinatorialClass):
         new_req_list = (GriddedChord(patt, pos),)
         return self.add_list_requirement(new_req_list)
 
+    def add_linkage(self, cells: Iterable[Cell]) -> "Tiling":
+        """Return a new tiling with an additional linkage."""
+        new_link = tuple(cells)
+        return Tiling(
+            self._obstructions,
+            self._requirements,
+            self._linkages + (new_link,),
+            self._assumptions,
+        )
+
     def add_obstructions(self, gcs: Iterable[GriddedChord], simplify: bool = True, expand: bool = True) -> "Tiling":
         """Return a new tiling with additional obstructions.
 
@@ -990,6 +1240,7 @@ class Tiling(CombinatorialClass):
         return (
             hash(self._requirements)
             ^ hash(self._obstructions)
+            ^ hash(self._linkages)
             ^ hash(self._assumptions)
         )
 
@@ -1017,13 +1268,13 @@ class Tiling(CombinatorialClass):
             or self.assumptions != other.assumptions
         )
 
-    def __contains__(self, gp: GriddedChord) -> bool:
+    def __contains__(self, gc: GriddedChord) -> bool:
         """Test if a gridded chord is griddable on the given tiling."""
         return (
-            gp.avoids(*self.obstructions)
-            and all(gp.contains(*req) for req in self.requirements)
+            gc.avoids(*self.obstructions)
+            and all(gc.contains(*req) for req in self.requirements)
             and all(
-                (len(linkage) == 0) or gp.is_connected(list(linkage))
+                (len(linkage) == 0) or gc.is_connected(list(linkage))
                 for linkage in self.linkages
             )
         )
