@@ -17,8 +17,8 @@ importing them from `chord_diagrams.misc` in new code.
 """
 
 from comb_spec_searcher import CombinatorialObject
-from typing import Callable, Dict, FrozenSet, Iterable, Iterator, List, Optional, Tuple, Union
-from itertools import combinations, islice, tee, product, chain, filterfalse
+from typing import Callable, Dict, FrozenSet, Iterable, Iterator, List, Optional, Tuple
+from itertools import combinations, islice, chain
 from permuta.misc import UnionFind
 import json
 from collections import deque
@@ -221,29 +221,6 @@ class Chord(Tuple):
         else:
             selected = self[index]
         return self.remove_chord(selected)
-    
-    # sToDo: test with this function commented out, then get rid
-    def standardize(self, original_list: list) -> "Chord":
-        """Return a Chord based on the original list ordering.
-        Assumes valid chord is inputted
-
-        Examples:
-            >>> Chord(()).standardize([-1, 1, -1, 2, 2, 1])
-            Chord((0, 1, 0, 2, 2, 1))
-            >>> Chord(()).standardize([0, 1, 0, 2, 2, 1, 5, 5])
-            Chord((0, 1, 0, 2, 2, 1, 3, 3))
-        """
-        unique_elements = []
-        for num in original_list:
-            if num not in unique_elements:
-                unique_elements.append(num)
-        
-        unique_elements.sort()
-    
-        result_list = []
-        for num in original_list:
-            result_list.append(unique_elements.index(num))
-        return Chord(result_list)
     
     @classmethod
     def to_standard(cls, iterable, in_relative_order: bool = False):
