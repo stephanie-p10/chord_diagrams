@@ -56,7 +56,8 @@ assert not t_lk_2x2.contains(gc_3_nested)
 
 # is_empty tests
 #assert Tiling((gc_empty,), (), ()).is_empty()
-assert Tiling((gc_single_00_00,), (), ()).is_empty()
+# Forbidding a single chord in the only cell still admits the empty diagram.
+assert not Tiling((gc_single_00_00,), (), ()).is_empty()
 assert Tiling((gc_sc_crossed,), ((gc_sc_crossed, gc_sc_disjoint, gc_sc_nested),), (((0, 0),),)).is_empty()
 assert Tiling((gc_single_00_00,), (), (((0, 0),),)).is_empty()
 assert Tiling((gc_crossed,), ((gc_3_crossed,),), ()).is_empty() # uh oh... this test takes a long time...

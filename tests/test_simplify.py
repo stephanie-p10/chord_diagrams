@@ -3,6 +3,7 @@ import _direct_run_bootstrap
 from src.algorithms.simplify import SimplifyObstructionsAndRequirements
 
 from src.common.chords import GriddedChord, Chord
+from src.common.obstructions import FiniteObstruction
 from src.common.tiling import Tiling
 
 ob_containing_ob = SimplifyObstructionsAndRequirements(
@@ -13,7 +14,7 @@ ob_containing_ob = SimplifyObstructionsAndRequirements(
     (),
 )
 ob_containing_ob.remove_redundant_obstructions()
-assert ob_containing_ob.obstructions == (GriddedChord(Chord((0, 1, 0, 1)), ((0,0),)*4),)
+assert ob_containing_ob.obstructions == (FiniteObstruction(GriddedChord(Chord((0, 1, 0, 1)), ((0,0),)*4)),)
 
 req_containing_ob = SimplifyObstructionsAndRequirements(
     (GriddedChord(Chord((0, 0)), ((0, 0), (0, 0))),),
@@ -23,7 +24,7 @@ req_containing_ob = SimplifyObstructionsAndRequirements(
     (),
 )
 req_containing_ob.simplify()
-assert req_containing_ob.obstructions == (GriddedChord(Chord((0, 0)), ((0,0), (0,0))),)
+assert req_containing_ob.obstructions == (FiniteObstruction(GriddedChord(Chord((0, 0)), ((0,0), (0,0)))),)
 assert req_containing_ob.requirements == ((),)
 
 all_from_21 = SimplifyObstructionsAndRequirements(
@@ -82,7 +83,7 @@ reqlist_containing_ob = SimplifyObstructionsAndRequirements(
 )
 reqlist_containing_ob.remove_redundant_requirements()
 assert reqlist_containing_ob.requirements == ((GriddedChord(Chord((0,1,1,0)), ((0,0),)*4),),)
-assert reqlist_containing_ob.obstructions == (GriddedChord(Chord((0, 1, 0, 1)), ((0,0),)*4),)
+assert reqlist_containing_ob.obstructions == (FiniteObstruction(GriddedChord(Chord((0, 1, 0, 1)), ((0,0),)*4)),)
 
 # Linkage deletion via simplify (Nabergall §2.2.1)
 _row_3 = ((0, 0), (1, 0), (2, 0))
@@ -132,3 +133,4 @@ def test_simplify_removes_union_linkage():
     algo.simplify()
     assert algo.linkages == (((0, 0), (1, 0)), ((1, 0), (2, 0)))
 
+print("tests passed")

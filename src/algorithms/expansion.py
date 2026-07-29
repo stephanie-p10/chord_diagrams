@@ -12,8 +12,8 @@ order (important for stable tests and reproducible strategy behavior).
 """
 
 
-from typing import TYPE_CHECKING, Iterable, Tuple, List
-from itertools import product, chain
+from typing import Iterable, Tuple, List, Union
+from itertools import product
 
 import sys
 from pathlib import Path
@@ -23,7 +23,26 @@ if str(_src_root) not in sys.path:
     sys.path.insert(0, str(_src_root))
 
 from src.common.chords import Chord, GriddedChord
+from src.common.obstructions import (
+    FiniteObstruction,
+    InfiniteObstruction,
+    Obstruction,
+    normalize_obstruction,
+)
+
 Cell = Tuple[int, int]
+
+
+def _avoids_obs(gc: GriddedChord, obs) -> bool:
+    """Return True if ``gc`` avoids every obstruction / gridded chord in ``obs``."""
+    for ob in obs:
+        if isinstance(ob, Obstruction):
+            if not ob.is_avoided_by(gc):
+                return False
+        elif not gc.avoids(ob):
+            return False
+    return True
+
 
 class Expansion: 
     """
@@ -32,12 +51,12 @@ class Expansion:
     """
     def __init__(
             self,
-            obstructions: List["GriddedChord"],
+            obstructions: List[Union[Obstruction, GriddedChord]],
             requirements: List[Tuple["GriddedChord", ...]],
             dimensions: Tuple[int, int],
             cells: Tuple[Tuple[int, int]] = None
     ):
-        self._obstructions = obstructions
+        self._obstructions = list(obstructions)
         self._requirements = requirements
         self._dimensions = dimensions
 
@@ -92,7 +111,7 @@ class Expansion:
                 possible_new_poslist.insert(idx, cell)
                 new_gc = GriddedChord(Chord(possible_new_patt), possible_new_poslist)
                 # if the expansion is consistant with the tiling, add it to the ways that this chord can be expanded
-                if not new_gc.contradictory() and new_gc.avoids(*obs):
+                if not new_gc.contradictory() and _avoids_obs(new_gc, obs):
                     expanded_chords.append(new_gc)
 
         # Deduplicate and keep deterministic ordering for tests.
@@ -101,7 +120,6 @@ class Expansion:
         
     def expand_gridded_chord(self, gc: GriddedChord, obs) -> Iterable[GriddedChord]:
         """Returns a list of all the possible ways gc can be expanded into a valid chord."""
-        chord = gc._chord
         chords_to_build = [gc]
 
         while (chords_to_build != [] and not chords_to_build[0]._chord.is_valid_chord()):
@@ -115,7 +133,7 @@ class Expansion:
 
     def expand_gridded_chords(self, 
                               gcs_to_expand: Iterable["GriddedChord"],
-                              gcs_to_avoid: Iterable["GriddedChord"]):
+                              gcs_to_avoid):
         """Returns a list of all the possible chords that come from expanding each chord in 
         gcs_to_expand to valid chord diagrams in all possible ways"""
         new_gcs = []
@@ -127,20 +145,36 @@ class Expansion:
         return new_gcs
 
     def expand_obstructions(self) -> None:
-        """Expands the obstructions into chord patterns in all possible ways"""
-        obs = sorted(self._obstructions)
-        new_obs = []
+        """Expands finite obstructions into chord patterns; infinite obs pass through."""
+        infinite = [
+            ob for ob in self._obstructions if isinstance(ob, InfiniteObstruction)
+        ]
+        finite_raw = [
+            ob for ob in self._obstructions if not isinstance(ob, InfiniteObstruction)
+        ]
+        finite_gcs = [
+            ob.gc if isinstance(ob, FiniteObstruction) else ob for ob in finite_raw
+        ]
+        finite_gcs = sorted(finite_gcs)
+        new_finite_gcs = []
 
-        for ob in obs:
-            # we want to delete and then expand this 
-            expanded = self.expand_gridded_chord(ob, new_obs)
+        for ob in finite_gcs:
+            expanded = self.expand_gridded_chord(ob, new_finite_gcs + infinite)
             for new_ob in expanded:
-                new_obs.append(new_ob)
+                new_finite_gcs.append(new_ob)
 
-        self._obstructions = tuple(new_obs)
+        self._obstructions = tuple(
+            sorted(
+                [FiniteObstruction(gc) for gc in new_finite_gcs] + infinite
+            )
+        )
 
     # sToDo: this is slightly inefficient, where since we expand requirments regarless if they contain smaller ones in 
     # the same list. If this is the case, the bigger requirement is redundant
     def expand_requirements(self):
-        self._requirements = tuple((tuple(self.expand_gridded_chords(reqlist, self._obstructions)) for reqlist in self._requirements))
-
+        self._requirements = tuple(
+            (
+                tuple(self.expand_gridded_chords(reqlist, self._obstructions))
+                for reqlist in self._requirements
+            )
+        )

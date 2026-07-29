@@ -23,13 +23,18 @@ def export_tiling_to_latex(tiling, filename: str = "tiling_visual.tex", compile_
             chord_cells_by_row[row] = []
         chord_cells_by_row[row].append(cell)
     
+    from src.common.obstructions import InfiniteObstruction
+
     # Filter out:
+    # - infinite family obstructions (drawn separately if needed later)
     # - obstructions that are fully in chord_rows (keep those only partially in chord_rows)
     # - point obstructions (used internally to mark derived empty cells)
     filtered_obs = [
         ob
         for ob in tiling._obstructions
-        if (not ob.is_point()) and (not all(cell[1] in chord_rows for cell in ob._pos))
+        if (not isinstance(ob, InfiniteObstruction))
+        and (not ob.is_point())
+        and (not all(cell[1] in chord_rows for cell in ob._pos))
     ]
     filtered_reqs = [r for req_list in tiling._requirements 
                      for r in req_list 

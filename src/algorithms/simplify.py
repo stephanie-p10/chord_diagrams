@@ -7,7 +7,7 @@ which must be contained.
 from collections import defaultdict
 from itertools import combinations, product
 from math import factorial
-from typing import TYPE_CHECKING, Dict, FrozenSet, Iterable, List, Optional, Set, Tuple
+from typing import TYPE_CHECKING, Dict, FrozenSet, Iterable, List, Optional, Set, Tuple, Union
 
 import sys
 from pathlib import Path
@@ -17,6 +17,12 @@ if str(_src_root) not in sys.path:
     sys.path.insert(0, str(_src_root))
 
 from src.common.chords import Chord, GriddedChord
+from src.common.obstructions import (
+    FiniteObstruction,
+    InfiniteObstruction,
+    Obstruction,
+    normalize_obstruction,
+)
 
 Cell = Tuple[int, int]
 Linkage = Tuple[Cell, ...]
@@ -252,14 +258,14 @@ class SimplifyObstructionsAndRequirements:
 
     def __init__(
         self,
-        obstructions: Tuple["GriddedChord", ...],
+        obstructions: Tuple[Union[Obstruction, GriddedChord], ...],
         requirements: Tuple[Tuple["GriddedChord", ...], ...],
         dimensions: Tuple[int, int],
         active_cells: Tuple[Tuple[int, int]],
         empty_cells: Tuple[Tuple[int, int]],
         linkages: Tuple[Tuple[Tuple[int, int], ...], ...] = tuple(),
     ):
-        self.obstructions = obstructions
+        self.obstructions = tuple(normalize_obstruction(ob) for ob in obstructions)
         self.requirements = requirements
         self.dimensions = dimensions
         self.active_cells = active_cells
@@ -282,15 +288,28 @@ class SimplifyObstructionsAndRequirements:
         return tuple(new_gridded_chords)
 
     def remove_redundant_obstructions(self) -> None:
-        """Remove obstructions that are implied by other obstructions."""
-        self.obstructions = self.remove_redundant_gridded_chords(self.obstructions)
+        """Remove finite obstructions implied by other finite ones; keep infinite."""
+        infinite = tuple(
+            ob for ob in self.obstructions if isinstance(ob, InfiniteObstruction)
+        )
+        finite = tuple(
+            ob for ob in self.obstructions if isinstance(ob, FiniteObstruction)
+        )
+        finite_gcs = self.remove_redundant_gridded_chords(tuple(ob.gc for ob in finite))
+        self.obstructions = tuple(
+            sorted(tuple(FiniteObstruction(gc) for gc in finite_gcs) + infinite)
+        )
 
     def remove_redundant_requirements(self) -> None:
         """Remove requirements that are implied by other requirements in the same list."""
         
         self.requirements = tuple(
             self.remove_redundant_gridded_chords(
-                tuple(req for req in req_list if req.avoids(*self.obstructions))
+                tuple(
+                    req
+                    for req in req_list
+                    if all(ob.is_avoided_by(req) for ob in self.obstructions)
+                )
             )
             for req_list in self.requirements
         )
@@ -323,14 +342,16 @@ class SimplifyObstructionsAndRequirements:
         if not active_cells:
             return
 
-        obs_set = set(self.obstructions)
+        finite_gc_set = {
+            ob.gc for ob in self.obstructions if isinstance(ob, FiniteObstruction)
+        }
 
         def has_single_chord_obstruction_in_cells(c1: Tuple[int, int], c2: Tuple[int, int]) -> bool:
             # A single-chord obstruction is represented by pattern (0,0) placed in two cells.
             # The cell could have the source or sink of the chord so check both.
             return (
-                GriddedChord(Chord((0, 0)), (c1, c2)) in obs_set
-                or GriddedChord(Chord((0, 0)), (c2, c1)) in obs_set
+                GriddedChord(Chord((0, 0)), (c1, c2)) in finite_gc_set
+                or GriddedChord(Chord((0, 0)), (c2, c1)) in finite_gc_set
             )
 
         cells_to_remove: Set[Tuple[int, int]] = set()
@@ -361,7 +382,8 @@ class SimplifyObstructionsAndRequirements:
 
         # Add a point obstruction for each removed cell
         point_obs = tuple(
-            GriddedChord.single_cell(Chord((0,)), cell) for cell in sorted(cells_to_remove)
+            FiniteObstruction(GriddedChord.single_cell(Chord((0,)), cell))
+            for cell in sorted(cells_to_remove)
         )
         self.obstructions = tuple(sorted(set(self.obstructions + point_obs)))
 

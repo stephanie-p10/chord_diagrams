@@ -27,4 +27,8 @@ __all__ = [
     "GriddedChord",
     "TrackingAssumption",
     "Tiling",
+    "Obstruction",
+    "FiniteObstruction",
+    "InfiniteObstruction",
+    "InfinitePatternType",
 ]

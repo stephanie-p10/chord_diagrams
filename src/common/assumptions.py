@@ -43,7 +43,7 @@ class TrackingAssumption:
 
     def avoiding(
         self,
-        obstructions: Iterable[GriddedChord],
+        obstructions: Iterable,
         active_cells: Optional[Iterable[Cell]] = None,
     ) -> "TrackingAssumption":
         """
@@ -51,17 +51,26 @@ class TrackingAssumption:
         the obstructions are removed. If active_cells is not None, then only assumputions 
         completely contained in active cells will remain.
         """
-        obstructions = tuple(obstructions)
+        from src.common.obstructions import Obstruction, normalize_obstruction
+
+        obs = tuple(
+            ob if isinstance(ob, Obstruction) else normalize_obstruction(ob)
+            for ob in obstructions
+        )
+
+        def avoids_all(gc: GriddedChord) -> bool:
+            return all(ob.is_avoided_by(gc) for ob in obs)
+
         if active_cells is not None:
             return self.__class__(
                 tuple(
                     gc
                     for gc in self.gcs
                     if all(cell in active_cells for cell in gc.pos)
-                    and gc.avoids(*obstructions)
+                    and avoids_all(gc)
                 )
             )
-        return self.__class__(tuple(gc for gc in self.gcs if gc.avoids(*obstructions)))
+        return self.__class__(tuple(gc for gc in self.gcs if avoids_all(gc)))
 
     def get_value(self, gc: GriddedChord) -> int:
         """

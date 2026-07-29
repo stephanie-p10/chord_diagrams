@@ -435,6 +435,85 @@ class Chord(Tuple):
         """
         yield from cls.__generate(length)
 
+    @classmethod
+    def top_cycle(cls, n: int) -> "Chord":
+        """The unique top-cycle diagram T_n of size ``n`` (n >= 3).
+
+        Its undirected intersection graph is the cycle C_n, and the diagram is
+        1-terminal. Note that T_3 = B_3.
+        """
+        if n < 3:
+            raise ValueError(f"top cycle requires n >= 3, got {n}")
+        if n == 3:
+            return cls((0, 1, 2, 0, 1, 2))
+        word = [0, 1, 2, 0]
+        for i in range(3, n):
+            word.extend((i, i - 1))
+        word.extend((1, n - 1))
+        return cls(word)
+
+    @classmethod
+    def bottom_cycle(cls, n: int) -> "Chord":
+        """The unique bottom-cycle diagram B_n of size ``n`` (n >= 3).
+
+        Its undirected intersection graph is the cycle C_n, and for n > 3 the
+        diagram is not 1-terminal. Note that T_3 = B_3.
+        """
+        if n < 3:
+            raise ValueError(f"bottom cycle requires n >= 3, got {n}")
+        if n == 3:
+            return cls((0, 1, 2, 0, 1, 2))
+        word = [0, 1, 2, 3, 1]
+        for i in range(4, n):
+            word.extend((i, i - 1))
+        word.extend((0, n - 1, 2))
+        return cls(word)
+
+    @classmethod
+    def partial_top_cycle(cls, n: int) -> "Chord":
+        """Partial top cycle of size ``n`` (n >= 3).
+
+        Obtained by removing the root chord of T_{n+1} (equivalently, the last
+        chord of B_{n+1}).
+        """
+        if n < 3:
+            raise ValueError(f"partial top cycle requires n >= 3, got {n}")
+        word = [0, 1, 2, 1]
+        for i in range(3, n):
+            word.extend((i, i - 1))
+        word.extend((0, n - 1))
+        return cls(word)
+
+    @classmethod
+    def partial_bottom_cycle(cls, n: int) -> "Chord":
+        """Partial bottom cycle of size ``n`` (n >= 3).
+
+        Obtained by removing the first chord of B_{n+1} (equivalently, the last
+        chord of T_{n+1}).
+        """
+        if n < 3:
+            raise ValueError(f"partial bottom cycle requires n >= 3, got {n}")
+        word = [0, 1, 2, 0]
+        for i in range(3, n):
+            word.extend((i, i - 1))
+        word.extend((n - 1, 1))
+        return cls(word)
+
+    @classmethod
+    def nonnesting_path(cls, n: int) -> "Chord":
+        """The unique nonnesting diagram whose intersection graph is a path on
+        ``n`` vertices (n >= 2).
+        """
+        if n < 2:
+            raise ValueError(f"nonnesting path requires n >= 2, got {n}")
+        if n == 2:
+            return cls((0, 1, 0, 1))
+        word = [0, 1, 0]
+        for i in range(1, n - 1):
+            word.extend((i + 1, i))
+        word.append(n - 1)
+        return cls(word)
+
     # sToDo: all of the following up to connected (these methods will probably be fun)
     def crossing(self):
         pass

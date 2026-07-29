@@ -1,6 +1,7 @@
 import _direct_run_bootstrap
 
 from src.common.chords import Chord, GriddedChord
+from src.common.obstructions import FiniteObstruction
 from src.algorithms.expansion import Expansion
 
 gc = GriddedChord(Chord((0, 1)), ((0, 0),)*2)
@@ -32,10 +33,12 @@ isolated_chord_obs = [GriddedChord(Chord((0, 0)), ((0, 0), (0, 0))),
 
 isolated_chord_algo = Expansion(isolated_chord_obs, ((GriddedChord(Chord((0, 0)), ((0, 0), (1, 0))),),), (2, 1))
 isolated_chord_algo.expand_obstructions()
-assert set(isolated_chord_algo._obstructions) == set([GriddedChord(Chord((0, 0)), ((0 ,0), (0, 0))),
-                                                      GriddedChord(Chord((0, 0)), ((1, 0), (1, 0))),
-                                                      GriddedChord(Chord((0, 1, 1, 0)), ((0, 0), (0, 0), (1, 0), (1, 0))),
-                                                      GriddedChord(Chord((0, 1, 0, 1)), ((0, 0), (0, 0), (1, 0), (1, 0)))])
+assert set(isolated_chord_algo._obstructions) == set([
+    FiniteObstruction(GriddedChord(Chord((0, 0)), ((0 ,0), (0, 0)))),
+    FiniteObstruction(GriddedChord(Chord((0, 0)), ((1, 0), (1, 0)))),
+    FiniteObstruction(GriddedChord(Chord((0, 1, 1, 0)), ((0, 0), (0, 0), (1, 0), (1, 0)))),
+    FiniteObstruction(GriddedChord(Chord((0, 1, 0, 1)), ((0, 0), (0, 0), (1, 0), (1, 0)))),
+])
 
 
 point_obs = [GriddedChord(Chord((0,)), ((0, 0),)),
@@ -44,12 +47,14 @@ point_obs = [GriddedChord(Chord((0,)), ((0, 0),)),
              GriddedChord(Chord((0,)), ((1, 1),))]
 point_obs_algo = Expansion(point_obs, (), (2, 2))
 point_obs_algo.expand_obstructions()
-assert set(point_obs_algo._obstructions) == set([GriddedChord(Chord((0, 0)), ((0, 0), (0, 0))),
-                                                 GriddedChord(Chord((0, 0)), ((0, 0), (1, 0))),
-                                                 GriddedChord(Chord((0, 0)), ((1, 0), (1, 0))),
-                                                 GriddedChord(Chord((0, 0)), ((0, 1), (0, 1))),
-                                                 GriddedChord(Chord((0, 0)), ((0, 1), (1, 1))),
-                                                 GriddedChord(Chord((0, 0)), ((1, 1), (1, 1))),])
+assert set(point_obs_algo._obstructions) == set([
+    FiniteObstruction(GriddedChord(Chord((0, 0)), ((0, 0), (0, 0)))),
+    FiniteObstruction(GriddedChord(Chord((0, 0)), ((0, 0), (1, 0)))),
+    FiniteObstruction(GriddedChord(Chord((0, 0)), ((1, 0), (1, 0)))),
+    FiniteObstruction(GriddedChord(Chord((0, 0)), ((0, 1), (0, 1)))),
+    FiniteObstruction(GriddedChord(Chord((0, 0)), ((0, 1), (1, 1)))),
+    FiniteObstruction(GriddedChord(Chord((0, 0)), ((1, 1), (1, 1)))),
+])
 
 
 size_two_reqs = [GriddedChord(Chord((0, 1)), ((0, 0), (0, 0)))]
@@ -66,5 +71,3 @@ assert {frozenset(req_list) for req_list in size_two_reqs_algo._requirements} ==
 }
 
 print("asserts passed")
-
-

@@ -205,13 +205,24 @@ class RequirementPlacement:
         return multiplexes
 
     # tested!
-    def get_multiplexes_of_chords(self, gcs: Iterable[GriddedChord], cell: Cell) -> List[GriddedChord]:
+    def get_multiplexes_of_chords(self, gcs: Iterable, cell: Cell) -> List[GriddedChord]:
         """
         Return all stretched gridded chord diagrams for an iterable of gridded
-        chord diagrams, assuming a point is placed in the given cell.
+        chord diagrams (or finite obstructions), assuming a point is placed in
+        the given cell. Infinite obstructions are skipped here.
         """
+        from src.common.obstructions import FiniteObstruction, InfiniteObstruction
+
+        unwrapped = []
+        for gc in gcs:
+            if isinstance(gc, InfiniteObstruction):
+                continue
+            if isinstance(gc, FiniteObstruction):
+                unwrapped.append(gc.gc)
+            else:
+                unwrapped.append(gc)
         return list(
-            chain.from_iterable(self.get_multiplexes_of_chord(gc, cell) for gc in gcs)
+            chain.from_iterable(self.get_multiplexes_of_chord(gc, cell) for gc in unwrapped)
         )
     
     def new_empty_cells(self, cell_placed: Cell, cell_end: Cell, dir: int, is_end_sink: bool = False) -> Iterable[Cell]:
@@ -611,15 +622,26 @@ class ChordPlacement:
 
         return multiplexes
     
-    def get_multiplexes_of_gcs(self, gcs: Iterable[GriddedChord], cell: Cell) -> List[GriddedChord]:
+    def get_multiplexes_of_gcs(self, gcs: Iterable, cell: Cell) -> List[GriddedChord]:
         """
         Return all stretched gridded chord diagrams for an iterable of gridded
-        chord diagrams, assuming a point is placed in the given cell.
+        chord diagrams (or finite obstructions), assuming a point is placed in
+        the given cell.
 
         This is the set M_{cell}(gcs) in the notation of ABCNPU. 
         """
+        from src.common.obstructions import FiniteObstruction, InfiniteObstruction
+
+        unwrapped = []
+        for gc in gcs:
+            if isinstance(gc, InfiniteObstruction):
+                continue
+            if isinstance(gc, FiniteObstruction):
+                unwrapped.append(gc.gc)
+            else:
+                unwrapped.append(gc)
         return list(
-            chain.from_iterable(self.get_multiplexes_of_gc(gc, cell) for gc in gcs)
+            chain.from_iterable(self.get_multiplexes_of_gc(gc, cell) for gc in unwrapped)
         )
     
     def is_directionmost(self, dir: int, a: Cell, b: Cell) -> bool:

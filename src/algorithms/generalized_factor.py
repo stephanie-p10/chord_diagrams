@@ -185,7 +185,9 @@ class GeneralizedFactor:
         for component in self.get_components():
             #print(component)
             obstructions = tuple(
-                ob for ob in self._tiling.obstructions if ob.pos[0] in component
+                ob
+                for ob in self._tiling.obstructions
+                if all(cell in component for cell in ob.pos)
             )
             requirements = tuple(
                 req for req in self._tiling.requirements if req[0].pos[0] in component

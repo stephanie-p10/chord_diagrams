@@ -21,6 +21,7 @@ if str(_src_root) not in sys.path:
 
 from src.common.chords import Chord, GriddedChord
 from src.common.tiling import Tiling
+from src.common.obstructions import FiniteObstruction, InfiniteObstruction
 
 Cell = Tuple[int, int]
 
@@ -346,8 +347,10 @@ class _RowColSeparationSingleApplication:
         filtered_obs = (
             ob
             for ob in self._tiling.obstructions
-            if len(ob.patt) == 2 and not ob.is_single_cell()
-        ) # all obstructions of length 2 that aren't in the same cell
+            if isinstance(ob, FiniteObstruction)
+            and len(ob.patt) == 2
+            and not ob.is_single_cell()
+        ) # all finite obstructions of length 2 that aren't in the same cell
 
         #print("filtered obs: ")
         for ob in filtered_obs:
@@ -439,11 +442,24 @@ class _RowColSeparationSingleApplication:
 
     def map_obstructions(self, cell_map: Dict[Cell, Cell]):
         """Map the obstruction of a tiling according to the cell map."""
-        non_point_obs = (ob for ob in self._tiling.obstructions if len(ob.patt) > 1)
-        for ob in non_point_obs:
-            ob = self._map_gridded_chord(cell_map, ob)
-            if not ob.contradictory():
-                yield ob
+        for ob in self._tiling.obstructions:
+            if isinstance(ob, InfiniteObstruction):
+                mapped_cells = tuple(cell_map[cell] for cell in ob.pos)
+                yield InfiniteObstruction(ob.pattern_type, mapped_cells)
+                continue
+            if isinstance(ob, FiniteObstruction):
+                if len(ob.patt) <= 1:
+                    continue
+                mapped = self._map_gridded_chord(cell_map, ob.gc)
+                if not mapped.contradictory():
+                    yield FiniteObstruction(mapped)
+                continue
+            # Raw GriddedChord fallback
+            if len(ob.patt) <= 1:
+                continue
+            mapped = self._map_gridded_chord(cell_map, ob)
+            if not mapped.contradictory():
+                yield FiniteObstruction(mapped)
 
     def map_requirements(self, cell_map: Dict[Cell, Cell]):
         """Map the requirements of a tiling according to the cell map."""

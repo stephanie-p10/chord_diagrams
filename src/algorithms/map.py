@@ -98,11 +98,26 @@ class RowColMap:
         """
         return all(self.is_mappable_cell(cell) for cell in gc.pos)
 
+    def is_mappable_obstruction(self, ob) -> bool:
+        """Return True if all cells of the obstruction can be mapped."""
+        return all(self.is_mappable_cell(cell) for cell in ob.pos)
+
     def map_gc(self, gc: "GriddedChord") -> "GriddedChord":
         """
         Map the gridded chord diagram according to the map.
         """
         return gc.__class__(Chord(gc.patt), map(self.map_cell, gc.pos))
+
+    def map_obstruction(self, ob):
+        """Map an obstruction (finite or infinite) according to the map."""
+        from src.common.obstructions import FiniteObstruction, InfiniteObstruction
+
+        if isinstance(ob, InfiniteObstruction):
+            return ob.map_cells(self.map_cell)
+        if isinstance(ob, FiniteObstruction):
+            return FiniteObstruction(self.map_gc(ob.gc))
+        # Raw GriddedChord for backward compatibility.
+        return FiniteObstruction(self.map_gc(ob))
 
     def map_assumption(self, assumption: "TrackingAssumption") -> "TrackingAssumption":
         """

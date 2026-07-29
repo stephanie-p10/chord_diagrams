@@ -3,11 +3,12 @@
 `Tiling` is the main combinatorial class in this repository. Informally, a
 tiling describes a class of gridded chord diagrams constrained by:
 
-- **obstructions**: gridded chord patterns that must be avoided
+- **obstructions**: patterns that must be avoided (`Obstruction` objects;
+  finite ones wrap a `GriddedChord`, infinite ones encode Nabergall families)
 - **requirements**: tuples/lists of gridded chord patterns, where each list
   represents an “OR” condition (at least one must occur)
 - **linkages**: sets of cells that are treated as linked (used by some
-  algorithms/strategies)
+    algorithms/strategies)
 - **assumptions**: tracking assumptions used by the specification searcher
 
 The implementation maintains cached derived data such as active/empty cells and
@@ -35,6 +36,14 @@ from comb_spec_searcher.typing import Parameters
 from src.common.chords import GriddedChord, Chord
 from src.common.assumptions import TrackingAssumption
 from src.common.latex_exporter import export_tiling_to_latex
+from src.common.obstructions import (
+    FiniteObstruction,
+    InfiniteObstruction,
+    Obstruction,
+    ObstructionLike,
+    normalize_obstruction,
+    normalize_obstructions,
+)
 from src.algorithms.map import RowColMap
 from src.algorithms.simplify import SimplifyObstructionsAndRequirements
 from src.algorithms.expansion import Expansion
@@ -55,6 +64,7 @@ CellBasis = Dict[Cell, Tuple[List[Chord], List[Chord]]]
 CellFrozenSet = FrozenSet[Cell]
 Dimension = Tuple[int, int]
 GCTuple = Tuple[GriddedChord, ...]
+ObsTuple = Tuple[Obstruction, ...]
 
 
 class Tiling(CombinatorialClass):
@@ -64,7 +74,8 @@ class Tiling(CombinatorialClass):
     where `x` is the column index and `y` the row index.
 
     **Stored inputs** (normalized to tuples during `__init__`):\n
-    - `obstructions`: tuple of `GriddedChord`\n
+    - `obstructions`: tuple of `Obstruction` (bare `GriddedChord` inputs are
+      wrapped as `FiniteObstruction`)\n
     - `requirements`: tuple of requirement lists (each requirement list is a tuple of `GriddedChord`)\n
     - `linkages`: tuple of tuples of cells\n
     - `assumptions`: tuple of tracking assumptions\n
@@ -73,7 +84,7 @@ class Tiling(CombinatorialClass):
     forward/backward row/column maps used by strategies and algorithms.
     """
     def __init__(self,
-        obstructions: Iterable[GriddedChord] = tuple(),
+        obstructions: Iterable[ObstructionLike] = tuple(),
         requirements: Iterable[Iterable[GriddedChord]] = tuple(), 
         linkages: Iterable[Iterable[Cell]] = tuple(),
         assumptions: Iterable[TrackingAssumption] = tuple(),
@@ -88,7 +99,7 @@ class Tiling(CombinatorialClass):
 
         super().__init__()
         self._linkages = tuple(tuple(link) for link in linkages)
-        self._obstructions = tuple(obstructions)
+        self._obstructions = normalize_obstructions(obstructions)
         self._requirements = tuple(tuple(req_list) for req_list in requirements)
         self._assumptions = tuple(assumptions)
         self._cached_properties = {}
@@ -156,7 +167,7 @@ class Tiling(CombinatorialClass):
         # Fast method of calculating active cells, assumes the user did not do anything "silly"
         # adds all cells that an obstuction larger than a single point uses
         cells_used = union_reduce(
-            set(ob.pos) for ob in self.obstructions if len(ob.patt) > 1
+            set(ob.pos) for ob in self.obstructions if not ob.is_point() and not ob.is_empty()
         )
         # adds all cells that are used in a requirement to the active cells.
         cells_used.update(
@@ -174,7 +185,7 @@ class Tiling(CombinatorialClass):
         # finds the cells that have point obstructions - these should be empty
         point_ob_cells = []
         for ob in self.obstructions:
-            if len(ob.patt) == 1:
+            if ob.is_point():
                 point_ob_cells.append(ob.pos[0])
 
         if derive_empty:
@@ -201,7 +212,7 @@ class Tiling(CombinatorialClass):
     def _add_point_obs(self, cells: Tuple[Cell]):
         new_obs = list(self._obstructions)
         for cell in cells:
-            new_obs.append(GriddedChord.single_cell(Chord((0,)), cell))
+            new_obs.append(FiniteObstruction(GriddedChord.single_cell(Chord((0,)), cell)))
 
         self._obstructions = tuple(new_obs)
   
@@ -482,7 +493,7 @@ class Tiling(CombinatorialClass):
         # Fast method of calculating active cells, assumes the user did not do anything "silly"
         # adds all cells that an obstuction larger than a single point uses
         cells_used = union_reduce(
-            set(ob.pos) for ob in self.obstructions if len(ob.patt) > 1
+            set(ob.pos) for ob in self.obstructions if not ob.is_point() and not ob.is_empty()
         )
         # adds all cells that are used in a requirement to the active cells.
         cells_used.update(
@@ -502,7 +513,7 @@ class Tiling(CombinatorialClass):
         # finds the cells that have point obstructions - these should be empty
         point_ob_cells = []
         for ob in self.obstructions:
-            if len(ob.patt) == 1:
+            if ob.is_point():
                 point_ob_cells.append(ob.pos[0])
 
         if derive_empty:
@@ -529,7 +540,7 @@ class Tiling(CombinatorialClass):
     def _add_point_obs(self, cells: Tuple[Cell]):
         new_obs = list(self._obstructions)
         for cell in cells:
-            new_obs.append(GriddedChord.single_cell(Chord((0,)), cell))
+            new_obs.append(FiniteObstruction(GriddedChord.single_cell(Chord((0,)), cell)))
 
         self._obstructions = tuple(new_obs)
   
@@ -579,9 +590,11 @@ class Tiling(CombinatorialClass):
         """Remove empty rows and columns."""
         # Produce the mapping between the two tilings
         if not self.active_cells:
-            assert GriddedChord.empty_chord() not in self.obstructions
+            assert not any(ob.is_empty() for ob in self.obstructions)
             self._cached_properties["forward_map"] = RowColMap.identity((0, 0))
-            self._obstructions = (GriddedChord.single_cell(Chord((0,0)), (0, 0)),)
+            self._obstructions = (
+                FiniteObstruction(GriddedChord.single_cell(Chord((0, 0)), (0, 0))),
+            )
             self._requirements = tuple()
             self._linkages = tuple()
             self._assumptions = tuple()
@@ -592,9 +605,9 @@ class Tiling(CombinatorialClass):
         # We still may need to remove point obstructions if the empty row or col
         # was on the end so we do it outside the next if statement.
         self._obstructions = tuple(
-            forward_map.map_gc(ob)
+            forward_map.map_obstruction(ob)
             for ob in self.obstructions
-            if not ob.is_point() and forward_map.is_mappable_gc(ob)
+            if not ob.is_point() and forward_map.is_mappable_obstruction(ob)
         )
 
         if not forward_map.is_identity():
@@ -856,7 +869,9 @@ class Tiling(CombinatorialClass):
                                                                          gc_to_add.pos[1][0],
                                                                          source_idx,
                                                                          sink_idx)
-                            if extended_gc != None and extended_gc.avoids(*self.obstructions):  # this check is not optimized
+                            if extended_gc != None and all(
+                                ob.is_avoided_by(extended_gc) for ob in self.obstructions
+                            ):  # this check is not optimized
                                 chords_inserted.append(gc_to_add)
                                 newly_constructed_gcs.append(extended_gc)
 
@@ -922,8 +937,10 @@ class Tiling(CombinatorialClass):
         # proved maximum size of smallest chord that can be gridded:
         max_len = sum_max_reqs * 2 - 1
 
-        if max_len == -1:
-            max_len = 0
+        if max_len < 0:
+            # No requirements: empty may be valid, but linkages can exclude it,
+            # so also search size-1 diagrams.
+            max_len = 1 if self._linkages else 0
        
         all_chords = []
         for num_chords in range(0, max_len + 1):
@@ -948,7 +965,7 @@ class Tiling(CombinatorialClass):
         - respects all linkage connectivity constraints.
         """
         has_reqs = all(gc.contains(*req) for req in self._requirements)
-        avoids_ob = not any(gc.contains(ob) for ob in self._obstructions)
+        avoids_ob = all(ob.is_avoided_by(gc) for ob in self._obstructions)
         links_connected = all(gc.is_connected(cells) for cells in self._linkages)
         #print(has_reqs, avoids_ob, links_connected)
         return has_reqs and avoids_ob and links_connected
@@ -1076,9 +1093,11 @@ class Tiling(CombinatorialClass):
         """Remove empty rows and columns."""
         # Produce the mapping between the two tilings
         if not self.active_cells:
-            assert GriddedChord.empty_chord() not in self.obstructions
+            assert not any(ob.is_empty() for ob in self.obstructions)
             self._cached_properties["forward_map"] = RowColMap.identity((0, 0))
-            self._obstructions = (GriddedChord.single_cell(Chord((0,0)), (0, 0)),)
+            self._obstructions = (
+                FiniteObstruction(GriddedChord.single_cell(Chord((0, 0)), (0, 0))),
+            )
             self._requirements = tuple()
             self._assumptions = tuple()
             self._cached_properties["dimensions"] = (1, 1)
@@ -1088,9 +1107,9 @@ class Tiling(CombinatorialClass):
         # We still may need to remove point obstructions if the empty row or col
         # was on the end so we do it outside the next if statement.
         self._obstructions = tuple(
-            forward_map.map_gc(ob)
+            forward_map.map_obstruction(ob)
             for ob in self.obstructions
-            if not ob.is_point() and forward_map.is_mappable_gc(ob)
+            if not ob.is_point() and forward_map.is_mappable_obstruction(ob)
         )
 
         if not forward_map.is_identity():
@@ -1184,13 +1203,13 @@ class Tiling(CombinatorialClass):
             self._assumptions,
         )
 
-    def add_obstructions(self, gcs: Iterable[GriddedChord], simplify: bool = True, expand: bool = True) -> "Tiling":
+    def add_obstructions(self, gcs: Iterable[ObstructionLike], simplify: bool = True, expand: bool = True) -> "Tiling":
         """Return a new tiling with additional obstructions.
 
         - **simplify**: whether to run simplification after adding.
         - **expand**: whether to run expansion after adding.
         """
-        new_obs = tuple(gcs)
+        new_obs = normalize_obstructions(gcs)
         all_obs = sorted(self._obstructions + new_obs)
         return Tiling(
             all_obs,
@@ -1271,7 +1290,7 @@ class Tiling(CombinatorialClass):
     def __contains__(self, gc: GriddedChord) -> bool:
         """Test if a gridded chord is griddable on the given tiling."""
         return (
-            gc.avoids(*self.obstructions)
+            all(ob.is_avoided_by(gc) for ob in self.obstructions)
             and all(gc.contains(*req) for req in self.requirements)
             and all(
                 (len(linkage) == 0) or gc.is_connected(list(linkage))
@@ -1283,7 +1302,7 @@ class Tiling(CombinatorialClass):
         format_string = "Tiling(obstructions={}, requirements={}, assumptions={})"
         #huh I'm not actually sure why this is here. Why don't I want single chords in my obstructions?
         non_point_obstructions = tuple(
-            filterfalse(GriddedChord.is_single_chord, self.obstructions)
+            filterfalse(lambda ob: ob.is_single_chord(), self.obstructions)
         )
         return format_string.format(
             non_point_obstructions, self.requirements, self.assumptions
@@ -1441,7 +1460,7 @@ class Tiling(CombinatorialClass):
 
     def to_jsonable(self):
         output: dict = super().to_jsonable()
-        output["obstructions"] = [gc.to_jsonable() for gc in self.obstructions]
+        output["obstructions"] = [ob.to_jsonable() for ob in self.obstructions]
         output["requirements"] = [[gc.to_jsonable() for gc in req] for req in self.requirements]
         output["linkages"] = self._linkages
         output["assumptions"] = [assump.to_jsonable() for assump in self.assumptions]
@@ -1452,7 +1471,7 @@ class Tiling(CombinatorialClass):
         # reasonably sure this is correct, not sure about formatting
         """Returns a Tiling object from a dictionary loaded from a JSON
         serialized Tiling object."""
-        obstructions = tuple(map(GriddedChord.from_dict, d["obstructions"]))
+        obstructions = tuple(map(Obstruction.from_dict, d["obstructions"]))
         requirements = tuple(map(lambda x: tuple(map(GriddedChord.from_dict, x)), d["requirements"]))
         linkages =  tuple(map(lambda x: tuple(map(tuple, x)), d["linkages"]))
         assumptions = tuple(map(TrackingAssumption.from_dict, d.get("assumptions", [])))
@@ -1481,7 +1500,7 @@ class Tiling(CombinatorialClass):
         dim_x, dim_y = self._cached_properties['dimensions']
 
         # Assign unique labels to obstructions (A, B, C, ...) and requirements (a, b, c...)
-        obs_labels: Dict[GriddedChord, str] = {}
+        obs_labels: Dict[Obstruction, str] = {}
         req_labels: Dict[GriddedChord, str] = {}
         for i, ob in enumerate(self._obstructions):
             obs_labels[ob] = chr(ord('A') + (i % 26)) + (str(i//26) if i//26 else '')
@@ -1492,7 +1511,7 @@ class Tiling(CombinatorialClass):
         # Build quick lookup: for each cell pick the label of the first obstruction
         cell_marker: Dict[Cell, Tuple[str, str]] = {}  # cell -> (label, color)
         for ob, lab in obs_labels.items():
-            for cell in ob._cells:
+            for cell in ob.cells:
                 cell_marker[cell] = (lab, RED)
         for rq, lab in req_labels.items():
             for cell in rq._cells:
