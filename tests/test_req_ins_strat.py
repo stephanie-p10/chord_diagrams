@@ -75,3 +75,29 @@ for strat in req_ins_factory(non_crossing):
         print()
     print()
 
+
+
+def test_requirement_insertion_and_placement_smoke():
+    base = Tiling(
+        obstructions=(
+            single_chord((1, 1), (3, 1)),
+            crossed_chord((1, 1)),
+            crossed_chord((3, 1)),
+            single_chord((0, 0), (0, 0)),
+            single_chord((2, 0), (2, 0)),
+            GriddedChord(Chord((0, 1)), ((0, 0), (0, 0))),
+            GriddedChord(Chord((1, 0)), ((0, 0), (0, 0))),
+            GriddedChord(Chord((0, 1)), ((2, 0), (2, 0))),
+            GriddedChord(Chord((1, 0)), ((2, 0), (2, 0))),
+        ),
+        requirements=([single_chord((0, 0), (2, 0))],),
+        simplify=False,
+        expand=False,
+    )
+
+    ins = RequirementInsertionStrategy((single_chord((0, 0), (0, 0)),))
+    avoid_child, contain_child = ins.decomposition_function(base)
+    assert isinstance(avoid_child, Tiling)
+    assert isinstance(contain_child, Tiling)
+
+    

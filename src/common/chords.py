@@ -800,17 +800,16 @@ class GriddedChord(CombinatorialObject):
 
     def forced_chord(self, cell: Cell, direction: int) -> int:
     # sCN: returns most extreme chord in each case, not point
-        """Search in the cell given for the chord with the strongest force with
-        respect to the given force.
+        """Search in the cell given for the most extreme chord in the given direction.
         
         Examples:
-        >>> GriddedChord(Chord((0, 1, 0, 1, 2, 2)), ((0,0), (0,0), (0,0), (0,0), (0, 0), (0, 0))).forced_point_index((0, 0), DIR_EAST)
+        >>> GriddedChord(Chord((0, 1, 0, 1, 2, 2)), ((0,0), (0,0), (0,0), (0,0), (0, 0), (0, 0))).forced_chord((0, 0), DIR_EAST)
         2
-        >>> GriddedChord(Chord((0, 1, 0, 2, 2, 1)), ((0,0), (0,0), (0,0), (0,0), (0, 0), (0, 0))).forced_point_index((0, 0), DIR_NORTH)
+        >>> GriddedChord(Chord((0, 1, 0, 2, 2, 1)), ((0,0), (0,0), (0,0), (0,0), (0, 0), (0, 0))).forced_chord((0, 0), DIR_NORTH)
         1
-        >>> GriddedChord(Chord((0, 1, 0, 1, 2, 2)), ((0,0), (0,0), (0,0), (0,0), (0, 0), (0, 0))).forced_point_index((0, 0), DIR_WEST)
+        >>> GriddedChord(Chord((0, 1, 0, 1, 2, 2)), ((0,0), (0,0), (0,0), (0,0), (0, 0), (0, 0))).forced_chord((0, 0), DIR_WEST)
         0
-        >>> GriddedChord(Chord((0, 1, 0, 1, 2, 2)), ((0,0), (0,0), (0,0), (0,0), (0, 0), (0, 0))).forced_point_index((0, 0), DIR_SOUTH)
+        >>> GriddedChord(Chord((0, 1, 0, 1, 2, 2)), ((0,0), (0,0), (0,0), (0,0), (0, 0), (0, 0))).forced_chord((0, 0), DIR_SOUTH)
         0"""
         if self.occupies(cell):
             indices = self.points_in_cell(cell)
@@ -1189,21 +1188,22 @@ class GriddedChord(CombinatorialObject):
         new_grid = GriddedChord(Chord.to_standard(patt), positions)
         return new_grid
     
-    def get_chords_on_cells(self, cells: Iterable[Cell]) -> "GriddedChord":
-        """Returns the subgridded chord with chords with an endpoint in cells.
-        """
-        chords_to_keep = [chord for chord, pos in self if pos in cells]
-        patt = []
-        positions = []
+    # We think we can get rid of this function now that we have get_subchord_in_cells
+    # def get_chords_on_cells(self, cells: Iterable[Cell]) -> "GriddedChord":
+    #     """Returns the subgridded chord with chords with at least one endpoint in cells.
+    #     """
+    #     chords_to_keep = [chord for chord, pos in self if pos in cells]
+    #     patt = []
+    #     positions = []
 
-        # builds lists of the chord pattern and positions of the chords in cells
-        for chord, pos in self:
-            if chord in chords_to_keep:
-                patt.append(chord)
-                positions.append(pos)
+    #     # builds lists of the chord pattern and positions of the chords in cells
+    #     for chord, pos in self:
+    #         if chord in chords_to_keep:
+    #             patt.append(chord)
+    #             positions.append(pos)
 
-        new_grid = GriddedChord(Chord.to_standard(patt), positions)
-        return new_grid
+    #     new_grid = GriddedChord(Chord.to_standard(patt), positions)
+    #     return new_grid
 
     def all_subchords(self, proper: bool = True, return_all_subpatts: bool = False) -> Iterator["GriddedChord"]:
         """Yields all gridded subchords.
@@ -1329,7 +1329,7 @@ class GriddedChord(CombinatorialObject):
 
     # sCN: insert_specific_point -> insert_specific_chord. Also changed number of parameters to work with chords
     def insert_specific_chord(self, row: int, col_source: int, col_sink: int, source: int, sink: int) -> "GriddedChord":
-        #sToDo: code check for vaild gridded chord required
+        #sToDo: code check for valid gridded chord required
         """Insert a new chord in row, with source and sink in col_source and col_sink respecitively, at indices source and sink.
         """
         patt = self._chord

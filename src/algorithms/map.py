@@ -99,7 +99,16 @@ class RowColMap:
         return all(self.is_mappable_cell(cell) for cell in gc.pos)
 
     def is_mappable_obstruction(self, ob) -> bool:
-        """Return True if all cells of the obstruction can be mapped."""
+        """Return True if the obstruction can be mapped.
+
+        Finite obstructions require every cell to be mappable. Infinite
+        families may lose cells that became empty after placement; they remain
+        mappable if at least one cell survives.
+        """
+        from src.common.obstructions import InfiniteObstruction
+
+        if isinstance(ob, InfiniteObstruction):
+            return any(self.is_mappable_cell(cell) for cell in ob.pos)
         return all(self.is_mappable_cell(cell) for cell in ob.pos)
 
     def map_gc(self, gc: "GriddedChord") -> "GriddedChord":
@@ -113,7 +122,12 @@ class RowColMap:
         from src.common.obstructions import FiniteObstruction, InfiniteObstruction
 
         if isinstance(ob, InfiniteObstruction):
-            return ob.map_cells(self.map_cell)
+            mapped_cells = tuple(
+                self.map_cell(cell)
+                for cell in ob.pos
+                if self.is_mappable_cell(cell)
+            )
+            return InfiniteObstruction(ob.pattern_type, mapped_cells)
         if isinstance(ob, FiniteObstruction):
             return FiniteObstruction(self.map_gc(ob.gc))
         # Raw GriddedChord for backward compatibility.

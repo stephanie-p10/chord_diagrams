@@ -4,6 +4,7 @@ from src.algorithms.factor import Factor
 from src.common.chords import Chord, GriddedChord
 from src.strategies.factor import FactorFactory, FactorStrategy
 from src.common.tiling import Tiling
+from src.common.tiling import Tiling
 
 
 def _make_non_crossing() -> Tiling:
@@ -51,3 +52,18 @@ def test_factor_factory_yields_a_strategy():
     strats = list(factory(tiling))
     assert strats
     assert isinstance(strats[0], FactorStrategy)
+
+
+def crossed_chord(pos):
+    return GriddedChord(Chord((0, 1, 0, 1)), (pos,) * 4)
+
+
+def single_chord(pos_left, pos_right):
+    return GriddedChord(Chord((0, 0)), (pos_left, pos_right))
+
+
+def test_factor_factory_smoke_on_small_tiling():
+    tiling = Tiling(obstructions=(crossed_chord((0, 0)),), simplify=False, expand=False)
+    factory = FactorFactory(unions=False)
+    # If it doesn't factor, it should yield nothing; just ensure no crash.
+    list(factory(tiling))

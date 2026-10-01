@@ -19,11 +19,16 @@ if str(_src_root) not in sys.path:
 from src.common import DIR_EAST, DIR_NONE, DIR_NORTH, DIR_SOUTH, DIR_WEST, DIRS
 from src.common.assumptions import TrackingAssumption
 from src.common.chords import Chord, GriddedChord
+from src.common.obstructions import (
+    FiniteObstruction,
+    InfiniteObstruction,
+    Obstruction,
+)
 from src.common.tiling import Tiling
 
 
 from itertools import chain, filterfalse, product, chain
-from typing import TYPE_CHECKING, Dict, FrozenSet, Iterable, List, Optional, Tuple
+from typing import TYPE_CHECKING, Dict, FrozenSet, Iterable, List, Optional, Tuple, Union
 from collections import Counter
 
 #from .simplify import SimplifyObstructionsAndRequirements
@@ -36,6 +41,61 @@ LinkCache = Dict[Cell, List[Linkages]]
 ObsCache = Dict[Cell, List[GriddedChord]]
 ReqsCache = Dict[Cell, List[ListRequirement]]
 AssumpCache = Dict[Cell, List[TrackingAssumption]]
+ObstructionLike = Union[Obstruction, GriddedChord]
+
+
+def stretch_cells_around_placement(
+    cells: Iterable[Cell],
+    cell_placed: Cell,
+    own_row: bool,
+    own_col: bool,
+) -> Tuple[Cell, ...]:
+    """Expand/shift cells when a point is placed in ``cell_placed``.
+
+    Mirrors the linkage map ``mu_e``: cells in the placed column/row expand
+    across the inserted columns/rows; cells strictly right/above shift by 2.
+    """
+    cx, cy = cell_placed
+    new_cells: List[Cell] = []
+    for x, y in cells:
+        expand_x = 2 if own_col and x == cx else 0
+        expand_y = 2 if own_row and y == cy else 0
+        corrected_x = x + (2 if own_col and cx < x else 0)
+        corrected_y = y + (2 if own_row and cy < y else 0)
+        for i in range(corrected_x, corrected_x + expand_x + 1):
+            for j in range(corrected_y, corrected_y + expand_y + 1):
+                new_cells.append((i, j))
+    return tuple(dict.fromkeys(new_cells))
+
+
+def stretch_infinite_obstruction(
+    ob: InfiniteObstruction,
+    cell_placed: Cell,
+    own_row: bool,
+    own_col: bool,
+) -> List[InfiniteObstruction]:
+    """Return infinite obstructions obtained by stretching ``ob`` around a placed point.
+
+    Each original cell is mapped to one or more image cells (as in the linkage
+    map). Every choice of one image per original cell becomes an infinite
+    obstruction of the same pattern type — the cell-level analogue of finite
+    multiplexes. Duplicate cell choices are skipped.
+    """
+    per_cell_images = [
+        stretch_cells_around_placement((cell,), cell_placed, own_row, own_col)
+        for cell in ob.pos
+    ]
+    result: List[InfiniteObstruction] = []
+    seen = set()
+    for choice in product(*per_cell_images):
+        if len(set(choice)) != len(choice):
+            continue
+        key = (ob.pattern_type, tuple(sorted(choice)))
+        if key in seen:
+            continue
+        seen.add(key)
+        result.append(InfiniteObstruction(ob.pattern_type, choice))
+    return result
 
 class RequirementPlacement:
     """
@@ -205,25 +265,29 @@ class RequirementPlacement:
         return multiplexes
 
     # tested!
-    def get_multiplexes_of_chords(self, gcs: Iterable, cell: Cell) -> List[GriddedChord]:
+    def get_multiplexes_of_chords(
+        self, gcs: Iterable, cell: Cell
+    ) -> List[ObstructionLike]:
         """
-        Return all stretched gridded chord diagrams for an iterable of gridded
-        chord diagrams (or finite obstructions), assuming a point is placed in
-        the given cell. Infinite obstructions are skipped here.
-        """
-        from src.common.obstructions import FiniteObstruction, InfiniteObstruction
+        Return all stretched obstructions for an iterable of gridded chords /
+        finite / infinite obstructions, assuming a point is placed in ``cell``.
 
-        unwrapped = []
+        Finite patterns are multiplexed; infinite families have their cell lists
+        stretched via :func:`stretch_infinite_obstruction`.
+        """
+        result: List[ObstructionLike] = []
         for gc in gcs:
             if isinstance(gc, InfiniteObstruction):
-                continue
-            if isinstance(gc, FiniteObstruction):
-                unwrapped.append(gc.gc)
+                result.extend(
+                    stretch_infinite_obstruction(
+                        gc, cell, self.own_row, self.own_col
+                    )
+                )
+            elif isinstance(gc, FiniteObstruction):
+                result.extend(self.get_multiplexes_of_chord(gc.gc, cell))
             else:
-                unwrapped.append(gc)
-        return list(
-            chain.from_iterable(self.get_multiplexes_of_chord(gc, cell) for gc in unwrapped)
-        )
+                result.extend(self.get_multiplexes_of_chord(gc, cell))
+        return result
     
     def new_empty_cells(self, cell_placed: Cell, cell_end: Cell, dir: int, is_end_sink: bool = False) -> Iterable[Cell]:
         cell_x, cell_y = self._point_placed_cell(cell_placed)
@@ -298,7 +362,7 @@ class RequirementPlacement:
     
     # tested!
     # sToDo: some obstructions being added currently may be redundant
-    def stretched_obs(self, cell_placed: Cell) -> Iterable[GriddedChord]:
+    def stretched_obs(self, cell_placed: Cell) -> Iterable[ObstructionLike]:
         """Returns the existing obstructions stretched over the cell that had a point placed.
         I.e., the mulitplexes of the obstructions over the cell placed"""
         return self.get_multiplexes_of_chords(self._tiling.obstructions, cell_placed)
@@ -622,27 +686,30 @@ class ChordPlacement:
 
         return multiplexes
     
-    def get_multiplexes_of_gcs(self, gcs: Iterable, cell: Cell) -> List[GriddedChord]:
+    def get_multiplexes_of_gcs(
+        self, gcs: Iterable, cell: Cell
+    ) -> List[ObstructionLike]:
         """
-        Return all stretched gridded chord diagrams for an iterable of gridded
-        chord diagrams (or finite obstructions), assuming a point is placed in
-        the given cell.
+        Return all stretched obstructions for an iterable of gridded chords /
+        finite / infinite obstructions, assuming a point is placed in ``cell``.
 
-        This is the set M_{cell}(gcs) in the notation of ABCNPU. 
+        This is the set M_{cell}(gcs) in the notation of ABCNPU for finite
+        patterns; infinite families are cell-stretched via
+        :func:`stretch_infinite_obstruction`.
         """
-        from src.common.obstructions import FiniteObstruction, InfiniteObstruction
-
-        unwrapped = []
+        result: List[ObstructionLike] = []
         for gc in gcs:
             if isinstance(gc, InfiniteObstruction):
-                continue
-            if isinstance(gc, FiniteObstruction):
-                unwrapped.append(gc.gc)
+                result.extend(
+                    stretch_infinite_obstruction(
+                        gc, cell, self.own_row, self.own_col
+                    )
+                )
+            elif isinstance(gc, FiniteObstruction):
+                result.extend(self.get_multiplexes_of_gc(gc.gc, cell))
             else:
-                unwrapped.append(gc)
-        return list(
-            chain.from_iterable(self.get_multiplexes_of_gc(gc, cell) for gc in unwrapped)
-        )
+                result.extend(self.get_multiplexes_of_gc(gc, cell))
+        return result
     
     def is_directionmost(self, dir: int, a: Cell, b: Cell) -> bool:
         """
@@ -660,27 +727,9 @@ class ChordPlacement:
     # NOT TESTED TODO
     def translate_linkage(self, cell_placed: Cell, linkage: List[Cell]) -> Tuple[Cell, ...]:
         """Apply the linkage map mu_e when splitting row/column at cell_placed."""
-        new_linkage: List[Cell] = []
-        for cell in linkage:
-            expand_x = 0
-            expand_y = 0
-            if cell_placed[0] == cell[0]:
-                expand_x = 2
-            if cell_placed[1] == cell[1]:
-                expand_y = 2
-
-            corrected_x = cell[0]
-            if cell_placed[0] < cell[0]:
-                corrected_x += 2
-
-            corrected_y = cell[1]
-            if cell_placed[1] < cell[1]:
-                corrected_y += 2
-
-            for i in range(corrected_x, corrected_x + expand_x + 1):
-                for j in range(corrected_y, corrected_y + expand_y + 1):
-                    new_linkage.append((i, j))
-        return tuple(dict.fromkeys(new_linkage))
+        return stretch_cells_around_placement(
+            linkage, cell_placed, self.own_row, self.own_col
+        )
 
     def _isolate_point_obs(self, isolated_cell: Cell, end_cell: Cell, dimensions: Tuple[int, int]):
         isolate_chord = [GriddedChord(Chord((0, 0)), (isolated_cell, isolated_cell)),

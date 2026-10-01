@@ -1,13 +1,12 @@
-import _direct_run_bootstrap 
+import sys
+from pathlib import Path
+sys.path.append(str(Path(__file__).resolve().parent.parent))
 from typing import Tuple
 
 from src.common.chords import Chord, GriddedChord
 from src.common import DIR_EAST, DIR_NORTH, DIR_SOUTH, DIR_WEST
 
 Cell = Tuple[int, int]
-
-
-# sToDo: fix the order of these tests
 
 # GriddedChord tests
 gc1 = GriddedChord(
@@ -28,7 +27,6 @@ assert(GriddedChord.empty_chord() == empty_c)
 assert(GriddedChord.empty_chord() == GriddedChord(Chord(), ()))
 
 assert(GriddedChord.single_chord(((0,0),)) == GriddedChord(Chord((0, 0)), ((0, 0), (0, 0))))
-
 assert(GriddedChord.single_chord(((0, 1), (1, 1))) == GriddedChord(Chord((0, 0)), ((0, 1), (1, 1))))
 
 assert(gc2.occupies((1, 1)))
@@ -117,10 +115,6 @@ assert gc1.get_subgrid_at_chords([]) == GriddedChord()
 assert GriddedChord(Chord((0, 1, 2, 0, 2, 1)), ((0, 0), (0, 1), (1, 1), (1, 0), (2, 1), (3, 1))).remove_chord_idx(0) == GriddedChord(Chord((0, 1, 1, 0)), ((0, 1), (1, 1), (2, 1), (3, 1)))
 assert GriddedChord(Chord((0, 1, 2, 0, 2, 1)), ((0, 0), (0, 1), (1, 1), (1, 0), (2, 1), (3, 1))).remove_chord_idx(3) == GriddedChord(Chord((0, 1, 1, 0)), ((0, 1), (1, 1), (2, 1), (3, 1)))
 assert GriddedChord(Chord((0, 1, 2, 0, 2, 1)), ((0, 0), (0, 1), (1, 1), (1, 0), (2, 1), (3, 1))).remove_chord_idx(4) == GriddedChord(Chord((0, 1, 0, 1)), ((0, 0), (0, 1), (1, 0), (3, 1)))
-
-assert gc1.get_chords_on_cells(((0, 0), (0, 1), (1, 0))) == GriddedChord(Chord((0, 1, 0, 1)), ((0, 0), (0, 1), (1, 0), (3, 1)))
-assert gc1.get_chords_on_cells(((4, 4), (3, 3))) == GriddedChord(Chord((0, 1, 0, 1)), ((2, 3), (2, 4), (3, 3), (4, 4)))
-assert gc1.get_chords_on_cells([(2, 0)]) == GriddedChord()
 
 assert gc1.get_subchord_in_cells([(0, 0), (0, 1)]) == empty_c
 assert gc2.get_subchord_in_cells([(1, 1)]) == gc2

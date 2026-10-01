@@ -1,4 +1,6 @@
-import _direct_run_bootstrap
+import sys
+from pathlib import Path
+sys.path.append(str(Path(__file__).resolve().parent.parent))
 
 from src.common.chords import Chord, GriddedChord
 from src.common.obstructions import FiniteObstruction
