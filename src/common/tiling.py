@@ -1005,6 +1005,11 @@ class Tiling(CombinatorialClass):
     
         # not used anywhere?
 
+    @property
+    def extra_parameters(self) -> Tuple[str, ...]:
+        """Variables associated with each tracking assumption on this tiling."""
+        return tuple(f"k_{i}" for i in range(len(self._assumptions)))
+
     def get_assumption_parameter(self, assumption: TrackingAssumption) -> str:
         """
         Return the variable associated with the given assumption.

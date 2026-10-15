@@ -57,18 +57,12 @@ from comb_spec_searcher.typing import (
     SubTerms,
     Terms,
 )
-from tilings.algorithms import (
-    Factor,
-    FactorWithInterleaving,
-    FactorWithMonotoneInterleaving,
-)
-from tilings.assumptions import TrackingAssumption
-from tilings.exception import InvalidOperationError
-from tilings.misc import multinomial, partitions_iterator
-from tilings.strategies.assumption_insertion import (
-    AddAssumptionsConstructor,
-    AddAssumptionsStrategy,
-)
+from tilings.misc import partitions_iterator
+
+try:
+    from ..algorithms.factor import Factor
+except ImportError:
+    from src.algorithms.factor import Factor
 
 Cell = Tuple[int, int]
 
@@ -150,7 +144,9 @@ class FactorStrategy(CartesianProductStrategy[Tiling, GriddedChord]):
         ]
         temp.sort()
         new_pos = [(idx[0], val[0]) for idx, val in temp]
-        new_patt = Chord.to_standard(val for _, val in temp)
+        # Materialize before to_standard: Chord.to_standard iterates twice.
+        vals = tuple(val for _, val in temp)
+        new_patt = Chord.to_standard(vals)
         yield GriddedChord(new_patt, new_pos)
 
     def forward_map(

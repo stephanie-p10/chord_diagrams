@@ -93,16 +93,21 @@ class Factor:
             c2_int = self._cell_to_int(c2)
             self._cell_unionfind.unite(c1_int, c2_int)
 
+    @staticmethod
+    def _assumption_gcs(assumption: TrackingAssumption):
+        """Return tracked gridded chords (`gcs` locally, `gps` in tilings)."""
+        return getattr(assumption, "gcs", None) or getattr(assumption, "gps", ())
+
     def _unite_assumptions(self) -> None:
         """
-        For each TrackingAssumption unite all the positions of the gridded perms.
+        For each TrackingAssumption unite all the positions of the gridded chords.
         """
         for assumption in self._tiling.assumptions:
             if isinstance(assumption, ComponentAssumption):
                 for cells in assumption.cell_decomposition(self._tiling):
                     self._unite_cells(cells)
             else:
-                for gp in assumption.gps:
+                for gp in self._assumption_gcs(assumption):
                     self._unite_cells(gp.pos)
 
     def _unite_obstructions(self) -> None:
@@ -200,15 +205,24 @@ class Factor:
             )
             # TODO: consider skew/sum assumptions
             assumptions = tuple(
-                ass.__class__(gp for gp in ass.gps if gp.pos[0] in component)
+                ass.__class__(
+                    gp
+                    for gp in self._assumption_gcs(ass)
+                    if gp.pos[0] in component
+                )
                 for ass in self._tiling.assumptions
             )
-            #print(obstructions, requirements)
             factors.append(
                 (
                     obstructions,
                     requirements,
-                    tuple(set(ass for ass in assumptions if ass.gps)),
+                    tuple(
+                        set(
+                            ass
+                            for ass in assumptions
+                            if self._assumption_gcs(ass)
+                        )
+                    ),
                 )
             )
         self._factors_obs_and_reqs = factors
